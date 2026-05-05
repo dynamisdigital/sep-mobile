@@ -1,0 +1,11 @@
+node_modules
+www
+.angular
+coverage
+playwright-report
+test-results
+*.lock
+package-lock.json
+android
+ios
+.capacitor
