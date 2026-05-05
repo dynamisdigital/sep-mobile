@@ -1,0 +1,197 @@
+// =============================================================================
+// Mixins SCSS para componentes Ionic customizados com tokens Notion (M-Sprint 1)
+// =============================================================================
+// Cada mixin aplica os tokens via CSS variables `--ion-*` ou via parts (::part).
+// O objetivo e usar os componentes Ionic AS-IS sem reescrever, garantindo
+// fidelidade visual ao Notion mobile.
+// =============================================================================
+
+@use "notion-mobile-tokens" as *;
+@use "notion-mobile-typography" as *;
+
+// -----------------------------------------------------------------------------
+// ion-button — variantes Notion (primary, secondary, ghost)
+// -----------------------------------------------------------------------------
+
+@mixin notion-ion-button-base {
+  --border-radius: #{$notion-radius-sm};
+  --padding-start: #{$notion-space-4};
+  --padding-end: #{$notion-space-4};
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --min-height: #{$notion-touch-target-min};
+
+  font-family: $notion-font-family;
+  font-size: $notion-font-size-base;
+  font-weight: $notion-font-weight-medium;
+  letter-spacing: -0.005em;
+  text-transform: none;
+}
+
+@mixin notion-ion-button-primary {
+  @include notion-ion-button-base;
+
+  --background: var(--ion-color-primary);
+  --background-hover: var(--ion-color-primary-shade);
+  --background-activated: var(--ion-color-primary-shade);
+  --color: var(--ion-color-primary-contrast);
+  --box-shadow: #{$notion-shadow-xs};
+}
+
+@mixin notion-ion-button-secondary {
+  @include notion-ion-button-base;
+
+  --background: var(--ion-background-color);
+  --background-hover: var(--notion-bg-secondary, #{$notion-bg-secondary});
+  --color: var(--ion-text-color);
+  --border-color: #{$notion-border};
+  --border-style: solid;
+  --border-width: 1px;
+  --box-shadow: none;
+}
+
+@mixin notion-ion-button-ghost {
+  @include notion-ion-button-base;
+
+  --background: transparent;
+  --background-hover: var(--notion-bg-secondary, #{$notion-bg-secondary});
+  --color: var(--ion-text-color);
+  --box-shadow: none;
+}
+
+// -----------------------------------------------------------------------------
+// ion-input + ion-item — borda discreta + label flutuante
+// -----------------------------------------------------------------------------
+
+@mixin notion-ion-input {
+  --background: var(--ion-background-color);
+  --color: var(--ion-text-color);
+  --placeholder-color: #{$notion-text-tertiary};
+  --placeholder-opacity: 1;
+  --padding-start: #{$notion-space-3};
+  --padding-end: #{$notion-space-3};
+  --padding-top: #{$notion-space-3};
+  --padding-bottom: #{$notion-space-3};
+  --min-height: #{$notion-touch-target-min};
+
+  font-family: $notion-font-family;
+  font-size: $notion-font-size-base;
+  border-radius: $notion-radius-sm;
+  border: 1px solid #{$notion-border};
+  transition: border-color $notion-transition-fast;
+
+  &:focus-within,
+  &.has-focus {
+    border-color: var(--ion-color-primary);
+  }
+}
+
+@mixin notion-ion-item {
+  --background: transparent;
+  --background-hover: var(--notion-bg-secondary, #{$notion-bg-secondary});
+  --background-focused: var(--notion-bg-secondary, #{$notion-bg-secondary});
+  --color: var(--ion-text-color);
+  --inner-padding-start: #{$notion-space-4};
+  --inner-padding-end: #{$notion-space-4};
+  --min-height: #{$notion-touch-target-min};
+  --border-color: #{$notion-border};
+
+  font-family: $notion-font-family;
+  font-size: $notion-font-size-base;
+}
+
+// -----------------------------------------------------------------------------
+// ion-card — sombra multilayer + radius generoso
+// -----------------------------------------------------------------------------
+
+@mixin notion-ion-card {
+  --background: var(--ion-background-color);
+  --color: var(--ion-text-color);
+
+  border-radius: $notion-radius-lg;
+  box-shadow: $notion-shadow-sm;
+  margin: $notion-space-4 0;
+  padding: $notion-space-4;
+  font-family: $notion-font-family;
+
+  &:hover {
+    box-shadow: $notion-shadow-md;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// ion-tabs (tab bar inferior — diferencial mobile chave)
+// -----------------------------------------------------------------------------
+
+@mixin notion-ion-tab-bar {
+  --background: var(--ion-tab-bar-background);
+  --color: var(--ion-tab-bar-color);
+  --color-selected: var(--ion-tab-bar-color-selected);
+  --border: 1px solid var(--ion-tab-bar-border-color);
+
+  height: 56px; // padrao mobile
+  z-index: $notion-z-tab-bar;
+
+  ion-tab-button {
+    --color: var(--ion-tab-bar-color);
+    --color-selected: var(--ion-tab-bar-color-selected);
+    --padding-top: #{$notion-space-1};
+    --padding-bottom: #{$notion-space-1};
+
+    font-family: $notion-font-family;
+    font-size: $notion-font-size-xs;
+    font-weight: $notion-font-weight-medium;
+
+    &.tab-selected {
+      font-weight: $notion-font-weight-semibold;
+    }
+  }
+}
+
+// -----------------------------------------------------------------------------
+// ion-toast — variantes semanticas
+// -----------------------------------------------------------------------------
+
+@mixin notion-ion-toast {
+  --background: var(--ion-text-color);
+  --color: var(--ion-text-color-step-100, var(--ion-text-color));
+  --border-radius: #{$notion-radius-md};
+  --box-shadow: #{$notion-shadow-md};
+
+  font-family: $notion-font-family;
+  font-size: $notion-font-size-sm;
+
+  &.toast-success {
+    --background: var(--ion-color-success);
+    --color: #fff;
+  }
+
+  &.toast-warning {
+    --background: var(--ion-color-warning);
+    --color: #fff;
+  }
+
+  &.toast-error {
+    --background: var(--ion-color-danger);
+    --color: #fff;
+  }
+}
+
+// -----------------------------------------------------------------------------
+// ion-modal — sheet full-screen mobile
+// -----------------------------------------------------------------------------
+
+@mixin notion-ion-modal {
+  --background: var(--ion-background-color);
+  --color: var(--ion-text-color);
+  --border-radius: #{$notion-radius-lg} #{$notion-radius-lg} 0 0;
+  --box-shadow: #{$notion-shadow-lg};
+
+  font-family: $notion-font-family;
+
+  ion-toolbar {
+    --background: var(--ion-background-color);
+    --color: var(--ion-text-color);
+    --border-color: #{$notion-border};
+  }
+}
