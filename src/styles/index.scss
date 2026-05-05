@@ -1,7 +1,14 @@
-// Indice central de estilos mobile.
-// Tokens reais entram na M-Sprint 1.
+// =============================================================================
+// Indice central de estilos do app SEP Mobile (M-Sprint 1)
+// =============================================================================
+// Ordem importa:
+// 1. Tokens (variaveis SCSS + CSS custom properties)
+// 2. Tipografia (mixins que usam tokens)
+// 3. Componentes (mixins que usam tokens + tipografia)
+// 4. Overrides Ionic (selector `:root` ja em theme/variables.scss)
+// =============================================================================
 
-@use "tokens" as *;
-@use "mixins" as *;
-@use "notion-mobile" as *;
-@use "ionic-overrides" as *;
+@use "notion-mobile-tokens" as *;
+@use "notion-mobile-typography" as *;
+@use "notion-mobile-components" as *;
+@use "mixins" as *; // placeholder da M-Sprint 0; opcional
