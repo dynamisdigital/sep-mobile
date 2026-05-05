@@ -1,0 +1,9 @@
+/* TypeScript config para Vitest specs (substitui o default Karma/Jasmine). */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/spec",
+    "types": ["vitest/globals", "node"]
+  },
+  "include": ["src/**/*.d.ts", "src/**/*.spec.ts", "src/test-setup.ts", "src/test-polyfills.ts"]
+}
