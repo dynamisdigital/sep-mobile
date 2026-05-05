@@ -1,0 +1,78 @@
+# =============================================================================
+# CI do repositorio sep-mobile (Ionic 8 + Angular 20 + Capacitor 8 — PWA-first).
+# Copiado de docs-SEP/docs-sep/ci-pipelines/templates/sep-mobile-pwa-ci.template.yml
+# Ajustes locais:
+#   - name renomeado para CI-MOBILE (diferencia de CI-API e CI-APP nos required checks)
+#   - npm ci com --legacy-peer-deps (vitest@^2 vs peer optional vitest@^3.1.1 do
+#     @angular/build, @testing-library/angular@18.1.1 vs Angular 20 transitive)
+#   - adicionados format:check, lint:scss e build PWA com upload de coverage
+#   - concurrency cancel-in-progress + timeout 15 min
+# =============================================================================
+
+name: CI-MOBILE
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate mobile PWA
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Lint TS/HTML
+        run: npm run lint
+
+      - name: Lint SCSS
+        run: npm run lint:scss
+
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: Build PWA
+        run: |
+          npm run build
+          test -d www
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-coverage
+          path: coverage/
+          retention-days: 14
+
+      - name: Upload PWA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-pwa-www
+          path: www/
+          if-no-files-found: error
+          retention-days: 14

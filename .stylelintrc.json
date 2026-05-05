@@ -1,0 +1,23 @@
+{
+  "extends": ["stylelint-config-standard-scss"],
+  "rules": {
+    "custom-property-pattern": [
+      "^([a-z][a-z0-9]*)(-[a-z0-9]+)*$|^ion-[a-z0-9-]+$",
+      {
+        "message": "Use kebab-case para CSS custom properties; variaveis --ion-* sao permitidas."
+      }
+    ],
+    "selector-class-pattern": null,
+    "scss/at-import-partial-extension": null,
+    "scss/dollar-variable-pattern": null,
+    "no-descending-specificity": null
+  },
+  "ignoreFiles": [
+    "www/**/*",
+    ".angular/**/*",
+    "coverage/**/*",
+    "node_modules/**/*",
+    "android/**/*",
+    "ios/**/*"
+  ]
+}
