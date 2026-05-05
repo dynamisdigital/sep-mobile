@@ -1,2 +1,74 @@
-// For information on how to create your own theme, please refer to:
-// https://ionicframework.com/docs/theming/
+// =============================================================================
+// CSS variables Ionic mapeadas para tokens Notion mobile (M-Sprint 1)
+// =============================================================================
+// Aqui mapeamos as variaveis --ion-* expostas pelos componentes Ionic para os
+// tokens warm do Notion. Componentes Ionic continuam funcionando, mas agora
+// "parecem" Notion sem reescreve-los.
+// Ver: https://ionicframework.com/docs/theming/colors
+// =============================================================================
+
+@use "../styles/notion-mobile-tokens" as notion;
+
+:root {
+  // ---------------------------------------------------------------------------
+  // Cor primaria (azul Notion)
+  // ---------------------------------------------------------------------------
+  --ion-color-primary: #{notion.$notion-color-primary};
+  --ion-color-primary-rgb: 35, 131, 226;
+  --ion-color-primary-contrast: #{notion.$notion-text-inverse};
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #{notion.$notion-color-primary-shade};
+  --ion-color-primary-tint: #{notion.$notion-color-primary-tint};
+
+  // ---------------------------------------------------------------------------
+  // Secundaria (texto secundario do Notion)
+  // ---------------------------------------------------------------------------
+  --ion-color-secondary: #{notion.$notion-text-secondary};
+  --ion-color-secondary-rgb: 55, 53, 47;
+  --ion-color-secondary-contrast: #{notion.$notion-text-inverse};
+  --ion-color-secondary-contrast-rgb: 255, 255, 255;
+
+  // ---------------------------------------------------------------------------
+  // Semanticas
+  // ---------------------------------------------------------------------------
+  --ion-color-success: #{notion.$notion-color-success};
+  --ion-color-success-rgb: 68, 131, 97;
+  --ion-color-success-contrast: #fff;
+  --ion-color-success-contrast-rgb: 255, 255, 255;
+  --ion-color-warning: #{notion.$notion-color-warning};
+  --ion-color-warning-rgb: 217, 115, 13;
+  --ion-color-warning-contrast: #fff;
+  --ion-color-danger: #{notion.$notion-color-danger};
+  --ion-color-danger-rgb: 212, 76, 71;
+  --ion-color-danger-contrast: #fff;
+
+  // ---------------------------------------------------------------------------
+  // Backgrounds (warm Notion)
+  // ---------------------------------------------------------------------------
+  --ion-background-color: #{notion.$notion-bg-primary};
+  --ion-background-color-rgb: 255, 255, 255;
+  --ion-text-color: #{notion.$notion-text-primary};
+  --ion-text-color-rgb: 55, 53, 47;
+  --ion-color-step-50: #{notion.$notion-bg-secondary};
+  --ion-color-step-100: #{notion.$notion-bg-tertiary};
+
+  // ---------------------------------------------------------------------------
+  // Toolbar (header) e Tab bar (rodape)
+  // ---------------------------------------------------------------------------
+  --ion-toolbar-background: #{notion.$notion-bg-primary};
+  --ion-toolbar-color: #{notion.$notion-text-primary};
+  --ion-tab-bar-background: #{notion.$notion-bg-primary};
+  --ion-tab-bar-color: #{notion.$notion-text-secondary};
+  --ion-tab-bar-color-selected: #{notion.$notion-color-primary};
+  --ion-tab-bar-border-color: #{notion.$notion-border};
+
+  // ---------------------------------------------------------------------------
+  // Tipografia
+  // ---------------------------------------------------------------------------
+  --ion-font-family: #{notion.$notion-font-family};
+
+  // ---------------------------------------------------------------------------
+  // Tap highlight (azul Notion translucido — feedback de toque)
+  // ---------------------------------------------------------------------------
+  --ion-tap-highlight: #{notion.$notion-tap-highlight};
+}
