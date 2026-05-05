@@ -1,38 +1,88 @@
-/*
- * App Global CSS
- * ----------------------------------------------------------------------------
- * Put style rules here that you want to apply globally. These styles are for
- * the entire app and not just one component. Additionally, this file can be
- * used as an entry point to import other CSS/Sass files to be included in the
- * output CSS.
- * For more information on global stylesheets, visit the documentation:
- * https://ionicframework.com/docs/layout/global-stylesheets
- */
+// =============================================================================
+// Estilos globais aplicados a componentes Ionic com mixins Notion mobile
+// =============================================================================
+// Estes selectors aplicam a aparencia Notion a TODOS os componentes Ionic do
+// app de uma vez. Variantes especificas (primary/secondary/ghost de botao,
+// success/error de toast) sao aplicadas via classes CSS no template.
+// =============================================================================
 
-/* Core CSS required for Ionic components to work properly */
-@import "@ionic/angular/css/core.css";
+// Core CSS required for Ionic components to work properly
+@use "@ionic/angular/css/core.css";
 
-/* Basic CSS for apps built with Ionic */
-@import "@ionic/angular/css/normalize.css";
-@import "@ionic/angular/css/structure.css";
-@import "@ionic/angular/css/typography.css";
-@import "@ionic/angular/css/display.css";
+// Basic CSS for apps built with Ionic
+@use "@ionic/angular/css/normalize.css";
+@use "@ionic/angular/css/structure.css";
+@use "@ionic/angular/css/typography.css";
+@use "@ionic/angular/css/display.css";
 
-/* Optional CSS utils that can be commented out */
-@import "@ionic/angular/css/padding.css";
-@import "@ionic/angular/css/float-elements.css";
-@import "@ionic/angular/css/text-alignment.css";
-@import "@ionic/angular/css/text-transformation.css";
-@import "@ionic/angular/css/flex-utils.css";
+// Optional CSS utils
+@use "@ionic/angular/css/padding.css";
+@use "@ionic/angular/css/float-elements.css";
+@use "@ionic/angular/css/text-alignment.css";
+@use "@ionic/angular/css/text-transformation.css";
+@use "@ionic/angular/css/flex-utils.css";
 
-/**
- * Ionic Dark Mode
- * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
- */
+// Dark mode (system-driven)
+@use "@ionic/angular/css/palettes/dark.system.css";
 
-/* @import "@ionic/angular/css/palettes/dark.always.css"; */
+// Mixins Notion mobile
+@use "styles/notion-mobile-components" as *;
 
-/* @import "@ionic/angular/css/palettes/dark.class.css"; */
-@import "@ionic/angular/css/palettes/dark.system.css";
+// Botoes
+ion-button {
+  @include notion-ion-button-base;
+
+  &[color="primary"],
+  &.notion-primary {
+    @include notion-ion-button-primary;
+  }
+
+  &[color="medium"],
+  &.notion-secondary {
+    @include notion-ion-button-secondary;
+  }
+
+  &[fill="clear"],
+  &.notion-ghost {
+    @include notion-ion-button-ghost;
+  }
+}
+
+// Inputs
+ion-input,
+ion-textarea {
+  @include notion-ion-input;
+}
+
+ion-item {
+  @include notion-ion-item;
+}
+
+// Cards
+ion-card {
+  @include notion-ion-card;
+}
+
+// Tab bar inferior
+ion-tab-bar {
+  @include notion-ion-tab-bar;
+}
+
+// Toast
+ion-toast {
+  @include notion-ion-toast;
+}
+
+// Modal
+ion-modal {
+  @include notion-ion-modal;
+}
+
+// Body global (corpo 16px Notion mobile)
+body {
+  font-family: var(--ion-font-family);
+  font-size: var(--notion-font-size-base, 16px);
+  color: var(--ion-text-color);
+  background: var(--ion-background-color);
+  -webkit-tap-highlight-color: var(--notion-tap-highlight);
+}
