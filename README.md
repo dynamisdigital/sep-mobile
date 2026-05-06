@@ -91,10 +91,12 @@ A separacao por **jornada** (tomador/credora) materializa o escopo reduzido do m
 
 ## Continuous Integration
 
-`.github/workflows/ci.yml` (`name: CI-MOBILE`) roda em cada PR e push em `main`:
+`.github/workflows/ci.yml` (`name: CI-MOBILE`) roda em pushes para `feature/**`, `develop` e `main`, alem de PRs para `develop` e `main`.
 
-- `format:check`, `lint`, `lint:scss`, `test:coverage`, `build` PWA
-- artifact `mobile-coverage` (relatorio v8) e `mobile-pwa-www` (`www/` final) com retention 14 dias
+A pipeline tem duas fases:
+
+1. `Test, Lint, Coverage` — instala dependencias com `npm ci --legacy-peer-deps`, roda `format:check`, `lint`, `lint:scss` e `test:coverage`, e publica o artifact `mobile-coverage` (relatorio v8) com retention 14 dias.
+2. `Build PWA` — depende da fase anterior, reinstala dependencias com `npm ci --legacy-peer-deps`, roda `npm run build`, valida a existencia de `www/` e publica o artifact `mobile-pwa-www` com retention 14 dias.
 
 ## Stack
 
