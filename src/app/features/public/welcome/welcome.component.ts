@@ -1,10 +1,12 @@
 import { Component } from '@angular/core';
-import { IonContent } from '@ionic/angular/standalone';
+import { RouterLink } from '@angular/router';
+import { IonButton, IonContent } from '@ionic/angular/standalone';
 
 @Component({
   selector: 'sep-welcome',
   standalone: true,
-  imports: [IonContent],
-  template: `<ion-content class="ion-padding"><p>Welcome</p></ion-content>`,
+  imports: [IonContent, IonButton, RouterLink],
+  templateUrl: './welcome.component.html',
+  styleUrls: ['./welcome.component.scss'],
 })
 export class WelcomeComponent {}
