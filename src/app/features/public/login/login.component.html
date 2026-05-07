@@ -1,0 +1,68 @@
+<ion-content class="sep-login" [fullscreen]="true">
+  <main class="sep-login__inner">
+    <header class="sep-login__header">
+      <h1 class="sep-login__title">Entrar</h1>
+      <p class="sep-login__subtitle">Acesse sua conta SEP</p>
+    </header>
+
+    <form class="sep-login__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <ion-item class="sep-login__field" lines="full">
+        <ion-label position="stacked">E-mail</ion-label>
+        <ion-input
+          type="email"
+          inputmode="email"
+          autocomplete="username"
+          autocapitalize="off"
+          spellcheck="false"
+          formControlName="username"
+          placeholder="voce@empresa.com"
+          aria-label="E-mail"
+        ></ion-input>
+        @if (form.controls.username.touched && form.controls.username.invalid; as _) {
+          <ion-note slot="error" color="danger" class="sep-login__error">
+            @if (form.controls.username.hasError('required')) {
+              <span>E-mail obrigatorio</span>
+            } @else if (form.controls.username.hasError('email')) {
+              <span>E-mail invalido</span>
+            }
+          </ion-note>
+        }
+      </ion-item>
+
+      <ion-item class="sep-login__field" lines="full">
+        <ion-label position="stacked">Senha</ion-label>
+        <ion-input
+          type="password"
+          autocomplete="current-password"
+          formControlName="password"
+          placeholder="6 caracteres"
+          aria-label="Senha"
+        ></ion-input>
+        @if (form.controls.password.touched && form.controls.password.invalid) {
+          <ion-note slot="error" color="danger" class="sep-login__error">
+            <span>Senha deve ter exatamente 6 caracteres</span>
+          </ion-note>
+        }
+      </ion-item>
+
+      <ion-button
+        class="sep-login__submit"
+        type="submit"
+        expand="block"
+        color="primary"
+        [disabled]="submitting()"
+      >
+        @if (submitting()) {
+          <ion-spinner name="dots"></ion-spinner>
+        } @else {
+          <span>Entrar</span>
+        }
+      </ion-button>
+
+      <p class="sep-login__alt">
+        <ion-text color="medium">Nao tem conta?</ion-text>
+        <a routerLink="/register" class="sep-login__alt-link">Criar conta</a>
+      </p>
+    </form>
+  </main>
+</ion-content>

@@ -1,0 +1,80 @@
+@use "../../../../styles/notion-mobile-tokens" as *;
+
+.sep-login {
+  --background: #{$notion-bg-secondary};
+}
+
+.sep-login__inner {
+  display: flex;
+  flex-direction: column;
+  gap: $notion-space-6;
+  padding: $notion-space-8 $notion-space-6;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.sep-login__header {
+  display: flex;
+  flex-direction: column;
+  gap: $notion-space-2;
+}
+
+.sep-login__title {
+  margin: 0;
+  color: $notion-text-primary;
+  font-weight: $notion-font-weight-bold;
+  font-size: $notion-font-size-2xl;
+  font-family: $notion-font-family;
+  letter-spacing: -0.02em;
+}
+
+.sep-login__subtitle {
+  margin: 0;
+  color: $notion-text-secondary;
+  font-size: $notion-font-size-base;
+  font-family: $notion-font-family;
+}
+
+.sep-login__form {
+  display: flex;
+  flex-direction: column;
+  gap: $notion-space-4;
+}
+
+.sep-login__field {
+  --background: #{$notion-bg-primary};
+  --border-radius: #{$notion-radius-md};
+}
+
+.sep-login__error {
+  display: block;
+  margin-top: $notion-space-1;
+  font-size: $notion-font-size-xs;
+}
+
+.sep-login__submit {
+  --border-radius: #{$notion-radius-md};
+
+  min-height: 48px;
+  margin-top: $notion-space-2;
+}
+
+.sep-login__alt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $notion-space-2;
+  justify-content: center;
+  margin: $notion-space-4 0 0;
+  font-size: $notion-font-size-sm;
+  font-family: $notion-font-family;
+}
+
+.sep-login__alt-link {
+  color: $notion-color-primary;
+  font-weight: $notion-font-weight-semibold;
+  text-decoration: none;
+
+  &:active {
+    color: $notion-color-primary-shade;
+  }
+}
