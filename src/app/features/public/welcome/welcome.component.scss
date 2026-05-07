@@ -1,0 +1,98 @@
+@use "../../../../styles/notion-mobile-tokens" as *;
+
+.sep-welcome {
+  --background: #{$notion-bg-secondary};
+}
+
+.sep-welcome__inner {
+  display: flex;
+  flex-direction: column;
+  gap: $notion-space-8;
+  padding: $notion-space-8 $notion-space-6;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.sep-welcome__brand {
+  display: flex;
+  flex-direction: column;
+  gap: $notion-space-3;
+}
+
+.sep-welcome__title {
+  margin: 0;
+  color: $notion-text-primary;
+  font-weight: $notion-font-weight-bold;
+  font-size: $notion-font-size-2xl;
+  font-family: $notion-font-family;
+  letter-spacing: -0.02em;
+}
+
+.sep-welcome__headline {
+  margin: 0;
+  color: $notion-text-primary;
+  font-weight: $notion-font-weight-semibold;
+  font-size: $notion-font-size-xl;
+  font-family: $notion-font-family;
+  line-height: $notion-line-height-tight;
+  letter-spacing: -0.01em;
+}
+
+.sep-welcome__support {
+  margin: 0;
+  color: $notion-text-secondary;
+  font-size: $notion-font-size-base;
+  font-family: $notion-font-family;
+  line-height: $notion-line-height-base;
+}
+
+.sep-welcome__journeys {
+  display: flex;
+  flex-direction: column;
+  gap: $notion-space-4;
+}
+
+.sep-welcome__journey {
+  padding: $notion-space-5;
+  background: $notion-bg-primary;
+  border: 1px solid $notion-border;
+  border-radius: $notion-radius-lg;
+  box-shadow: $notion-shadow-xs;
+}
+
+.sep-welcome__journey-title {
+  margin: 0 0 $notion-space-2;
+  color: $notion-text-primary;
+  font-weight: $notion-font-weight-semibold;
+  font-size: $notion-font-size-lg;
+  font-family: $notion-font-family;
+}
+
+.sep-welcome__journey-body {
+  margin: 0;
+  color: $notion-text-secondary;
+  font-size: $notion-font-size-sm;
+  font-family: $notion-font-family;
+  line-height: $notion-line-height-base;
+}
+
+.sep-welcome__actions {
+  display: flex;
+  flex-direction: column;
+  gap: $notion-space-3;
+}
+
+.sep-welcome__cta-primary,
+.sep-welcome__cta-secondary {
+  --border-radius: #{$notion-radius-md};
+
+  min-height: 48px;
+}
+
+.sep-welcome__trust {
+  margin: $notion-space-2 0 0;
+  color: $notion-text-tertiary;
+  font-size: $notion-font-size-xs;
+  font-family: $notion-font-family;
+  text-align: center;
+}

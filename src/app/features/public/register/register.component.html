@@ -1,0 +1,84 @@
+<ion-content class="sep-register" [fullscreen]="true">
+  <main class="sep-register__inner">
+    <header class="sep-register__header">
+      <h1 class="sep-register__title">Criar conta</h1>
+      <p class="sep-register__subtitle">Cadastro publico SEP</p>
+    </header>
+
+    <form class="sep-register__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <div class="sep-register__field">
+        <ion-input
+          label="E-mail"
+          labelPlacement="stacked"
+          fill="outline"
+          type="email"
+          inputmode="email"
+          autocomplete="username"
+          autocapitalize="off"
+          spellcheck="false"
+          formControlName="username"
+          placeholder="voce@empresa.com"
+        ></ion-input>
+        @if (form.controls.username.touched && form.controls.username.invalid) {
+          <ion-note color="danger" class="sep-register__error">
+            @if (form.controls.username.hasError('required')) {
+              <span>E-mail obrigatorio</span>
+            } @else if (form.controls.username.hasError('email')) {
+              <span>E-mail invalido</span>
+            }
+          </ion-note>
+        }
+      </div>
+
+      <div class="sep-register__field">
+        <ion-input
+          label="Senha"
+          labelPlacement="stacked"
+          fill="outline"
+          type="password"
+          autocomplete="new-password"
+          formControlName="password"
+          placeholder="6 caracteres"
+        ></ion-input>
+        @if (form.controls.password.touched && form.controls.password.invalid) {
+          <ion-note color="danger" class="sep-register__error">
+            <span>Senha deve ter exatamente 6 caracteres</span>
+          </ion-note>
+        }
+      </div>
+
+      <div class="sep-register__field">
+        <ion-select
+          label="Perfil"
+          labelPlacement="stacked"
+          fill="outline"
+          formControlName="role"
+          interface="action-sheet"
+          aria-label="Perfil"
+        >
+          <ion-select-option value="CLIENTE">Cliente</ion-select-option>
+          <ion-select-option value="ADMIN">Administrador</ion-select-option>
+        </ion-select>
+      </div>
+
+      <ion-button
+        class="sep-register__submit"
+        type="submit"
+        expand="block"
+        color="primary"
+        [disabled]="submitting()"
+      >
+        @if (submitting()) {
+          <ion-spinner name="dots"></ion-spinner>
+        } @else {
+          <span>Criar conta</span>
+        }
+      </ion-button>
+
+      <p class="sep-register__alt">
+        <ion-text color="medium">Ja tem conta?</ion-text>
+        <a routerLink="/login" class="sep-register__alt-link">Entrar</a>
+      </p>
+    </form>
+  </main>
+</ion-content>
