@@ -2,8 +2,8 @@ import { Routes } from '@angular/router';
 
 export const routes: Routes = [
   {
-    path: 'home',
-    loadComponent: () => import('./home/home.page').then((m) => m.HomePage),
+    path: '',
+    loadChildren: () => import('./features/public/public.routes').then((m) => m.PUBLIC_ROUTES),
   },
   {
     path: 'design-system',
@@ -11,8 +11,7 @@ export const routes: Routes = [
       import('./features/design-system/design-system.routes').then((m) => m.DESIGN_SYSTEM_ROUTES),
   },
   {
-    path: '',
-    redirectTo: 'home',
-    pathMatch: 'full',
+    path: '**',
+    redirectTo: '',
   },
 ];
