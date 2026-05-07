@@ -6,9 +6,11 @@
     </header>
 
     <form class="sep-register__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
-      <ion-item class="sep-register__field" lines="full">
-        <ion-label position="stacked">E-mail</ion-label>
+      <div class="sep-register__field">
         <ion-input
+          label="E-mail"
+          labelPlacement="stacked"
+          fill="outline"
           type="email"
           inputmode="email"
           autocomplete="username"
@@ -16,10 +18,9 @@
           spellcheck="false"
           formControlName="username"
           placeholder="voce@empresa.com"
-          aria-label="E-mail"
         ></ion-input>
         @if (form.controls.username.touched && form.controls.username.invalid) {
-          <ion-note slot="error" color="danger" class="sep-register__error">
+          <ion-note color="danger" class="sep-register__error">
             @if (form.controls.username.hasError('required')) {
               <span>E-mail obrigatorio</span>
             } @else if (form.controls.username.hasError('email')) {
@@ -27,31 +28,38 @@
             }
           </ion-note>
         }
-      </ion-item>
+      </div>
 
-      <ion-item class="sep-register__field" lines="full">
-        <ion-label position="stacked">Senha</ion-label>
+      <div class="sep-register__field">
         <ion-input
+          label="Senha"
+          labelPlacement="stacked"
+          fill="outline"
           type="password"
           autocomplete="new-password"
           formControlName="password"
           placeholder="6 caracteres"
-          aria-label="Senha"
         ></ion-input>
         @if (form.controls.password.touched && form.controls.password.invalid) {
-          <ion-note slot="error" color="danger" class="sep-register__error">
+          <ion-note color="danger" class="sep-register__error">
             <span>Senha deve ter exatamente 6 caracteres</span>
           </ion-note>
         }
-      </ion-item>
+      </div>
 
-      <ion-item class="sep-register__field" lines="full">
-        <ion-label position="stacked">Perfil</ion-label>
-        <ion-select formControlName="role" aria-label="Perfil" interface="action-sheet">
+      <div class="sep-register__field">
+        <ion-select
+          label="Perfil"
+          labelPlacement="stacked"
+          fill="outline"
+          formControlName="role"
+          interface="action-sheet"
+          aria-label="Perfil"
+        >
           <ion-select-option value="CLIENTE">Cliente</ion-select-option>
           <ion-select-option value="ADMIN">Administrador</ion-select-option>
         </ion-select>
-      </ion-item>
+      </div>
 
       <ion-button
         class="sep-register__submit"

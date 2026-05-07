@@ -42,8 +42,9 @@
 }
 
 .sep-register__field {
-  --background: #{$notion-bg-primary};
-  --border-radius: #{$notion-radius-md};
+  display: flex;
+  flex-direction: column;
+  gap: $notion-space-1;
 }
 
 .sep-register__error {
