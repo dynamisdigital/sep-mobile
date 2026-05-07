@@ -22,8 +22,10 @@
 @use "@ionic/angular/css/text-transformation.css";
 @use "@ionic/angular/css/flex-utils.css";
 
-// Dark mode (system-driven)
-@use "@ionic/angular/css/palettes/dark.system.css";
+// Notion mobile design eh light-only (warm-white). Dark palette do Ionic
+// sobrescreve --ion-text-color em prefers-color-scheme: dark e deixa texto
+// dos ion-input invisivel sobre fundo Notion forcado. Reintroduzir apenas
+// quando houver tokens Notion dark proprios.
 
 // Mixins Notion mobile
 @use "styles/notion-mobile-components" as *;
