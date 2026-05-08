@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { IonHeader, IonToolbar } from '@ionic/angular/standalone';
+import { IonButtons, IonHeader, IonTitle, IonToolbar } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { logOutOutline } from 'ionicons/icons';
 
@@ -9,7 +9,7 @@ import { AuthService } from '../../core/auth/auth.service';
 @Component({
   selector: 'sep-header-mobile',
   standalone: true,
-  imports: [IonHeader, IonToolbar],
+  imports: [IonButtons, IonHeader, IonTitle, IonToolbar],
   templateUrl: './header-mobile.component.html',
   styleUrl: './header-mobile.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

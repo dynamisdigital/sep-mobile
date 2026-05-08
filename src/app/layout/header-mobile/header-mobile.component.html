@@ -1,15 +1,21 @@
 <ion-header class="sep-header-mobile" data-testid="sep-header-mobile">
   <ion-toolbar class="sep-header-mobile-toolbar">
-    <div class="sep-header-mobile-content">
+    <ion-buttons slot="start">
       <span class="sep-header-mobile-brand" aria-label="SEP">SEP</span>
+    </ion-buttons>
+
+    <ion-title class="sep-header-mobile-title">
       @if (user(); as currentUser) {
-        <div class="sep-header-mobile-user">
+        <span class="sep-header-mobile-user">
           <span class="sep-header-mobile-email" data-testid="sep-header-mobile-email">{{
             userEmail()
           }}</span>
           <span class="sep-header-mobile-role" [attr.data-role]="userRole()">{{ userRole() }}</span>
-        </div>
+        </span>
       }
+    </ion-title>
+
+    <ion-buttons slot="end">
       <button
         type="button"
         class="sep-header-mobile-logout"
@@ -19,6 +25,6 @@
       >
         Sair
       </button>
-    </div>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
