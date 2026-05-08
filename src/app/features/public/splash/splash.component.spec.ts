@@ -50,4 +50,21 @@ describe('SplashComponent', () => {
     expect(authSpy.loadCurrentUser).toHaveBeenCalled();
     expect(routerSpy.navigateByUrl).toHaveBeenCalledWith('/welcome');
   });
+
+  it('com sessao valida navega para /app/inicio', async () => {
+    authSpy.loadCurrentUser.mockResolvedValue({
+      id: '1f0799c0-98b9-6d9d-bc4a-7d6f5b771001',
+      username: 'cliente@empresa.com',
+      role: 'CLIENTE',
+      dataCriacao: '2026-04-24T18:30:00-03:00',
+      dataModificacao: '2026-04-24T18:30:00-03:00',
+      criadoPor: 'system',
+      modificadoPor: 'system',
+    });
+    const fixture = TestBed.createComponent(SplashComponent);
+    fixture.detectChanges();
+    await vi.advanceTimersByTimeAsync(SPLASH_DELAY_MS + 10);
+    await Promise.resolve();
+    expect(routerSpy.navigateByUrl).toHaveBeenCalledWith('/app/inicio');
+  });
 });

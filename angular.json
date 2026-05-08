@@ -72,6 +72,17 @@
             },
             "ci": {
               "progress": false
+            },
+            "dev-offline": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.dev-offline.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -87,6 +98,9 @@
             },
             "ci": {
               "progress": false
+            },
+            "dev-offline": {
+              "buildTarget": "app:build:dev-offline"
             }
           },
           "defaultConfiguration": "development"

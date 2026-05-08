@@ -51,7 +51,7 @@ export class LoginComponent {
     this.submitting.set(true);
     try {
       await this.auth.login(this.form.getRawValue());
-      await this.router.navigateByUrl('/welcome');
+      await this.router.navigateByUrl('/app/inicio');
     } catch (error) {
       const status = error instanceof HttpErrorResponse ? error.status : 0;
       const message =

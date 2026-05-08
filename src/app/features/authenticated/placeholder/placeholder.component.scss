@@ -1,0 +1,26 @@
+@use "../../../../styles/notion-mobile-tokens" as t;
+
+.sep-placeholder {
+  --background: #{t.$notion-bg-primary};
+
+  &-section {
+    padding: t.$notion-space-8 t.$notion-space-4;
+    text-align: center;
+  }
+
+  &-title {
+    margin: 0 0 t.$notion-space-2;
+    font-family: t.$notion-font-family;
+    font-size: t.$notion-font-size-2xl;
+    font-weight: t.$notion-font-weight-bold;
+    color: t.$notion-text-primary;
+    letter-spacing: -0.02em;
+  }
+
+  &-status {
+    margin: 0;
+    font-family: t.$notion-font-family;
+    font-size: t.$notion-font-size-sm;
+    color: t.$notion-text-secondary;
+  }
+}

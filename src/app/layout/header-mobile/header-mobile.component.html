@@ -1,0 +1,26 @@
+<ion-header class="sep-header-mobile-wrapper" data-testid="sep-header-mobile">
+  <div class="sep-header-mobile">
+    <span class="sep-header-mobile-brand" aria-label="SEP">SEP</span>
+
+    @if (user(); as currentUser) {
+      <div class="sep-header-mobile-user">
+        <span class="sep-header-mobile-email" data-testid="sep-header-mobile-email">{{
+          userEmail()
+        }}</span>
+        <span class="sep-header-mobile-role" [attr.data-role]="userRole()">{{ userRole() }}</span>
+      </div>
+    } @else {
+      <span class="sep-header-mobile-spacer"></span>
+    }
+
+    <button
+      type="button"
+      class="sep-header-mobile-logout"
+      aria-label="Sair"
+      data-testid="sep-header-mobile-logout"
+      (click)="logout()"
+    >
+      Sair
+    </button>
+  </div>
+</ion-header>

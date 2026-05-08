@@ -18,10 +18,10 @@ export class SplashComponent implements OnInit {
   private readonly router = inject(Router);
 
   async ngOnInit(): Promise<void> {
-    await Promise.all([
+    const [, usuario] = await Promise.all([
       new Promise((resolve) => setTimeout(resolve, SPLASH_DELAY_MS)),
       this.auth.loadCurrentUser(),
     ]);
-    await this.router.navigateByUrl('/welcome');
+    await this.router.navigateByUrl(usuario ? '/app/inicio' : '/welcome');
   }
 }
