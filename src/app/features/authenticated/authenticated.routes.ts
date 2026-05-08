@@ -16,7 +16,8 @@ export const AUTHENTICATED_ROUTES: Routes = [
       },
       {
         path: 'inicio',
-        loadComponent: () => import('./home/home.component').then((m) => m.HomeComponent),
+        loadComponent: () =>
+          import('../tomador/home/home.component').then((m) => m.TomadorHomeComponent),
         data: { tab: 'inicio' },
       },
       {
@@ -33,9 +34,22 @@ export const AUTHENTICATED_ROUTES: Routes = [
       },
       {
         path: 'perfil',
+        loadComponent: () => import('./profile/profile.component').then((m) => m.ProfileComponent),
+        data: { tab: 'perfil' },
+      },
+      {
+        path: 'perfil/alterar-senha',
         loadComponent: () =>
-          import('./placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
-        data: { tab: 'perfil', title: 'Perfil' },
+          import('./profile/change-password/change-password.component').then(
+            (m) => m.ChangePasswordComponent,
+          ),
+        data: { tab: 'perfil' },
+      },
+      {
+        path: 'credora/inicio',
+        loadComponent: () =>
+          import('../credora/home/home.component').then((m) => m.CredoraHomeComponent),
+        data: { tab: 'credora-inicio' },
       },
       {
         path: 'admin',

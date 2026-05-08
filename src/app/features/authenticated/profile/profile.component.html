@@ -1,0 +1,86 @@
+<sep-header-mobile />
+<ion-content class="sep-profile">
+  <section class="sep-profile-section">
+    <header class="sep-profile-header">
+      <h1 class="sep-profile-title">Meu perfil</h1>
+      <p class="sep-profile-subtitle">Seus dados de cadastro.</p>
+    </header>
+
+    @if (user(); as currentUser) {
+      <article class="sep-profile-card" data-testid="sep-profile-identification">
+        <h2 class="sep-profile-card-title">Identificacao</h2>
+        <dl class="sep-profile-list">
+          <div class="sep-profile-list-item">
+            <dt>E-mail</dt>
+            <dd data-testid="sep-profile-email">{{ currentUser.username }}</dd>
+          </div>
+          <div class="sep-profile-list-item">
+            <dt>Perfil</dt>
+            <dd data-testid="sep-profile-role">{{ currentUser.role }}</dd>
+          </div>
+          <div class="sep-profile-list-item">
+            <dt>Identificador</dt>
+            <dd
+              class="sep-profile-list-mono"
+              data-testid="sep-profile-id"
+              [attr.title]="currentUser.id"
+            >
+              {{ shortId() }}
+            </dd>
+          </div>
+        </dl>
+      </article>
+
+      <article class="sep-profile-card" data-testid="sep-profile-audit">
+        <h2 class="sep-profile-card-title">Auditoria</h2>
+        <dl class="sep-profile-list">
+          <div class="sep-profile-list-item">
+            <dt>Criado em</dt>
+            <dd>{{ currentUser.dataCriacao }}</dd>
+          </div>
+          <div class="sep-profile-list-item">
+            <dt>Atualizado em</dt>
+            <dd>{{ currentUser.dataModificacao }}</dd>
+          </div>
+          <div class="sep-profile-list-item">
+            <dt>Criado por</dt>
+            <dd class="sep-profile-list-mono">{{ currentUser.criadoPor }}</dd>
+          </div>
+          <div class="sep-profile-list-item">
+            <dt>Modificado por</dt>
+            <dd class="sep-profile-list-mono">{{ currentUser.modificadoPor }}</dd>
+          </div>
+        </dl>
+      </article>
+
+      <div class="sep-profile-actions">
+        <a
+          class="sep-profile-button sep-profile-button--primary"
+          routerLink="/app/perfil/alterar-senha"
+          data-testid="sep-profile-change-password"
+        >
+          Alterar senha
+        </a>
+        <button
+          type="button"
+          class="sep-profile-button sep-profile-button--ghost"
+          data-testid="sep-profile-reload"
+          [disabled]="loading()"
+          (click)="reload()"
+        >
+          Recarregar
+        </button>
+        <button
+          type="button"
+          class="sep-profile-button sep-profile-button--danger"
+          data-testid="sep-profile-logout"
+          (click)="logout()"
+        >
+          Sair
+        </button>
+      </div>
+    } @else {
+      <p class="sep-profile-empty" data-testid="sep-profile-empty">Carregando perfil...</p>
+    }
+  </section>
+</ion-content>

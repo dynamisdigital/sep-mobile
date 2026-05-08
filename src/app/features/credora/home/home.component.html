@@ -1,0 +1,23 @@
+<sep-header-mobile />
+<ion-content class="sep-credora">
+  <section class="sep-credora-section">
+    <header class="sep-credora-greeting">
+      <p class="sep-credora-greeting-label">Empresa credora</p>
+      <h1 class="sep-credora-greeting-name" data-testid="sep-credora-email">
+        {{ user()?.username }}
+      </h1>
+    </header>
+
+    <div class="sep-credora-cards">
+      @for (card of cards; track card.testid) {
+        <article class="sep-credora-card" [attr.data-testid]="card.testid">
+          <div class="sep-credora-card-head">
+            <h2 class="sep-credora-card-title">{{ card.label }}</h2>
+            <span class="sep-credora-card-badge">Em breve</span>
+          </div>
+          <p class="sep-credora-card-description">{{ card.description }}</p>
+        </article>
+      }
+    </div>
+  </section>
+</ion-content>
