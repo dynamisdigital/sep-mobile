@@ -1,0 +1,47 @@
+@use "../../../styles/notion-mobile-tokens" as t;
+
+.sep-error {
+  --background: #{t.$notion-bg-primary};
+
+  &-section {
+    padding: t.$notion-space-12 t.$notion-space-4;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: t.$notion-space-4;
+    text-align: center;
+  }
+
+  &-title {
+    margin: 0;
+    font-family: t.$notion-font-family;
+    font-size: t.$notion-font-size-2xl;
+    font-weight: t.$notion-font-weight-bold;
+    color: t.$notion-text-primary;
+    letter-spacing: -0.02em;
+  }
+
+  &-body {
+    margin: 0;
+    font-family: t.$notion-font-family;
+    font-size: t.$notion-font-size-base;
+    color: t.$notion-text-secondary;
+    max-width: 28rem;
+  }
+
+  &-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: t.$notion-touch-target-comfortable;
+    padding: 0 t.$notion-space-5;
+    border-radius: t.$notion-radius-pill;
+    background: t.$notion-color-primary;
+    color: t.$notion-text-inverse;
+    font-family: t.$notion-font-family;
+    font-size: t.$notion-font-size-sm;
+    font-weight: t.$notion-font-weight-semibold;
+    text-decoration: none;
+    text-transform: none;
+  }
+}

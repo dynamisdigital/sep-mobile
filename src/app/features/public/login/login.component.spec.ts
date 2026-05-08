@@ -68,7 +68,7 @@ describe('LoginComponent', () => {
       username: 'cliente@empresa.com',
       password: '123456',
     });
-    expect(routerSpy.navigateByUrl).toHaveBeenCalledWith('/welcome');
+    expect(routerSpy.navigateByUrl).toHaveBeenCalledWith('/app/inicio');
   });
 
   it('credenciais invalidas mostram toast com 401', async () => {
