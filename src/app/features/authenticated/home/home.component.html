@@ -1,0 +1,17 @@
+<sep-header-mobile />
+<ion-content class="sep-home">
+  <section class="sep-home-section">
+    <header class="sep-home-greeting">
+      <p class="sep-home-greeting-label">Ola</p>
+      <h1 class="sep-home-greeting-name" data-testid="sep-home-email">{{ user()?.username }}</h1>
+    </header>
+    <div class="sep-home-shortcuts">
+      @for (shortcut of shortcuts(); track shortcut.link) {
+        <a class="sep-home-card" [routerLink]="shortcut.link" [attr.data-testid]="shortcut.testid">
+          <span class="sep-home-card-label">{{ shortcut.label }}</span>
+          <span class="sep-home-card-description">{{ shortcut.description }}</span>
+        </a>
+      }
+    </div>
+  </section>
+</ion-content>
