@@ -2,6 +2,7 @@
 
 .sep-tomador {
   --background: #{t.$notion-bg-primary};
+  --padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
 
   &-section {
     padding: t.$notion-space-5 t.$notion-space-4 t.$notion-space-12;
