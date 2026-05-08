@@ -1,0 +1,43 @@
+<sep-header-mobile />
+<ion-content class="sep-tomador">
+  <section class="sep-tomador-section">
+    <header class="sep-tomador-greeting">
+      <p class="sep-tomador-greeting-label">Ola</p>
+      <h1 class="sep-tomador-greeting-name" data-testid="sep-tomador-email">
+        {{ user()?.username }}
+      </h1>
+    </header>
+
+    <div class="sep-tomador-cards">
+      @for (card of cards; track card.testid) {
+        <article class="sep-tomador-card" [attr.data-testid]="card.testid">
+          <div class="sep-tomador-card-head">
+            <h2 class="sep-tomador-card-title">{{ card.label }}</h2>
+            <span class="sep-tomador-card-badge">Em breve</span>
+          </div>
+          <p class="sep-tomador-card-description">{{ card.description }}</p>
+        </article>
+      }
+    </div>
+
+    <h2 class="sep-tomador-shortcut-title">Atalhos</h2>
+    <div class="sep-tomador-shortcuts">
+      @for (shortcut of shortcuts; track shortcut.testid) {
+        <button
+          type="button"
+          class="sep-tomador-shortcut"
+          [attr.data-testid]="shortcut.testid"
+          (click)="showSoon()"
+        >
+          <span class="sep-tomador-shortcut-label">{{ shortcut.label }}</span>
+          <span class="sep-tomador-shortcut-description">{{ shortcut.description }}</span>
+          <span class="sep-tomador-card-badge">Em breve</span>
+        </button>
+      }
+    </div>
+
+    @if (soonMessage(); as msg) {
+      <p class="sep-tomador-toast" role="status" data-testid="sep-tomador-soon">{{ msg }}</p>
+    }
+  </section>
+</ion-content>
