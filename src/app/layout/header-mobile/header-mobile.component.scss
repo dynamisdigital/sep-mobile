@@ -1,0 +1,76 @@
+@use "../../../styles/notion-mobile-tokens" as t;
+
+.sep-header-mobile {
+  --background: #{t.$notion-bg-primary};
+
+  &-toolbar {
+    --background: #{t.$notion-bg-primary};
+    --border-color: #{t.$notion-border};
+    --min-height: 56px;
+  }
+
+  &-content {
+    display: flex;
+    align-items: center;
+    gap: t.$notion-space-3;
+    padding: 0 t.$notion-space-4;
+    min-height: 56px;
+  }
+
+  &-brand {
+    font-family: t.$notion-font-family;
+    font-weight: t.$notion-font-weight-bold;
+    font-size: t.$notion-font-size-lg;
+    color: t.$notion-text-primary;
+    letter-spacing: -0.01em;
+  }
+
+  &-user {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  &-email {
+    font-family: t.$notion-font-family;
+    font-size: t.$notion-font-size-xs;
+    color: t.$notion-text-secondary;
+    max-width: 60vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &-role {
+    font-family: t.$notion-font-family;
+    font-size: 10px;
+    font-weight: t.$notion-font-weight-semibold;
+    color: t.$notion-text-primary;
+    background: t.$notion-bg-secondary;
+    border: 1px solid t.$notion-border;
+    padding: 2px 6px;
+    border-radius: t.$notion-radius-sm;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  &-logout {
+    min-height: t.$notion-touch-target-min;
+    padding: 0 t.$notion-space-3;
+    background: transparent;
+    border: 1px solid t.$notion-border;
+    border-radius: t.$notion-radius-md;
+    color: t.$notion-text-primary;
+    font-family: t.$notion-font-family;
+    font-size: t.$notion-font-size-sm;
+    font-weight: t.$notion-font-weight-semibold;
+    cursor: pointer;
+
+    &:active {
+      background: t.$notion-bg-secondary;
+    }
+  }
+}

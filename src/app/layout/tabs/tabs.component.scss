@@ -1,0 +1,25 @@
+@use "../../../styles/notion-mobile-tokens" as t;
+
+.sep-tab-bar {
+  --background: #{t.$notion-bg-primary};
+  --color: #{t.$notion-text-secondary};
+  --color-selected: #{t.$notion-text-primary};
+  --border: 1px solid #{t.$notion-border};
+
+  font-family: t.$notion-font-family;
+
+  ion-tab-button {
+    --ripple-color: transparent;
+
+    font-weight: t.$notion-font-weight-regular;
+
+    &.tab-selected {
+      font-weight: t.$notion-font-weight-semibold;
+    }
+
+    ion-label {
+      font-size: t.$notion-font-size-xs;
+      letter-spacing: 0;
+    }
+  }
+}

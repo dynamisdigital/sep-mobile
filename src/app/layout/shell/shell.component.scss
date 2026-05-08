@@ -1,0 +1,9 @@
+@use "../../../styles/notion-mobile-tokens" as t;
+
+.sep-shell {
+  --background: #{t.$notion-bg-primary};
+}
+
+.sep-shell-content {
+  --background: #{t.$notion-bg-primary};
+}
