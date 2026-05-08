@@ -1,40 +1,38 @@
 @use "../../../styles/notion-mobile-tokens" as t;
 
 .sep-header-mobile {
-  --background: #{t.$notion-bg-primary};
-
-  &-toolbar {
-    --background: #{t.$notion-bg-primary};
-    --border-color: #{t.$notion-border};
-    --color: #{t.$notion-text-primary};
-    --min-height: 56px;
-    --padding-start: #{t.$notion-space-3};
-    --padding-end: #{t.$notion-space-3};
-  }
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: t.$notion-space-3;
+  padding: calc(env(safe-area-inset-top, 0) + t.$notion-space-2) t.$notion-space-4 t.$notion-space-2;
+  min-height: 56px;
+  background: t.$notion-bg-primary;
+  border-bottom: 1px solid t.$notion-border;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 
   &-brand {
-    padding: 0 t.$notion-space-2;
     font-family: t.$notion-font-family;
     font-weight: t.$notion-font-weight-bold;
     font-size: t.$notion-font-size-lg;
     color: t.$notion-text-primary;
     letter-spacing: -0.01em;
+    white-space: nowrap;
   }
 
-  &-title {
-    --color: #{t.$notion-text-primary};
-
-    text-align: end;
-    padding-inline: t.$notion-space-2;
+  &-user,
+  &-spacer {
+    min-width: 0;
   }
 
   &-user {
-    display: inline-flex;
+    display: flex;
     flex-direction: column;
     align-items: flex-end;
     gap: 2px;
-    min-width: 0;
-    max-width: 100%;
+    overflow: hidden;
   }
 
   &-email {
@@ -72,6 +70,7 @@
     font-size: t.$notion-font-size-sm;
     font-weight: t.$notion-font-weight-semibold;
     cursor: pointer;
+    white-space: nowrap;
 
     &:active {
       background: t.$notion-bg-secondary;
