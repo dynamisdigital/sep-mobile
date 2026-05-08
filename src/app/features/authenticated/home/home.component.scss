@@ -1,0 +1,65 @@
+@use "../../../../styles/notion-mobile-tokens" as t;
+
+.sep-home {
+  --background: #{t.$notion-bg-primary};
+
+  &-section {
+    padding: t.$notion-space-5 t.$notion-space-4 t.$notion-space-8;
+  }
+
+  &-greeting {
+    margin-bottom: t.$notion-space-6;
+
+    &-label {
+      margin: 0 0 t.$notion-space-1;
+      font-family: t.$notion-font-family;
+      font-size: t.$notion-font-size-sm;
+      color: t.$notion-text-secondary;
+    }
+
+    &-name {
+      margin: 0;
+      font-family: t.$notion-font-family;
+      font-size: t.$notion-font-size-2xl;
+      font-weight: t.$notion-font-weight-bold;
+      color: t.$notion-text-primary;
+      letter-spacing: -0.02em;
+      word-break: break-word;
+    }
+  }
+
+  &-shortcuts {
+    display: flex;
+    flex-direction: column;
+    gap: t.$notion-space-3;
+  }
+
+  &-card {
+    display: flex;
+    flex-direction: column;
+    gap: t.$notion-space-1;
+    padding: t.$notion-space-4;
+    background: t.$notion-bg-primary;
+    border: 1px solid t.$notion-border;
+    border-radius: t.$notion-radius-lg;
+    color: t.$notion-text-primary;
+    text-decoration: none;
+    min-height: t.$notion-touch-target-comfortable;
+
+    &-label {
+      font-family: t.$notion-font-family;
+      font-size: t.$notion-font-size-base;
+      font-weight: t.$notion-font-weight-semibold;
+    }
+
+    &-description {
+      font-family: t.$notion-font-family;
+      font-size: t.$notion-font-size-sm;
+      color: t.$notion-text-secondary;
+    }
+
+    &:active {
+      background: t.$notion-bg-secondary;
+    }
+  }
+}

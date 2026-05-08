@@ -70,6 +70,17 @@ describe('AuthService', () => {
     expect(service.isAuthenticated()).toBe(true);
   });
 
+  it('login invalido nao deixa usuario autenticado', async () => {
+    const promise = service.login({ username: usuario.username, password: 'wrong1' });
+    const req = httpMock.expectOne(`${API}/auth/login`);
+    req.flush({ message: 'invalid' }, { status: 401, statusText: 'Unauthorized' });
+
+    await expect(promise).rejects.toBeDefined();
+    expect(storage.setToken).not.toHaveBeenCalled();
+    expect(service.currentUser()).toBeNull();
+    expect(service.isAuthenticated()).toBe(false);
+  });
+
   it('register dispara POST /usuarios', async () => {
     const promise = service.register({
       username: 'novo@empresa.com',
@@ -82,7 +93,14 @@ describe('AuthService', () => {
     expect(await promise).toEqual(usuario);
   });
 
-  it('logout limpa token e currentUser', async () => {
+  it('clearSession remove token e currentUser', async () => {
+    await storage.setToken('jwt-x');
+    await service.clearSession();
+    expect(storage.clearToken).toHaveBeenCalled();
+    expect(service.currentUser()).toBeNull();
+  });
+
+  it('logout delega para clearSession', async () => {
     await storage.setToken('jwt-2');
     await service.logout();
     expect(storage.clearToken).toHaveBeenCalled();
@@ -101,13 +119,12 @@ describe('AuthService', () => {
     await Promise.resolve();
     await Promise.resolve();
     const req = httpMock.expectOne(`${API}/auth/me`);
-    expect(req.request.headers.get('Authorization')).toBe('Bearer jwt-3');
     req.flush(usuario);
     expect(await promise).toEqual(usuario);
     expect(service.currentUser()).toEqual(usuario);
   });
 
-  it('loadCurrentUser com falha limpa sessao', async () => {
+  it('loadCurrentUser com falha em /auth/me chama clearSession', async () => {
     await storage.setToken('jwt-bad');
     const promise = service.loadCurrentUser();
     await Promise.resolve();
@@ -117,6 +134,12 @@ describe('AuthService', () => {
     expect(await promise).toBeNull();
     expect(storage.clearToken).toHaveBeenCalled();
     expect(service.currentUser()).toBeNull();
+  });
+
+  it('hasToken reflete estado do TokenStorage', async () => {
+    expect(await service.hasToken()).toBe(false);
+    await storage.setToken('jwt-y');
+    expect(await service.hasToken()).toBe(true);
   });
 
   afterEach(() => httpMock.verify());

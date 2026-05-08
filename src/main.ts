@@ -1,4 +1,4 @@
-import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { bootstrapApplication } from '@angular/platform-browser';
 import {
   PreloadAllModules,
@@ -10,11 +10,15 @@ import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalo
 
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
+import { authInterceptor } from './app/core/interceptors/auth.interceptor';
+import { errorInterceptor } from './app/core/interceptors/error.interceptor';
+import { environment } from './environments/environment';
 
 async function prepare(): Promise<void> {
-  // MSW so dispara via flag em localStorage para evitar surpresa em builds prod.
-  // Para ativar em dev: localStorage.setItem('NG_APP_USE_MSW', 'true') e recarregar.
-  if (typeof window !== 'undefined' && window.localStorage?.getItem('NG_APP_USE_MSW') === 'true') {
+  const forceMsw =
+    typeof window !== 'undefined' && window.localStorage?.getItem('NG_APP_USE_MSW') === 'true';
+
+  if (environment.useMsw || forceMsw) {
     const { worker } = await import('./mocks/browser');
     await worker.start({ onUnhandledRequest: 'bypass' });
   }
@@ -26,7 +30,7 @@ prepare().then(() =>
       { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
       provideIonicAngular(),
       provideRouter(routes, withPreloading(PreloadAllModules)),
-      provideHttpClient(withInterceptorsFromDi()),
+      provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     ],
   }).catch((err) => console.error(err)),
 );
