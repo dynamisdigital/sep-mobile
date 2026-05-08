@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
 
 interface HomeShortcut {
   label: string;
@@ -14,7 +15,7 @@ interface HomeShortcut {
 @Component({
   selector: 'sep-home',
   standalone: true,
-  imports: [IonContent, RouterLink],
+  imports: [IonContent, RouterLink, HeaderMobileComponent],
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

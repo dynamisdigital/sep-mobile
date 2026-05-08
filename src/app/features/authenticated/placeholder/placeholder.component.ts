@@ -3,10 +3,12 @@ import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { IonContent } from '@ionic/angular/standalone';
 
+import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
+
 @Component({
   selector: 'sep-placeholder',
   standalone: true,
-  imports: [IonContent],
+  imports: [IonContent, HeaderMobileComponent],
   templateUrl: './placeholder.component.html',
   styleUrl: './placeholder.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
