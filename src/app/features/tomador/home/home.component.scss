@@ -1,0 +1,152 @@
+@use "../../../../styles/notion-mobile-tokens" as t;
+
+.sep-tomador {
+  --background: #{t.$notion-bg-primary};
+  --padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
+
+  &-section {
+    padding: t.$notion-space-5 t.$notion-space-4 t.$notion-space-12;
+    display: flex;
+    flex-direction: column;
+    gap: t.$notion-space-4;
+  }
+
+  &-greeting {
+    margin-bottom: t.$notion-space-2;
+
+    &-label {
+      margin: 0 0 t.$notion-space-1;
+      font-family: t.$notion-font-family;
+      font-size: t.$notion-font-size-sm;
+      color: t.$notion-text-secondary;
+    }
+
+    &-name {
+      margin: 0;
+      font-family: t.$notion-font-family;
+      font-size: t.$notion-font-size-2xl;
+      font-weight: t.$notion-font-weight-bold;
+      color: t.$notion-text-primary;
+      letter-spacing: -0.02em;
+      word-break: break-word;
+    }
+  }
+
+  &-cards {
+    display: flex;
+    flex-direction: column;
+    gap: t.$notion-space-3;
+  }
+
+  &-card {
+    padding: t.$notion-space-4;
+    background: t.$notion-bg-primary;
+    border: 1px solid t.$notion-border;
+    border-radius: t.$notion-radius-lg;
+
+    &-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: t.$notion-space-2;
+      margin-bottom: t.$notion-space-1;
+    }
+
+    &-title {
+      margin: 0;
+      font-family: t.$notion-font-family;
+      font-size: t.$notion-font-size-base;
+      font-weight: t.$notion-font-weight-semibold;
+      color: t.$notion-text-primary;
+    }
+
+    &-badge {
+      font-family: t.$notion-font-family;
+      font-size: 10px;
+      font-weight: t.$notion-font-weight-semibold;
+      color: t.$notion-text-secondary;
+      background: t.$notion-bg-secondary;
+      border: 1px solid t.$notion-border;
+      padding: 2px 6px;
+      border-radius: t.$notion-radius-sm;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    &-description {
+      margin: 0;
+      font-family: t.$notion-font-family;
+      font-size: t.$notion-font-size-sm;
+      color: t.$notion-text-secondary;
+    }
+  }
+
+  &-shortcut-title {
+    margin: t.$notion-space-2 0 0;
+    font-family: t.$notion-font-family;
+    font-size: t.$notion-font-size-base;
+    font-weight: t.$notion-font-weight-semibold;
+    color: t.$notion-text-primary;
+  }
+
+  &-shortcuts {
+    display: flex;
+    flex-direction: column;
+    gap: t.$notion-space-2;
+  }
+
+  &-shortcut {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    gap: 2px t.$notion-space-2;
+    width: 100%;
+    min-height: t.$notion-touch-target-comfortable;
+    padding: t.$notion-space-3 t.$notion-space-4;
+    background: t.$notion-bg-primary;
+    border: 1px solid t.$notion-border;
+    border-radius: t.$notion-radius-md;
+    color: t.$notion-text-primary;
+    text-align: left;
+    cursor: pointer;
+
+    &-label {
+      grid-column: 1;
+      grid-row: 1;
+      font-family: t.$notion-font-family;
+      font-size: t.$notion-font-size-base;
+      font-weight: t.$notion-font-weight-semibold;
+    }
+
+    &-description {
+      grid-column: 1;
+      grid-row: 2;
+      font-family: t.$notion-font-family;
+      font-size: t.$notion-font-size-sm;
+      color: t.$notion-text-secondary;
+    }
+
+    .sep-tomador-card-badge {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      align-self: center;
+    }
+
+    &:active {
+      background: t.$notion-bg-secondary;
+    }
+  }
+
+  &-toast {
+    margin: 0;
+    padding: t.$notion-space-3 t.$notion-space-4;
+    background: t.$notion-bg-secondary;
+    border: 1px solid t.$notion-border;
+    border-radius: t.$notion-radius-md;
+    font-family: t.$notion-font-family;
+    font-size: t.$notion-font-size-sm;
+    color: t.$notion-text-primary;
+    text-align: center;
+  }
+}
