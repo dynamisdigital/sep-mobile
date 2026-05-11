@@ -108,14 +108,19 @@ export class AuthService {
   }
 
   async logout(): Promise<void> {
+    // Dispara revogacao do refresh token no servidor em fire-and-forget para nao
+    // bloquear o logout local. Caso o token de acesso ja tenha expirado, o
+    // errorInterceptor capturaria 401 e tentaria redirecionar para
+    // /session-expired, criando race condition com a navegacao do caller.
+    // Mantemos clearSession sincrono e independente do resultado HTTP.
     const refreshToken = await this.getRefreshToken();
     if (refreshToken) {
       const payload: LogoutRequest = { refreshToken };
-      try {
-        await firstValueFrom(this.http.post(`${API_BASE_URL}/auth/logout`, payload));
-      } catch {
-        // logout idempotente: limpar sessao mesmo se chamada falhar.
-      }
+      this.http.post(`${API_BASE_URL}/auth/logout`, payload).subscribe({
+        error: () => {
+          // ignorado: logout local ja foi efetuado.
+        },
+      });
     }
     await this.clearSession();
   }

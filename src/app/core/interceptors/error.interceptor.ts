@@ -15,7 +15,8 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         return throwError(() => error);
       }
 
-      if (error.status === 401 && !req.url.includes('/auth/login')) {
+      const isLogoutOrLogin = req.url.includes('/auth/login') || req.url.includes('/auth/logout');
+      if (error.status === 401 && !isLogoutOrLogin) {
         return from(auth.clearSession()).pipe(
           switchMap(() => {
             void router.navigateByUrl('/session-expired');
@@ -26,6 +27,16 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
       if (error.status === 403) {
         void router.navigateByUrl('/access-denied');
+      }
+
+      // Sprint 5: 423 Locked = conta bloqueada.
+      if (error.status === 423) {
+        return from(auth.clearSession()).pipe(
+          switchMap(() => {
+            void router.navigateByUrl('/account-locked');
+            return throwError(() => error);
+          }),
+        );
       }
 
       return throwError(() => error);
