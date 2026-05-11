@@ -50,15 +50,15 @@ describe('ChangePasswordComponent', () => {
     expect(cmp.form.controls.passwordAtual.hasError('required')).toBe(true);
   });
 
-  it('nova senha exige exatamente 6 caracteres', () => {
+  it('nova senha vazia invalida form', () => {
     const { fixture } = setup(cliente);
     const cmp = fixture.componentInstance;
     cmp.form.setValue({
-      passwordAtual: '123456',
-      novaSenha: '12345',
-      confirmacaoNovaSenha: '12345',
+      passwordAtual: 'senha-passphrase-segura',
+      novaSenha: '',
+      confirmacaoNovaSenha: '',
     });
-    expect(cmp.form.controls.novaSenha.hasError('minlength')).toBe(true);
+    expect(cmp.form.controls.novaSenha.hasError('required')).toBe(true);
   });
 
   it('confirmacao diferente invalida o form', () => {
