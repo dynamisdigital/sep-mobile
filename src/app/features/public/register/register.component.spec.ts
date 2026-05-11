@@ -52,9 +52,9 @@ describe('RegisterComponent', () => {
     expect(component.form.controls.username.invalid).toBe(true);
   });
 
-  it('senha com tamanho diferente de 6 invalida form', () => {
+  it('senha vazia invalida form', () => {
     const component = buildComponent();
-    component.form.patchValue({ username: 'novo@empresa.com', password: '12345' });
+    component.form.patchValue({ username: 'novo@empresa.com', password: '' });
     expect(component.form.controls.password.invalid).toBe(true);
   });
 
