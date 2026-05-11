@@ -40,7 +40,8 @@ export class LoginComponent {
 
   readonly form = this.fb.nonNullable.group({
     username: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
+    // M-Sprint 5: politica server-side (PasswordPolicy 12+ chars OU passphrase).
+    password: ['', [Validators.required]],
   });
 
   async submit(): Promise<void> {
@@ -50,12 +51,25 @@ export class LoginComponent {
     }
     this.submitting.set(true);
     try {
-      await this.auth.login(this.form.getRawValue());
+      const response = await this.auth.login(this.form.getRawValue());
+      if (response.mfaRequired) {
+        await this.router.navigateByUrl('/login/verify-totp');
+        return;
+      }
+      if (response.usuario?.precisaRedefinirSenha) {
+        await this.router.navigateByUrl('/app/perfil/alterar-senha?forced=true');
+        return;
+      }
       await this.router.navigateByUrl('/app/inicio');
     } catch (error) {
       const status = error instanceof HttpErrorResponse ? error.status : 0;
-      const message =
-        status === 401 ? 'Credenciais invalidas' : 'Falha ao autenticar. Tente novamente.';
+      let message = 'Falha ao autenticar. Tente novamente.';
+      if (status === 401) {
+        message = 'Credenciais invalidas';
+      } else if (status === 423) {
+        await this.router.navigateByUrl('/account-locked');
+        return;
+      }
       const toast = await this.toastCtrl.create({
         message,
         duration: 3000,

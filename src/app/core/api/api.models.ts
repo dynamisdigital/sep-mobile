@@ -8,6 +8,9 @@ export interface UsuarioResponse {
   dataModificacao: string;
   criadoPor: string;
   modificadoPor: string;
+  // M-Sprint 5: flags de seguranca propagadas pelo backend.
+  precisaRedefinirSenha: boolean;
+  mfaHabilitado: boolean;
 }
 
 export interface LoginRequest {
@@ -16,10 +19,26 @@ export interface LoginRequest {
 }
 
 export interface TokenResponse {
-  accessToken: string;
+  accessToken: string | null;
   tokenType: 'Bearer';
   expiresIn: number;
-  usuario: UsuarioResponse;
+  refreshToken: string | null;
+  usuario: UsuarioResponse | null;
+  mfaRequired: boolean;
+  mfaChallengeId: string | null;
+}
+
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+export interface LogoutRequest {
+  refreshToken: string;
+}
+
+export interface TotpVerifyRequest {
+  mfaChallengeId: string;
+  codigo: string;
 }
 
 export interface UsuarioCreateRequest {

@@ -1,0 +1,38 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Biometria neste dispositivo</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content class="ion-padding sep-setup-biometric">
+  <ion-text>
+    <h2>Confiar neste dispositivo</h2>
+    <p>
+      Ao ativar, voce podera abrir o app SEP usando Face ID / Touch ID / impressao digital. Isso
+      acelera o login mas nao substitui sua senha — voce ainda precisara dela para operacoes
+      sensiveis e ao usar outro dispositivo.
+    </p>
+  </ion-text>
+
+  @if (disponivel() === null) {
+    <ion-text color="medium"><p>Verificando disponibilidade...</p></ion-text>
+  } @else if (disponivel()) {
+    <div class="sep-setup-biometric-row">
+      <span>Confiar neste dispositivo</span>
+      <ion-toggle
+        [checked]="confiado()"
+        (ionChange)="alternar($event.detail.checked)"
+        data-testid="sep-setup-biometric-toggle"
+      ></ion-toggle>
+    </div>
+  } @else {
+    <ion-text color="medium">
+      <p>
+        Biometria nao disponivel neste dispositivo (ou estamos no PWA web). Em compilacoes nativas
+        Android/iOS, este controle ficara disponivel quando o sensor estiver configurado no sistema.
+      </p>
+    </ion-text>
+  }
+
+  <ion-button expand="block" fill="clear" (click)="voltar()">Voltar ao perfil</ion-button>
+</ion-content>

@@ -45,7 +45,8 @@ export class RegisterComponent {
 
   readonly form = this.fb.nonNullable.group({
     username: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
+    // M-Sprint 5: politica server-side (PasswordPolicy 12+ chars OU passphrase).
+    password: ['', [Validators.required]],
     role: ['CLIENTE' as UsuarioRole, [Validators.required]],
   });
 
