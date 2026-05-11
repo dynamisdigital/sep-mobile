@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import {
   IonButton,
   IonContent,
@@ -16,7 +16,7 @@ import { BiometricService } from '../../../../core/auth/biometric.service';
 @Component({
   selector: 'sep-setup-biometric',
   standalone: true,
-  imports: [RouterLink, IonHeader, IonToolbar, IonTitle, IonContent, IonText, IonButton, IonToggle],
+  imports: [IonHeader, IonToolbar, IonTitle, IonContent, IonText, IonButton, IonToggle],
   templateUrl: './setup-biometric.component.html',
   styleUrls: ['./setup-biometric.component.scss'],
 })
