@@ -1,0 +1,61 @@
+<sep-header-mobile />
+<ion-content class="sep-step-up">
+  <section class="sep-step-up-section">
+    <header class="sep-step-up-header">
+      <h1 class="sep-step-up-title">Verificacao adicional</h1>
+      <p class="sep-step-up-subtitle">
+        Confirme um codigo do seu app autenticador (TOTP) ou backup code para liberar a operacao
+        sensivel.
+      </p>
+    </header>
+
+    @if (loadingChallenge()) {
+      <p class="sep-step-up-status" role="status">Preparando verificacao...</p>
+    } @else {
+      <form
+        class="sep-step-up-form"
+        novalidate
+        (ngSubmit)="submit()"
+        data-testid="sep-step-up-form"
+      >
+        <label class="sep-step-up-field">
+          <span class="sep-step-up-label">Codigo</span>
+          <input
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            [formControl]="codigo"
+            data-testid="sep-step-up-codigo"
+          />
+          @if (codigo.touched && codigo.hasError('required')) {
+            <span class="sep-step-up-error" role="alert">Informe o codigo.</span>
+          }
+          @if (codigo.touched && codigo.hasError('minlength')) {
+            <span class="sep-step-up-error" role="alert"
+              >Codigo precisa de pelo menos 6 caracteres.</span
+            >
+          }
+        </label>
+
+        @if (errorMessage()) {
+          <p class="sep-step-up-error" role="alert" data-testid="sep-step-up-error">
+            {{ errorMessage() }}
+          </p>
+        }
+
+        <button
+          type="submit"
+          class="sep-step-up-submit"
+          [disabled]="submitting()"
+          data-testid="sep-step-up-submit"
+        >
+          {{ submitting() ? 'Verificando...' : 'Confirmar' }}
+        </button>
+      </form>
+    }
+
+    <a class="sep-step-up-cancel" routerLink="/app/perfil" data-testid="sep-step-up-cancelar">
+      Cancelar
+    </a>
+  </section>
+</ion-content>
