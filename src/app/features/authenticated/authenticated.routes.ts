@@ -54,6 +54,11 @@ export const AUTHENTICATED_ROUTES: Routes = [
         data: { tab: 'perfil' },
       },
       {
+        path: 'step-up',
+        loadComponent: () => import('./step-up/step-up.component').then((m) => m.StepUpComponent),
+        data: { tab: 'perfil' },
+      },
+      {
         path: 'credora/inicio',
         loadComponent: () =>
           import('../credora/home/home.component').then((m) => m.CredoraHomeComponent),

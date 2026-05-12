@@ -41,6 +41,20 @@ export interface TotpVerifyRequest {
   codigo: string;
 }
 
+// 5F-FIX-05: step-up authentication mobile.
+export interface StepUpInitiateResponse {
+  stepUpChallengeId: string;
+}
+
+export interface StepUpCompleteRequest {
+  stepUpChallengeId: string;
+  codigo: string;
+}
+
+export interface StepUpCompleteResponse {
+  stepUpToken: string;
+}
+
 export interface UsuarioCreateRequest {
   username: string;
   password: string;
