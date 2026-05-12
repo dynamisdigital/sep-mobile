@@ -11,7 +11,9 @@ import { IonicRouteStrategy, provideIonicAngular } from '@ionic/angular/standalo
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
 import { authInterceptor } from './app/core/interceptors/auth.interceptor';
+import { clientChannelInterceptor } from './app/core/interceptors/client-channel.interceptor';
 import { errorInterceptor } from './app/core/interceptors/error.interceptor';
+import { stepUpInterceptor } from './app/core/interceptors/step-up.interceptor';
 import { environment } from './environments/environment';
 
 async function prepare(): Promise<void> {
@@ -30,7 +32,14 @@ prepare().then(() =>
       { provide: RouteReuseStrategy, useClass: IonicRouteStrategy },
       provideIonicAngular(),
       provideRouter(routes, withPreloading(PreloadAllModules)),
-      provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
+      provideHttpClient(
+        withInterceptors([
+          clientChannelInterceptor,
+          authInterceptor,
+          stepUpInterceptor,
+          errorInterceptor,
+        ]),
+      ),
     ],
   }).catch((err) => console.error(err)),
 );

@@ -12,6 +12,7 @@ import { IonContent } from '@ionic/angular/standalone';
 
 import { ApiErrorResponse } from '../../../../core/api/api.models';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { StepUpTokenStore } from '../../../../core/auth/step-up-token.store';
 import { UsuariosService } from '../../../../core/users/usuarios.service';
 import { HeaderMobileComponent } from '../../../../layout/header-mobile/header-mobile.component';
 
@@ -37,6 +38,7 @@ export class ChangePasswordComponent {
   private readonly auth = inject(AuthService);
   private readonly usuarios = inject(UsuariosService);
   private readonly router = inject(Router);
+  private readonly stepUpStore = inject(StepUpTokenStore);
 
   readonly submitting = signal(false);
   readonly successMessage = signal<string | null>(null);
@@ -62,6 +64,13 @@ export class ChangePasswordComponent {
       return;
     }
 
+    // 5F-FIX-05: usuario com MFA ativo precisa concluir step-up antes do PATCH;
+    // sem o token, redireciona para a tela de step-up e volta para esta rota.
+    if (user.mfaHabilitado && !this.stepUpStore.hasToken()) {
+      void this.router.navigateByUrl('/app/step-up?next=/app/perfil/alterar-senha');
+      return;
+    }
+
     this.submitting.set(true);
     this.successMessage.set(null);
     this.errorMessage.set(null);
@@ -74,10 +83,27 @@ export class ChangePasswordComponent {
       this.successMessage.set('Senha alterada com sucesso.');
       this.form.reset({ passwordAtual: '', novaSenha: '', confirmacaoNovaSenha: '' });
     } catch (error) {
+      // Se backend rejeitar por step-up ausente, abre o fluxo de verificacao.
+      if (
+        error instanceof HttpErrorResponse &&
+        error.status === 403 &&
+        user.mfaHabilitado &&
+        this.isStepUpRequiredError(error)
+      ) {
+        this.stepUpStore.clear();
+        void this.router.navigateByUrl('/app/step-up?next=/app/perfil/alterar-senha');
+        return;
+      }
       this.errorMessage.set(this.extractMessage(error));
     } finally {
       this.submitting.set(false);
     }
+  }
+
+  private isStepUpRequiredError(error: HttpErrorResponse): boolean {
+    const body = error.error as ApiErrorResponse | null | undefined;
+    const message = (body?.message ?? '').toString().toLowerCase();
+    return message.includes('step-up') || message.includes('step_up');
   }
 
   cancel(): void {
