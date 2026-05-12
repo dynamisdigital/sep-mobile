@@ -17,9 +17,12 @@ on:
       - main
       - develop
   push:
+    # Roda em push de qualquer branch (feature/*, fix/*, hotfix/*, etc.) pra
+    # garantir test+lint+build PWA antes de PR. Branches com PR aberto
+    # rodarao 2 vezes (push + pull_request); tolerado em favor de validacao
+    # continua (alinhado a sep-api/sep-app).
     branches:
-      - main
-      - develop
+      - '**'
   workflow_dispatch:
 
 permissions:
