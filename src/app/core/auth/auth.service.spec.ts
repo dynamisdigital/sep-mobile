@@ -17,16 +17,52 @@ const usuario: UsuarioResponse = {
   dataModificacao: '2026-04-24T18:30:00-03:00',
   criadoPor: 'system',
   modificadoPor: 'system',
+  precisaRedefinirSenha: false,
+  mfaHabilitado: false,
 };
 
 class TokenStorageStub {
-  private value: string | null = null;
-  getToken = vi.fn(async () => this.value);
+  private access: string | null = null;
+  private refresh: string | null = null;
+  private trust = false;
+  private challenge: string | null = null;
+
+  getToken = vi.fn(async () => this.access);
   setToken = vi.fn(async (token: string) => {
-    this.value = token;
+    this.access = token;
   });
   clearToken = vi.fn(async () => {
-    this.value = null;
+    this.access = null;
+  });
+
+  getRefreshToken = vi.fn(async () => this.refresh);
+  setRefreshToken = vi.fn(async (token: string) => {
+    this.refresh = token;
+  });
+  clearRefreshToken = vi.fn(async () => {
+    this.refresh = null;
+  });
+
+  getTrustDevice = vi.fn(async () => this.trust);
+  setTrustDevice = vi.fn(async (value: boolean) => {
+    this.trust = value;
+  });
+  clearTrustDevice = vi.fn(async () => {
+    this.trust = false;
+  });
+
+  getPendingMfaChallenge = vi.fn(async () => this.challenge);
+  setPendingMfaChallenge = vi.fn(async (id: string) => {
+    this.challenge = id;
+  });
+  clearPendingMfaChallenge = vi.fn(async () => {
+    this.challenge = null;
+  });
+
+  clearAll = vi.fn(async () => {
+    this.access = null;
+    this.refresh = null;
+    this.challenge = null;
   });
 }
 
@@ -53,11 +89,17 @@ describe('AuthService', () => {
     const tokenResponse: TokenResponse = {
       accessToken: 'jwt-1',
       tokenType: 'Bearer',
-      expiresIn: 3600,
+      expiresIn: 900,
+      refreshToken: 'refresh-1',
       usuario,
+      mfaRequired: false,
+      mfaChallengeId: null,
     };
 
-    const promise = service.login({ username: usuario.username, password: '123456' });
+    const promise = service.login({
+      username: usuario.username,
+      password: 'senha-passphrase-segura',
+    });
 
     const req = httpMock.expectOne(`${API}/auth/login`);
     expect(req.request.method).toBe('POST');
@@ -66,8 +108,32 @@ describe('AuthService', () => {
     await promise;
 
     expect(storage.setToken).toHaveBeenCalledWith('jwt-1');
+    expect(storage.setRefreshToken).toHaveBeenCalledWith('refresh-1');
     expect(service.currentUser()).toEqual(usuario);
     expect(service.isAuthenticated()).toBe(true);
+  });
+
+  it('login com MFA pendente persiste challengeId', async () => {
+    const tokenResponse: TokenResponse = {
+      accessToken: null,
+      tokenType: 'Bearer',
+      expiresIn: 0,
+      refreshToken: null,
+      usuario: null,
+      mfaRequired: true,
+      mfaChallengeId: '11111111-1111-1111-1111-111111111111',
+    };
+
+    const promise = service.login({ username: usuario.username, password: 'qualquer' });
+    const req = httpMock.expectOne(`${API}/auth/login`);
+    req.flush(tokenResponse);
+    await promise;
+
+    expect(storage.setPendingMfaChallenge).toHaveBeenCalledWith(
+      '11111111-1111-1111-1111-111111111111',
+    );
+    expect(service.pendingMfaChallenge()).toBe('11111111-1111-1111-1111-111111111111');
+    expect(service.isAuthenticated()).toBe(false);
   });
 
   it('login invalido nao deixa usuario autenticado', async () => {
@@ -84,7 +150,7 @@ describe('AuthService', () => {
   it('register dispara POST /usuarios', async () => {
     const promise = service.register({
       username: 'novo@empresa.com',
-      password: '123456',
+      password: 'senha-passphrase-segura',
       role: 'CLIENTE',
     });
     const req = httpMock.expectOne(`${API}/usuarios`);
@@ -93,17 +159,25 @@ describe('AuthService', () => {
     expect(await promise).toEqual(usuario);
   });
 
-  it('clearSession remove token e currentUser', async () => {
+  it('clearSession remove tokens e currentUser', async () => {
     await storage.setToken('jwt-x');
     await service.clearSession();
-    expect(storage.clearToken).toHaveBeenCalled();
+    expect(storage.clearAll).toHaveBeenCalled();
     expect(service.currentUser()).toBeNull();
   });
 
-  it('logout delega para clearSession', async () => {
+  it('logout chama /auth/logout quando ha refresh + limpa sessao', async () => {
     await storage.setToken('jwt-2');
-    await service.logout();
-    expect(storage.clearToken).toHaveBeenCalled();
+    await storage.setRefreshToken('refresh-2');
+    const promise = service.logout();
+    await Promise.resolve();
+    await Promise.resolve();
+    const req = httpMock.expectOne(`${API}/auth/logout`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ refreshToken: 'refresh-2' });
+    req.flush(null);
+    await promise;
+    expect(storage.clearAll).toHaveBeenCalled();
     expect(service.currentUser()).toBeNull();
   });
 
@@ -124,7 +198,7 @@ describe('AuthService', () => {
     expect(service.currentUser()).toEqual(usuario);
   });
 
-  it('loadCurrentUser com falha em /auth/me chama clearSession', async () => {
+  it('loadCurrentUser com falha em /auth/me chama clearAll', async () => {
     await storage.setToken('jwt-bad');
     const promise = service.loadCurrentUser();
     await Promise.resolve();
@@ -132,7 +206,7 @@ describe('AuthService', () => {
     const req = httpMock.expectOne(`${API}/auth/me`);
     req.flush({ message: 'unauth' }, { status: 401, statusText: 'Unauthorized' });
     expect(await promise).toBeNull();
-    expect(storage.clearToken).toHaveBeenCalled();
+    expect(storage.clearAll).toHaveBeenCalled();
     expect(service.currentUser()).toBeNull();
   });
 

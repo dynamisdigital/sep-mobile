@@ -38,11 +38,11 @@
           type="password"
           autocomplete="current-password"
           formControlName="password"
-          placeholder="6 caracteres"
+          placeholder="Sua senha"
         ></ion-input>
         @if (form.controls.password.touched && form.controls.password.invalid) {
           <ion-note color="danger" class="sep-login__error">
-            <span>Senha deve ter exatamente 6 caracteres</span>
+            <span>Informe sua senha.</span>
           </ion-note>
         }
       </div>

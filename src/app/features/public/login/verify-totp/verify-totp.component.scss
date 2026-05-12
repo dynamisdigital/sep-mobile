@@ -1,0 +1,14 @@
+.sep-verify-totp {
+  --padding-bottom: 24px;
+
+  h2 {
+    margin: 0 0 8px;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 16px;
+  }
+}

@@ -53,20 +53,27 @@ describe('LoginComponent', () => {
     expect(component.form.controls.username.hasError('email')).toBe(true);
   });
 
-  it('senha com tamanho diferente de 6 invalida form', () => {
+  it('senha vazia invalida form', () => {
     const component = buildComponent();
-    component.form.setValue({ username: 'cliente@empresa.com', password: '123' });
+    component.form.setValue({ username: 'cliente@empresa.com', password: '' });
     expect(component.form.controls.password.invalid).toBe(true);
   });
 
   it('credenciais validas chamam login e navegam', async () => {
-    authSpy.login.mockResolvedValue({ accessToken: 'jwt-1' });
+    authSpy.login.mockResolvedValue({
+      accessToken: 'jwt-1',
+      mfaRequired: false,
+      usuario: { precisaRedefinirSenha: false },
+    });
     const component = buildComponent();
-    component.form.setValue({ username: 'cliente@empresa.com', password: '123456' });
+    component.form.setValue({
+      username: 'cliente@empresa.com',
+      password: 'senha-passphrase-segura',
+    });
     await component.submit();
     expect(authSpy.login).toHaveBeenCalledWith({
       username: 'cliente@empresa.com',
-      password: '123456',
+      password: 'senha-passphrase-segura',
     });
     expect(routerSpy.navigateByUrl).toHaveBeenCalledWith('/app/inicio');
   });

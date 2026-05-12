@@ -70,6 +70,16 @@ ion-tab-bar {
   @include notion-ion-tab-bar;
 }
 
+// Em ion-tabs, o ion-router-outlet fica absoluto sobre a viewport. No Chromium
+// mobile ele pode virar o alvo do hit-test e bloquear cliques da pagina ativa.
+ion-tabs ion-router-outlet {
+  pointer-events: none;
+}
+
+ion-tabs ion-router-outlet > .ion-page {
+  pointer-events: auto;
+}
+
 // Toast
 ion-toast {
   @include notion-ion-toast;

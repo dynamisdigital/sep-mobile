@@ -1,0 +1,21 @@
+.sep-setup-biometric {
+  --padding-bottom: 24px;
+
+  h2 {
+    margin: 0 0 8px;
+  }
+
+  .sep-setup-biometric-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+    margin-top: 16px;
+    border-top: 1px solid var(--ion-color-step-100);
+    border-bottom: 1px solid var(--ion-color-step-100);
+
+    span {
+      font-weight: 500;
+    }
+  }
+}

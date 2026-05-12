@@ -45,7 +45,8 @@ export class ChangePasswordComponent {
   readonly form = this.fb.nonNullable.group(
     {
       passwordAtual: ['', [Validators.required]],
-      novaSenha: ['', [Validators.required, Validators.minLength(6), Validators.maxLength(6)]],
+      // M-Sprint 5: politica server-side (PasswordPolicy 12+ chars OU passphrase).
+      novaSenha: ['', [Validators.required]],
       confirmacaoNovaSenha: ['', [Validators.required]],
     },
     { validators: confirmacaoIgualValidator },

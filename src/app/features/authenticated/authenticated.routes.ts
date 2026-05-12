@@ -46,6 +46,14 @@ export const AUTHENTICATED_ROUTES: Routes = [
         data: { tab: 'perfil' },
       },
       {
+        path: 'perfil/biometria',
+        loadComponent: () =>
+          import('./profile/setup-biometric/setup-biometric.component').then(
+            (m) => m.SetupBiometricComponent,
+          ),
+        data: { tab: 'perfil' },
+      },
+      {
         path: 'credora/inicio',
         loadComponent: () =>
           import('../credora/home/home.component').then((m) => m.CredoraHomeComponent),
