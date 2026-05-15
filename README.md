@@ -3,7 +3,7 @@
 Mobile SEP em Ionic 8 + Angular 20 + Capacitor 8 (PWA-first).
 
 > Documentacao consolidada do produto vive no repositorio [`docs-SEP`](../docs-SEP):
-> [PRD](../docs-SEP/docs-sep/PRD.md), [CONTEXT](../docs-SEP/docs-sep/CONTEXT.md), [AGENT.md](../docs-SEP/AGENT.md), [ADRs](../docs-SEP/adr/), [specs](../docs-SEP/specs/) e [steps mobile](../docs-SEP/steps/mobile/).
+> [PRD](../docs-SEP/docs-sep/PRD.md), [CONTEXT](../docs-SEP/docs-sep/CONTEXT.md), [AGENT.md](../docs-SEP/AGENT.md), [ADRs](../docs-SEP/adr/), [specs](../docs-SEP/specs/), [steps mobile](../docs-SEP/steps-fase-1/mobile/) e [docs especificos do mobile](../docs-SEP/repos/sep-mobile/).
 
 ## Setup do desenvolvedor
 
@@ -135,4 +135,4 @@ SEP opera sob a Resolucao CMN 4.656/2018. Mobile cobre apenas as jornadas de **t
 - M-Sprint 3 — Auth real, Shell mobile, Guards, Interceptors
 - M-Sprint 4 — Perfil/Senha + Casca tomador + Casca credora + Smoke E2E PWA
 
-Detalhamento: [docs-SEP/specs/fase-1/](../docs-SEP/specs/fase-1/) (200-204) e [docs-SEP/steps/mobile/](../docs-SEP/steps/mobile/).
+Detalhamento: [docs-SEP/specs/fase-1/](../docs-SEP/specs/fase-1/) (200-204) e [docs-SEP/steps-fase-1/mobile/](../docs-SEP/steps-fase-1/mobile/).
