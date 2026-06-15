@@ -1,26 +1,25 @@
-@use "../../../styles/notion-mobile-tokens" as t;
-
 .sep-header-mobile-wrapper {
-  --background: #{t.$notion-bg-primary};
-
-  background: t.$notion-bg-primary;
+  --background: transparent;
 }
 
 .sep-header-mobile {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--sep-space-12);
   align-items: center;
-  gap: t.$notion-space-3;
-  padding: t.$notion-space-3 t.$notion-space-4;
   min-height: 56px;
-  background: t.$notion-bg-primary;
-  border-bottom: 1px solid t.$notion-border;
+  padding: var(--sep-space-12) var(--sep-space-16);
+  padding-top: calc(var(--sep-space-12) + env(safe-area-inset-top, 0));
+
+  // Header translucido/sticky: superficie semi-transparente + blur quando suportado.
+  background: hsl(var(--card) / 82%);
+  border-bottom: 1px solid hsl(var(--border));
+  backdrop-filter: blur(12px);
 
   &-brand {
-    font-family: t.$notion-font-family;
-    font-weight: t.$notion-font-weight-bold;
-    font-size: t.$notion-font-size-lg;
-    color: t.$notion-text-primary;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: hsl(var(--primary));
     letter-spacing: -0.01em;
     white-space: nowrap;
   }
@@ -33,50 +32,73 @@
   &-user {
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
     gap: 2px;
+    align-items: flex-end;
     overflow: hidden;
   }
 
   &-email {
-    font-family: t.$notion-font-family;
-    font-size: t.$notion-font-size-xs;
-    font-weight: t.$notion-font-weight-regular;
-    color: t.$notion-text-secondary;
+    max-width: 100%;
     overflow: hidden;
+    font-size: 0.75rem;
+    color: hsl(var(--muted-foreground));
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 100%;
   }
 
   &-role {
-    font-family: t.$notion-font-family;
-    font-size: 10px;
-    font-weight: t.$notion-font-weight-semibold;
-    color: t.$notion-text-primary;
-    background: t.$notion-bg-secondary;
-    border: 1px solid t.$notion-border;
     padding: 1px 6px;
-    border-radius: t.$notion-radius-sm;
-    text-transform: uppercase;
+    font-size: 10px;
+    font-weight: 600;
+    color: hsl(var(--foreground));
     letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: hsl(var(--muted));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--sep-radius-sm);
+  }
+
+  &-actions {
+    display: flex;
+    gap: var(--sep-space-8);
+    align-items: center;
+  }
+
+  &-theme {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    color: hsl(var(--foreground));
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--sep-radius-md);
+
+    ion-icon {
+      font-size: 20px;
+    }
+
+    &:active {
+      background: hsl(var(--muted));
+    }
   }
 
   &-logout {
-    min-height: t.$notion-touch-target-min;
-    padding: 0 t.$notion-space-3;
-    background: transparent;
-    border: 1px solid t.$notion-border;
-    border-radius: t.$notion-radius-md;
-    color: t.$notion-text-primary;
-    font-family: t.$notion-font-family;
-    font-size: t.$notion-font-size-sm;
-    font-weight: t.$notion-font-weight-semibold;
-    cursor: pointer;
+    min-height: 44px;
+    padding: 0 var(--sep-space-12);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: hsl(var(--foreground));
     white-space: nowrap;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--sep-radius-md);
 
     &:active {
-      background: t.$notion-bg-secondary;
+      background: hsl(var(--muted));
     }
   }
 }

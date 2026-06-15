@@ -1,28 +1,26 @@
-@use "../../../../styles/notion-mobile-tokens" as t;
+@use "../../../../styles/sep-mobile-ds-components" as comp;
 
 .sep-home {
-  --background: #{t.$notion-bg-primary};
+  --background: var(--ion-background-color);
 
   &-section {
-    padding: t.$notion-space-5 t.$notion-space-4 t.$notion-space-8;
+    padding: var(--sep-space-24) var(--sep-space-16) var(--sep-space-32);
   }
 
   &-greeting {
-    margin-bottom: t.$notion-space-6;
+    margin-bottom: var(--sep-space-24);
 
     &-label {
-      margin: 0 0 t.$notion-space-1;
-      font-family: t.$notion-font-family;
-      font-size: t.$notion-font-size-sm;
-      color: t.$notion-text-secondary;
+      margin: 0 0 var(--sep-space-4);
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
     }
 
     &-name {
       margin: 0;
-      font-family: t.$notion-font-family;
-      font-size: t.$notion-font-size-2xl;
-      font-weight: t.$notion-font-weight-bold;
-      color: t.$notion-text-primary;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: hsl(var(--foreground));
       letter-spacing: -0.02em;
       word-break: break-word;
     }
@@ -31,35 +29,41 @@
   &-shortcuts {
     display: flex;
     flex-direction: column;
-    gap: t.$notion-space-3;
+    gap: var(--sep-space-12);
   }
 
   &-card {
+    @include comp.sep-mobile-surface-card;
+    @include comp.sep-mobile-touch-state;
+
     display: flex;
-    flex-direction: column;
-    gap: t.$notion-space-1;
-    padding: t.$notion-space-4;
-    background: t.$notion-bg-primary;
-    border: 1px solid t.$notion-border;
-    border-radius: t.$notion-radius-lg;
-    color: t.$notion-text-primary;
+    gap: var(--sep-space-16);
+    align-items: center;
+    padding: var(--sep-space-16);
+    color: hsl(var(--foreground));
     text-decoration: none;
-    min-height: t.$notion-touch-target-comfortable;
+
+    &-chip {
+      @include comp.sep-mobile-icon-chip(--chip-tone);
+
+      flex-shrink: 0;
+    }
+
+    &-text {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sep-space-2);
+      min-width: 0;
+    }
 
     &-label {
-      font-family: t.$notion-font-family;
-      font-size: t.$notion-font-size-base;
-      font-weight: t.$notion-font-weight-semibold;
+      font-size: 1rem;
+      font-weight: 600;
     }
 
     &-description {
-      font-family: t.$notion-font-family;
-      font-size: t.$notion-font-size-sm;
-      color: t.$notion-text-secondary;
-    }
-
-    &:active {
-      background: t.$notion-bg-secondary;
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
     }
   }
 }

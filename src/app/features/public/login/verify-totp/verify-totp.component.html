@@ -1,64 +1,68 @@
-<ion-header>
-  <ion-toolbar>
-    <ion-title>Verificacao em duas etapas</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content class="sep-verify-totp" [fullscreen]="true">
+  <header class="sep-verify-totp__brand">
+    <span class="sep-verify-totp__brand-mark">SEP</span>
+    <h1 class="sep-verify-totp__title">Verificacao em duas etapas</h1>
+  </header>
 
-<ion-content class="ion-padding sep-verify-totp">
-  @if (challengeAusente()) {
-    <ion-text>
-      <h2>Sessao expirada</h2>
-      <p>Refaca o login para receber um novo desafio.</p>
-    </ion-text>
-    <ion-button expand="block" fill="solid" routerLink="/login">Voltar ao login</ion-button>
-  } @else {
-    <ion-text>
-      <p>
-        Informe o codigo de 6 digitos do seu aplicativo autenticador ou um dos backup codes salvos.
-      </p>
-    </ion-text>
+  <main class="sep-verify-totp__inner">
+    @if (challengeAusente()) {
+      <ion-text>
+        <h2>Sessao expirada</h2>
+        <p>Refaca o login para receber um novo desafio.</p>
+      </ion-text>
+      <ion-button class="sep-verify-totp__submit" expand="block" routerLink="/login">
+        Voltar ao login
+      </ion-button>
+    } @else {
+      <ion-text>
+        <p>
+          Informe o codigo de 6 digitos do seu aplicativo autenticador ou um dos backup codes
+          salvos.
+        </p>
+      </ion-text>
 
-    <form [formGroup]="form" (ngSubmit)="submit()">
-      <ion-input
-        labelPlacement="stacked"
-        label="Codigo"
-        type="text"
-        inputmode="text"
-        formControlName="codigo"
-        data-testid="sep-verify-totp-input"
-      ></ion-input>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <ion-input
+          labelPlacement="stacked"
+          label="Codigo"
+          fill="outline"
+          type="text"
+          inputmode="text"
+          formControlName="codigo"
+          data-testid="sep-verify-totp-input"
+        ></ion-input>
 
-      @if (form.controls.codigo.touched && form.controls.codigo.errors?.['required']) {
-        <ion-note color="danger">Informe o codigo.</ion-note>
+        @if (form.controls.codigo.touched && form.controls.codigo.errors?.['required']) {
+          <ion-note color="danger">Informe o codigo.</ion-note>
+        }
+
+        <ion-button
+          class="sep-verify-totp__submit"
+          type="submit"
+          expand="block"
+          [disabled]="submitting()"
+          data-testid="sep-verify-totp-submit"
+        >
+          @if (submitting()) {
+            <ion-spinner name="dots"></ion-spinner>
+          } @else {
+            Verificar
+          }
+        </ion-button>
+      </form>
+
+      @if (biometriaDisponivel()) {
+        <ion-button
+          expand="block"
+          fill="outline"
+          (click)="tentarBiometria()"
+          data-testid="sep-verify-totp-biometric"
+        >
+          Usar biometria
+        </ion-button>
       }
 
-      <ion-button
-        type="submit"
-        expand="block"
-        fill="solid"
-        color="primary"
-        [disabled]="submitting()"
-        data-testid="sep-verify-totp-submit"
-      >
-        @if (submitting()) {
-          <ion-spinner name="dots"></ion-spinner>
-        } @else {
-          Verificar
-        }
-      </ion-button>
-    </form>
-
-    @if (biometriaDisponivel()) {
-      <ion-button
-        expand="block"
-        fill="outline"
-        (click)="tentarBiometria()"
-        data-testid="sep-verify-totp-biometric"
-      >
-        Usar biometria
-      </ion-button>
+      <ion-button expand="block" fill="clear" routerLink="/login">Cancelar</ion-button>
     }
-
-    <ion-button expand="block" fill="clear" routerLink="/login">Cancelar</ion-button>
-  }
+  </main>
 </ion-content>

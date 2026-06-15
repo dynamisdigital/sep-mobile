@@ -30,7 +30,7 @@ import { colorPaletteOutline, cubeOutline, navigateOutline, textOutline } from '
   template: `
     <ion-header>
       <ion-toolbar>
-        <ion-title>Design System (Notion Mobile)</ion-title>
+        <ion-title>New Design System SEP</ion-title>
       </ion-toolbar>
     </ion-header>
 

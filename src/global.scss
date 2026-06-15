@@ -1,9 +1,9 @@
 // =============================================================================
-// Estilos globais aplicados a componentes Ionic com mixins Notion mobile
+// Estilos globais dos componentes Ionic com o New Design System SEP (M-12.3)
 // =============================================================================
-// Estes selectors aplicam a aparencia Notion a TODOS os componentes Ionic do
-// app de uma vez. Variantes especificas (primary/secondary/ghost de botao,
-// success/error de toast) sao aplicadas via classes CSS no template.
+// Tema os componentes Ionic via custom properties --ion-* (mapeadas em
+// theme/variables.scss) e tokens DS (_sep-mobile-ds-tokens.scss), que tem
+// versao light e dark. Substitui os mixins Notion das M-Sprints 0-5.
 // =============================================================================
 
 // Core CSS required for Ionic components to work properly
@@ -22,52 +22,55 @@
 @use "@ionic/angular/css/text-transformation.css";
 @use "@ionic/angular/css/flex-utils.css";
 
-// Notion mobile design eh light-only (warm-white). Dark palette do Ionic
-// sobrescreve --ion-text-color em prefers-color-scheme: dark e deixa texto
-// dos ion-input invisivel sobre fundo Notion forcado. Reintroduzir apenas
-// quando houver tokens Notion dark proprios.
-
-// Mixins Notion mobile
-@use "styles/notion-mobile-components" as *;
-
-// Botoes
+// ===== Botoes =====
 ion-button {
-  @include notion-ion-button-base;
+  --border-radius: var(--sep-radius-md);
+  --box-shadow: none;
 
-  &[color="primary"],
-  &.notion-primary {
-    @include notion-ion-button-primary;
-  }
-
-  &[color="medium"],
-  &.notion-secondary {
-    @include notion-ion-button-secondary;
-  }
-
-  &[fill="clear"],
-  &.notion-ghost {
-    @include notion-ion-button-ghost;
-  }
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
-// Inputs
+// ===== Inputs e formularios =====
 ion-input,
 ion-textarea {
-  @include notion-ion-input;
+  --background: hsl(var(--card));
+  --color: hsl(var(--foreground));
+  --placeholder-color: hsl(var(--muted-foreground));
+  --placeholder-opacity: 1;
+  --border-radius: var(--sep-radius-md);
 }
 
 ion-item {
-  @include notion-ion-item;
+  --background: transparent;
+  --background-hover: hsl(var(--muted));
+  --background-focused: hsl(var(--muted));
+  --color: hsl(var(--foreground));
+  --border-color: hsl(var(--border));
+  --min-height: 44px;
 }
 
-// Cards
+// ===== Cards =====
 ion-card {
-  @include notion-ion-card;
+  --background: hsl(var(--card));
+  --color: hsl(var(--card-foreground));
+
+  margin: var(--sep-space-16) 0;
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--sep-radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
-// Tab bar inferior
+// ===== Tab bar inferior =====
 ion-tab-bar {
-  @include notion-ion-tab-bar;
+  --background: var(--ion-tab-bar-background);
+  --color: var(--ion-tab-bar-color);
+  --color-selected: var(--ion-tab-bar-color-selected);
+
+  // Reserva da safe-area fica so aqui (fonte unica) para nao somar duas vezes.
+  min-height: 56px;
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 // Em ion-tabs, o ion-router-outlet fica absoluto sobre a viewport. No Chromium
@@ -80,21 +83,51 @@ ion-tabs ion-router-outlet > .ion-page {
   pointer-events: auto;
 }
 
-// Toast
+// ===== Toast (variantes semanticas) =====
 ion-toast {
-  @include notion-ion-toast;
+  --border-radius: var(--sep-radius-md);
+  --box-shadow: var(--shadow-md);
+
+  &.toast-success {
+    --background: hsl(var(--success));
+    --color: hsl(var(--success-foreground));
+  }
+
+  &.toast-warning {
+    --background: hsl(var(--warning));
+    --color: hsl(var(--warning-foreground));
+  }
+
+  &.toast-error {
+    --background: hsl(var(--destructive));
+    --color: hsl(var(--destructive-foreground));
+  }
 }
 
-// Modal
+// ===== Modal (sheet) =====
 ion-modal {
-  @include notion-ion-modal;
+  --background: hsl(var(--background));
+  --color: hsl(var(--foreground));
+  --border-radius: var(--sep-radius-lg) var(--sep-radius-lg) 0 0;
+  --box-shadow: var(--shadow-lg);
+
+  ion-toolbar {
+    --background: hsl(var(--card));
+    --color: hsl(var(--foreground));
+    --border-color: hsl(var(--border));
+  }
 }
 
-// Body global (corpo 16px Notion mobile)
+// ===== Foco visivel global =====
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+// ===== Body =====
 body {
   font-family: var(--ion-font-family);
-  font-size: var(--notion-font-size-base, 16px);
   color: var(--ion-text-color);
   background: var(--ion-background-color);
-  -webkit-tap-highlight-color: var(--notion-tap-highlight);
+  -webkit-tap-highlight-color: var(--ion-tap-highlight);
 }

@@ -1,91 +1,101 @@
-@use "../../../../styles/notion-mobile-tokens" as tokens;
-
 .sep-step-up {
+  --background: var(--ion-background-color);
   --padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
 }
 
 .sep-step-up-section {
   display: flex;
   flex-direction: column;
-  gap: tokens.$notion-space-6;
-  padding: tokens.$notion-space-6;
+  gap: var(--sep-space-24);
+  padding: var(--sep-space-24);
 }
 
 .sep-step-up-header {
   display: flex;
   flex-direction: column;
-  gap: tokens.$notion-space-2;
+  gap: var(--sep-space-8);
 }
 
 .sep-step-up-title {
   margin: 0;
-  font-size: tokens.$notion-font-size-2xl;
-  font-weight: tokens.$notion-font-weight-semibold;
-  color: tokens.$notion-text-primary;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  letter-spacing: -0.02em;
 }
 
 .sep-step-up-subtitle {
   margin: 0;
-  font-size: tokens.$notion-font-size-base;
-  color: tokens.$notion-text-secondary;
+  font-size: 1rem;
+  color: hsl(var(--muted-foreground));
 }
 
 .sep-step-up-form {
   display: flex;
   flex-direction: column;
-  gap: tokens.$notion-space-4;
+  gap: var(--sep-space-16);
 }
 
 .sep-step-up-field {
   display: flex;
   flex-direction: column;
-  gap: tokens.$notion-space-2;
+  gap: var(--sep-space-8);
 }
 
 .sep-step-up-label {
-  font-weight: tokens.$notion-font-weight-semibold;
-  font-size: tokens.$notion-font-size-sm;
-  color: tokens.$notion-text-primary;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
 }
 
 .sep-step-up-field input {
-  padding: tokens.$notion-space-3 tokens.$notion-space-4;
-  border: 1px solid tokens.$notion-border;
-  border-radius: tokens.$notion-radius-md;
-  background: tokens.$notion-bg-primary;
-  font-size: tokens.$notion-font-size-base;
-  min-height: tokens.$notion-touch-target-min;
+  min-height: 44px;
+  padding: var(--sep-space-12) var(--sep-space-16);
+  font-size: 1rem;
+  color: hsl(var(--foreground));
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--input));
+  border-radius: var(--sep-radius-md);
+
+  &:focus {
+    border-color: hsl(var(--ring));
+    outline: none;
+  }
 }
 
 .sep-step-up-error {
-  color: tokens.$notion-color-danger;
-  font-size: tokens.$notion-font-size-sm;
+  font-size: 0.875rem;
+  color: hsl(var(--destructive));
 }
 
 .sep-step-up-status {
-  color: tokens.$notion-text-secondary;
-  font-size: tokens.$notion-font-size-base;
+  font-size: 1rem;
+  color: hsl(var(--muted-foreground));
 }
 
 .sep-step-up-submit {
-  padding: tokens.$notion-space-4;
-  background: tokens.$notion-color-primary;
-  color: tokens.$notion-text-inverse;
+  min-height: 44px;
+  padding: var(--sep-space-16);
+  font-size: 1rem;
+  font-weight: 600;
+  color: hsl(var(--primary-foreground));
+  background: hsl(var(--primary));
   border: none;
-  border-radius: tokens.$notion-radius-md;
-  font-weight: tokens.$notion-font-weight-semibold;
-  font-size: tokens.$notion-font-size-base;
-  min-height: tokens.$notion-touch-target-min;
+  border-radius: var(--sep-radius-md);
   cursor: pointer;
-}
 
-.sep-step-up-submit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  &:active {
+    background: hsl(var(--primary-hover));
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
 }
 
 .sep-step-up-cancel {
   align-self: center;
-  color: tokens.$notion-text-secondary;
+  color: hsl(var(--muted-foreground));
   text-decoration: underline;
 }

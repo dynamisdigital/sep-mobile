@@ -1,14 +1,12 @@
 // =============================================================================
-// Indice central de estilos do app SEP Mobile (M-Sprint 1)
+// Indice central de estilos do app SEP Mobile
 // =============================================================================
-// Ordem importa:
-// 1. Tokens (variaveis SCSS + CSS custom properties)
-// 2. Tipografia (mixins que usam tokens)
-// 3. Componentes (mixins que usam tokens + tipografia)
-// 4. Overrides Ionic (selector `:root` ja em theme/variables.scss)
+// Fonte visual vigente: New Design System SEP (M-Sprint 12). Os tokens HSL
+// (light + dark .dark/.ion-palette-dark) e os mixins dos primitivos ficam
+// disponiveis para os componentes via @use. O mapeamento --ion-* vive em
+// theme/variables.scss; os estilos globais dos componentes Ionic em global.scss.
 // =============================================================================
 
-@use "notion-mobile-tokens" as *;
-@use "notion-mobile-typography" as *;
-@use "notion-mobile-components" as *;
 @use "mixins" as *; // placeholder da M-Sprint 0; opcional
+@use "sep-mobile-ds-tokens" as *;
+@use "sep-mobile-ds-components" as *;

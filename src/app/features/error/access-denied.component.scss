@@ -1,47 +1,42 @@
-@use "../../../styles/notion-mobile-tokens" as t;
-
 .sep-error {
-  --background: #{t.$notion-bg-primary};
+  --background: var(--ion-background-color);
 
   &-section {
-    padding: t.$notion-space-12 t.$notion-space-4;
     display: flex;
     flex-direction: column;
+    gap: var(--sep-space-16);
     align-items: center;
-    gap: t.$notion-space-4;
+    padding: var(--sep-space-48) var(--sep-space-16);
     text-align: center;
   }
 
   &-title {
     margin: 0;
-    font-family: t.$notion-font-family;
-    font-size: t.$notion-font-size-2xl;
-    font-weight: t.$notion-font-weight-bold;
-    color: t.$notion-text-primary;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: hsl(var(--foreground));
     letter-spacing: -0.02em;
   }
 
   &-body {
-    margin: 0;
-    font-family: t.$notion-font-family;
-    font-size: t.$notion-font-size-base;
-    color: t.$notion-text-secondary;
     max-width: 28rem;
+    margin: 0;
+    font-size: 1rem;
+    color: hsl(var(--muted-foreground));
   }
 
   &-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: t.$notion-touch-target-comfortable;
-    padding: 0 t.$notion-space-5;
-    border-radius: t.$notion-radius-pill;
-    background: t.$notion-color-primary;
-    color: t.$notion-text-inverse;
-    font-family: t.$notion-font-family;
-    font-size: t.$notion-font-size-sm;
-    font-weight: t.$notion-font-weight-semibold;
+    min-height: 48px;
+    padding: 0 var(--sep-space-24);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: hsl(var(--primary-foreground));
     text-decoration: none;
     text-transform: none;
+    background: hsl(var(--primary));
+    border-radius: var(--sep-radius-pill);
   }
 }

@@ -1,0 +1,61 @@
+@use "../../../../styles/sep-mobile-ds-components" as comp;
+
+// CTA gradiente
+.demo-cta {
+  @include comp.sep-mobile-button-gradient;
+}
+
+// Chips de icone por tom
+.demo-chips {
+  display: flex;
+  gap: var(--sep-space-12);
+}
+
+.demo-chip {
+  &--primary {
+    @include comp.sep-mobile-icon-chip(--primary);
+  }
+
+  &--secondary {
+    @include comp.sep-mobile-icon-chip(--secondary);
+  }
+
+  &--warning {
+    @include comp.sep-mobile-icon-chip(--warning);
+  }
+
+  &--success {
+    @include comp.sep-mobile-icon-chip(--success);
+  }
+}
+
+// Tiles de acesso rapido
+.demo-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--sep-space-12);
+}
+
+.demo-tile {
+  &--primary {
+    @include comp.sep-mobile-quick-tile(--primary);
+  }
+
+  &--secondary {
+    @include comp.sep-mobile-quick-tile(--secondary);
+  }
+}
+
+// Painel de marca (banda compacta)
+.demo-brand {
+  @include comp.sep-mobile-auth-brand-panel;
+
+  gap: var(--sep-space-8);
+  border-radius: var(--sep-radius-lg);
+}
+
+.demo-brand-mark {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
