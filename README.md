@@ -5,6 +5,10 @@ Mobile SEP em Ionic 8 + Angular 20 + Capacitor 8 (PWA-first).
 > Documentacao consolidada do produto vive no repositorio [`docs-SEP`](../docs-SEP):
 > [PRD](../docs-SEP/docs-sep/PRD.md), [CONTEXT](../docs-SEP/docs-sep/CONTEXT.md), [AGENT.md](../docs-SEP/AGENT.md), [ADRs](../docs-SEP/adr/), [specs](../docs-SEP/specs/), [steps mobile](../docs-SEP/steps-fase-1/mobile/) e [docs especificos do mobile](../docs-SEP/repos/sep-mobile/).
 
+## Infográfico Geral
+
+![Infográfico Geral do Projeto](docs/assets/infograficos/infografico_visao_geral_projeto.png)
+
 ## Setup do desenvolvedor
 
 Apos clonar o repositorio:
