@@ -1,38 +1,36 @@
-@use "../../../../styles/notion-mobile-tokens" as *;
+// Splash: hero de marca com o gradiente do New Design System SEP (M-12.1).
 
 .sep-splash {
-  --background: #{$notion-bg-secondary};
+  --background: var(--gradient-primary);
 }
 
 .sep-splash__inner {
   display: flex;
   flex-direction: column;
-  gap: $notion-space-4;
+  gap: var(--sep-space-8);
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  padding: $notion-space-8;
+  padding: var(--sep-space-32);
+  color: hsl(var(--gradient-foreground));
   text-align: center;
 }
 
 .sep-splash__brand {
   margin: 0;
-  color: $notion-text-primary;
-  font-weight: $notion-font-weight-bold;
-  font-size: $notion-font-size-3xl;
-  font-family: $notion-font-family;
+  font-weight: 700;
+  font-size: 2.5rem;
   letter-spacing: -0.02em;
 }
 
 .sep-splash__subtitle {
   margin: 0;
-  color: $notion-text-secondary;
-  font-size: $notion-font-size-sm;
-  font-family: $notion-font-family;
+  color: hsl(var(--gradient-foreground) / 88%);
+  font-size: 0.9rem;
 }
 
 .sep-splash__spinner {
-  --color: #{$notion-color-primary};
+  --color: hsl(var(--gradient-foreground));
 
-  margin-top: $notion-space-4;
+  margin-top: var(--sep-space-8);
 }

@@ -5,13 +5,10 @@ import { Router, RouterLink } from '@angular/router';
 import {
   IonButton,
   IonContent,
-  IonHeader,
   IonInput,
   IonNote,
   IonSpinner,
   IonText,
-  IonTitle,
-  IonToolbar,
   ToastController,
 } from '@ionic/angular/standalone';
 
@@ -25,9 +22,6 @@ import { MfaService } from '../../../../core/auth/mfa.service';
   imports: [
     ReactiveFormsModule,
     RouterLink,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
     IonContent,
     IonInput,
     IonNote,

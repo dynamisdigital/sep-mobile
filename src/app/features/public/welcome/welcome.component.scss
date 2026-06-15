@@ -1,98 +1,122 @@
-@use "../../../../styles/notion-mobile-tokens" as *;
+@use "../../../../styles/sep-mobile-ds-components" as comp;
 
 .sep-welcome {
-  --background: #{$notion-bg-secondary};
+  --background: var(--ion-background-color);
 }
 
 .sep-welcome__inner {
   display: flex;
   flex-direction: column;
-  gap: $notion-space-8;
-  padding: $notion-space-8 $notion-space-6;
+  gap: var(--sep-space-32);
   max-width: 480px;
   margin: 0 auto;
+  padding: var(--sep-space-32) var(--sep-space-24);
 }
 
 .sep-welcome__brand {
   display: flex;
   flex-direction: column;
-  gap: $notion-space-3;
+  gap: var(--sep-space-12);
 }
 
 .sep-welcome__title {
   margin: 0;
-  color: $notion-text-primary;
-  font-weight: $notion-font-weight-bold;
-  font-size: $notion-font-size-2xl;
-  font-family: $notion-font-family;
+  color: hsl(var(--primary));
+  font-weight: 700;
+  font-size: 1.75rem;
   letter-spacing: -0.02em;
 }
 
 .sep-welcome__headline {
   margin: 0;
-  color: $notion-text-primary;
-  font-weight: $notion-font-weight-semibold;
-  font-size: $notion-font-size-xl;
-  font-family: $notion-font-family;
-  line-height: $notion-line-height-tight;
+  color: hsl(var(--foreground));
+  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 1.2;
   letter-spacing: -0.01em;
 }
 
 .sep-welcome__support {
   margin: 0;
-  color: $notion-text-secondary;
-  font-size: $notion-font-size-base;
-  font-family: $notion-font-family;
-  line-height: $notion-line-height-base;
+  color: hsl(var(--muted-foreground));
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .sep-welcome__journeys {
   display: flex;
   flex-direction: column;
-  gap: $notion-space-4;
+  gap: var(--sep-space-16);
 }
 
 .sep-welcome__journey {
-  padding: $notion-space-5;
-  background: $notion-bg-primary;
-  border: 1px solid $notion-border;
-  border-radius: $notion-radius-lg;
-  box-shadow: $notion-shadow-xs;
+  @include comp.sep-mobile-surface-card;
+
+  display: flex;
+  gap: var(--sep-space-16);
+  align-items: flex-start;
+  padding: var(--sep-space-16);
+}
+
+.sep-welcome__chip {
+  flex-shrink: 0;
+
+  &--primary {
+    @include comp.sep-mobile-icon-chip(--primary);
+  }
+
+  &--secondary {
+    @include comp.sep-mobile-icon-chip(--secondary);
+  }
+}
+
+.sep-welcome__journey-text {
+  flex: 1;
+  min-width: 0;
 }
 
 .sep-welcome__journey-title {
-  margin: 0 0 $notion-space-2;
-  color: $notion-text-primary;
-  font-weight: $notion-font-weight-semibold;
-  font-size: $notion-font-size-lg;
-  font-family: $notion-font-family;
+  margin: 0 0 var(--sep-space-4);
+  color: hsl(var(--foreground));
+  font-weight: 600;
+  font-size: 1.125rem;
 }
 
 .sep-welcome__journey-body {
   margin: 0;
-  color: $notion-text-secondary;
-  font-size: $notion-font-size-sm;
-  font-family: $notion-font-family;
-  line-height: $notion-line-height-base;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 
 .sep-welcome__actions {
   display: flex;
   flex-direction: column;
-  gap: $notion-space-3;
+  gap: var(--sep-space-12);
 }
 
-.sep-welcome__cta-primary,
-.sep-welcome__cta-secondary {
-  --border-radius: #{$notion-radius-md};
+.sep-welcome__cta-primary {
+  @include comp.sep-mobile-button-gradient;
+}
 
-  min-height: 48px;
+.sep-welcome__cta-secondary {
+  --background: transparent;
+  --color: hsl(var(--foreground));
+  --border-color: hsl(var(--input));
+  --border-width: 1px;
+  --border-style: solid;
+  --border-radius: var(--sep-radius-md);
+
+  min-height: var(--sep-touch-target);
 }
 
 .sep-welcome__trust {
-  margin: $notion-space-2 0 0;
-  color: $notion-text-tertiary;
-  font-size: $notion-font-size-xs;
-  font-family: $notion-font-family;
+  display: flex;
+  gap: var(--sep-space-8);
+  align-items: center;
+  justify-content: center;
+  margin: var(--sep-space-8) 0 0;
+  color: hsl(var(--muted-foreground));
+  font-size: 0.75rem;
   text-align: center;
 }

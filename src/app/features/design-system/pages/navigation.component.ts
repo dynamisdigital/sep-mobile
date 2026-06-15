@@ -15,7 +15,10 @@ import { IonContent, IonNote } from '@ionic/angular/standalone';
       </p>
 
       <h3>Tabs (rodape)</h3>
-      <p>Altura 56px. 4 tabs visiveis no maximo. Selecionado em azul Notion.</p>
+      <p>
+        Altura 56px + safe-area. 4 tabs visiveis no maximo. Selecionado no azul do design system,
+        com wash de fundo no item ativo.
+      </p>
 
       <h3>Pilha</h3>
       <p>

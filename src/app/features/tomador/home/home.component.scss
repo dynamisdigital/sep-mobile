@@ -1,32 +1,30 @@
-@use "../../../../styles/notion-mobile-tokens" as t;
+@use "../../../../styles/sep-mobile-ds-components" as comp;
 
 .sep-tomador {
-  --background: #{t.$notion-bg-primary};
+  --background: var(--ion-background-color);
   --padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
 
   &-section {
-    padding: t.$notion-space-5 t.$notion-space-4 t.$notion-space-12;
     display: flex;
     flex-direction: column;
-    gap: t.$notion-space-4;
+    gap: var(--sep-space-16);
+    padding: var(--sep-space-24) var(--sep-space-16) var(--sep-space-48);
   }
 
   &-greeting {
-    margin-bottom: t.$notion-space-2;
+    margin-bottom: var(--sep-space-8);
 
     &-label {
-      margin: 0 0 t.$notion-space-1;
-      font-family: t.$notion-font-family;
-      font-size: t.$notion-font-size-sm;
-      color: t.$notion-text-secondary;
+      margin: 0 0 var(--sep-space-4);
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
     }
 
     &-name {
       margin: 0;
-      font-family: t.$notion-font-family;
-      font-size: t.$notion-font-size-2xl;
-      font-weight: t.$notion-font-weight-bold;
-      color: t.$notion-text-primary;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: hsl(var(--foreground));
       letter-spacing: -0.02em;
       word-break: break-word;
     }
@@ -35,118 +33,118 @@
   &-cards {
     display: flex;
     flex-direction: column;
-    gap: t.$notion-space-3;
+    gap: var(--sep-space-12);
   }
 
   &-card {
-    padding: t.$notion-space-4;
-    background: t.$notion-bg-primary;
-    border: 1px solid t.$notion-border;
-    border-radius: t.$notion-radius-lg;
+    @include comp.sep-mobile-surface-card;
+
+    display: flex;
+    gap: var(--sep-space-16);
+    align-items: flex-start;
+    padding: var(--sep-space-16);
+
+    &-chip {
+      @include comp.sep-mobile-icon-chip(--chip-tone);
+
+      flex-shrink: 0;
+    }
+
+    &-body {
+      flex: 1;
+      min-width: 0;
+    }
 
     &-head {
       display: flex;
+      gap: var(--sep-space-8);
       align-items: center;
       justify-content: space-between;
-      gap: t.$notion-space-2;
-      margin-bottom: t.$notion-space-1;
+      margin-bottom: var(--sep-space-4);
     }
 
     &-title {
       margin: 0;
-      font-family: t.$notion-font-family;
-      font-size: t.$notion-font-size-base;
-      font-weight: t.$notion-font-weight-semibold;
-      color: t.$notion-text-primary;
+      font-size: 1rem;
+      font-weight: 600;
+      color: hsl(var(--foreground));
     }
 
     &-badge {
-      font-family: t.$notion-font-family;
-      font-size: 10px;
-      font-weight: t.$notion-font-weight-semibold;
-      color: t.$notion-text-secondary;
-      background: t.$notion-bg-secondary;
-      border: 1px solid t.$notion-border;
+      flex-shrink: 0;
       padding: 2px 6px;
-      border-radius: t.$notion-radius-sm;
-      text-transform: uppercase;
+      font-size: 10px;
+      font-weight: 600;
+      color: hsl(var(--muted-foreground));
       letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: hsl(var(--muted));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--sep-radius-sm);
     }
 
     &-description {
       margin: 0;
-      font-family: t.$notion-font-family;
-      font-size: t.$notion-font-size-sm;
-      color: t.$notion-text-secondary;
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
     }
   }
 
   &-shortcut-title {
-    margin: t.$notion-space-2 0 0;
-    font-family: t.$notion-font-family;
-    font-size: t.$notion-font-size-base;
-    font-weight: t.$notion-font-weight-semibold;
-    color: t.$notion-text-primary;
+    margin: var(--sep-space-8) 0 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: hsl(var(--foreground));
   }
 
   &-shortcuts {
     display: flex;
     flex-direction: column;
-    gap: t.$notion-space-2;
+    gap: var(--sep-space-8);
   }
 
   &-shortcut {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    grid-template-rows: auto auto;
+    @include comp.sep-mobile-touch-state;
+
+    display: flex;
+    gap: var(--sep-space-16);
     align-items: center;
-    gap: 2px t.$notion-space-2;
     width: 100%;
-    min-height: t.$notion-touch-target-comfortable;
-    padding: t.$notion-space-3 t.$notion-space-4;
-    background: t.$notion-bg-primary;
-    border: 1px solid t.$notion-border;
-    border-radius: t.$notion-radius-md;
-    color: t.$notion-text-primary;
+    min-height: 48px;
+    padding: var(--sep-space-12) var(--sep-space-16);
+    color: hsl(var(--foreground));
     text-align: left;
-    cursor: pointer;
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--sep-radius-md);
+
+    &-body {
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
 
     &-label {
-      grid-column: 1;
-      grid-row: 1;
-      font-family: t.$notion-font-family;
-      font-size: t.$notion-font-size-base;
-      font-weight: t.$notion-font-weight-semibold;
+      font-size: 1rem;
+      font-weight: 600;
     }
 
     &-description {
-      grid-column: 1;
-      grid-row: 2;
-      font-family: t.$notion-font-family;
-      font-size: t.$notion-font-size-sm;
-      color: t.$notion-text-secondary;
-    }
-
-    .sep-tomador-card-badge {
-      grid-column: 2;
-      grid-row: 1 / span 2;
-      align-self: center;
-    }
-
-    &:active {
-      background: t.$notion-bg-secondary;
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
     }
   }
 
   &-toast {
     margin: 0;
-    padding: t.$notion-space-3 t.$notion-space-4;
-    background: t.$notion-bg-secondary;
-    border: 1px solid t.$notion-border;
-    border-radius: t.$notion-radius-md;
-    font-family: t.$notion-font-family;
-    font-size: t.$notion-font-size-sm;
-    color: t.$notion-text-primary;
+    padding: var(--sep-space-12) var(--sep-space-16);
+    font-size: 0.875rem;
+    color: hsl(var(--foreground));
     text-align: center;
+    background: hsl(var(--muted));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--sep-radius-md);
   }
 }

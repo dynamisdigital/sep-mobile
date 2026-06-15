@@ -1,0 +1,141 @@
+// =============================================================================
+// Tokens do New Design System SEP — versao mobile (M-Sprint 12 / Epic 17)
+// =============================================================================
+// Fonte oficial: docs-sep/New Design System Sep.md. Espelha os tokens do web
+// (sep-app/src/styles/_sep-ds-tokens.scss, F-Sprint 14/15) para manter paridade
+// visual cross-stack, adaptando ao mobile (touch targets, consumo via --ion-*).
+// Camadas:
+// - Cores em CSS custom properties HSL (`H S% L%`), consumidas via `hsl(var(--token))`.
+//   Light em `:root`; dark em `.dark`/`.ion-palette-dark` (alternado por ThemeService — M-12.3).
+// - Variaveis Sass `$sep-*` (cor concreta) para derivar a paleta Ionic em theme/variables.scss
+//   (shade/tint/contrast/rgb calculados por `sass:color`).
+// =============================================================================
+
+@use "sass:color";
+
+// -----------------------------------------------------------------------------
+// Paleta Sass concreta (origem das variaveis --ion-* em theme/variables.scss)
+// -----------------------------------------------------------------------------
+
+$sep-primary: hsl(213deg 58% 43%);
+$sep-primary-shade: color.adjust($sep-primary, $lightness: -7%); // ~213 58% 36%
+$sep-primary-tint: color.adjust($sep-primary, $lightness: 9%); // ~213 58% 52%
+$sep-secondary: hsl(145deg 50% 50%); // verde de suporte da marca
+$sep-secondary-shade: color.adjust($sep-secondary, $lightness: -7%);
+$sep-secondary-tint: color.adjust($sep-secondary, $lightness: 5%);
+$sep-success: hsl(145deg 50% 50%);
+$sep-warning: hsl(38deg 92% 50%);
+$sep-danger: hsl(0deg 72% 51%);
+$sep-bg-light: hsl(207deg 44% 97%);
+$sep-card-light: hsl(0deg 0% 100%);
+$sep-text-light: hsl(216deg 28% 24%);
+$sep-border-light: hsl(214deg 20% 88%);
+$sep-bg-dark: hsl(220deg 20% 10%);
+$sep-card-dark: hsl(220deg 20% 13%);
+$sep-text-dark: hsl(210deg 40% 98%);
+$sep-border-dark: hsl(220deg 15% 20%);
+
+// -----------------------------------------------------------------------------
+// Custom properties HSL — light
+// -----------------------------------------------------------------------------
+
+:root {
+  // Cores (HSL: H S% L%)
+  --background: 207 44% 97%;
+  --foreground: 216 28% 24%;
+  --card: 0 0% 100%;
+  --card-foreground: 216 28% 24%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 216 28% 24%;
+  --primary: 213 58% 43%;
+  --primary-foreground: 0 0% 100%;
+  --primary-hover: 213 58% 36%;
+  --secondary: 145 50% 50%;
+  --secondary-foreground: 0 0% 100%;
+  --secondary-hover: 145 50% 43%;
+  --muted: 210 20% 94%;
+  --muted-foreground: 214 16% 65%;
+  --accent: 145 40% 92%;
+  --accent-foreground: 216 28% 24%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
+  --success: 145 50% 50%;
+  --success-foreground: 0 0% 100%;
+  --border: 214 20% 88%;
+  --input: 214 20% 88%;
+  --ring: 213 58% 43%;
+
+  // Texto/icone sobre gradiente: invariante ao tema, sempre branco.
+  --gradient-foreground: 0 0% 100%;
+
+  // Raio (base 0.75rem; derivados seguem a config Tailwind de origem)
+  --radius: 0.75rem;
+  --sep-radius-sm: calc(var(--radius) - 4px);
+  --sep-radius-md: calc(var(--radius) - 2px);
+  --sep-radius-lg: var(--radius);
+  --sep-radius-xl: 1rem;
+  --sep-radius-pill: 9999px;
+  --sep-radius-full: 9999px;
+
+  // Gradientes da marca
+  --gradient-primary: linear-gradient(135deg, hsl(213deg 58% 43%), hsl(145deg 50% 50%));
+  --gradient-secondary: linear-gradient(135deg, hsl(145deg 50% 50%), hsl(213deg 58% 43%));
+  --gradient-hero: linear-gradient(135deg, hsl(213deg 58% 43% / 10%), hsl(145deg 50% 50% / 10%));
+
+  // Sombras (tingidas com o azul primario)
+  --shadow-sm: 0 2px 8px -2px hsl(213deg 58% 43% / 10%);
+  --shadow-md: 0 4px 16px -4px hsl(213deg 58% 43% / 15%);
+  --shadow-lg: 0 8px 32px -8px hsl(213deg 58% 43% / 20%);
+  --shadow-card: 0 4px 20px -4px hsl(213deg 58% 43% / 10%);
+
+  // Espacamento (base 8px) usado pelos primitivos mobile
+  --sep-space-2: 2px;
+  --sep-space-4: 4px;
+  --sep-space-8: 8px;
+  --sep-space-12: 12px;
+  --sep-space-16: 16px;
+  --sep-space-24: 24px;
+  --sep-space-32: 32px;
+  --sep-space-48: 48px;
+
+  // Touch target minimo (Apple HIG) reusado pelos primitivos interativos
+  --sep-touch-target: 44px;
+
+  // Transicao suave compartilhada
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+// -----------------------------------------------------------------------------
+// Custom properties HSL — dark (ativado por classe via ThemeService na M-12.3)
+// -----------------------------------------------------------------------------
+
+.dark,
+.ion-palette-dark {
+  --background: 220 20% 10%;
+  --foreground: 210 40% 98%;
+  --card: 220 20% 13%;
+  --card-foreground: 210 40% 98%;
+  --popover: 220 20% 13%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 213 58% 52%;
+  --primary-foreground: 220 20% 10%;
+  --primary-hover: 213 58% 58%;
+  --secondary: 145 50% 55%;
+  --secondary-foreground: 220 20% 10%;
+  --secondary-hover: 145 50% 60%;
+  --muted: 220 15% 18%;
+  --muted-foreground: 214 16% 65%;
+  --accent: 145 30% 20%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 72% 55%;
+  --destructive-foreground: 210 40% 98%;
+  --warning: 38 92% 55%;
+  --warning-foreground: 220 20% 10%;
+  --success: 145 50% 55%;
+  --success-foreground: 220 20% 10%;
+  --border: 220 15% 20%;
+  --input: 220 15% 20%;
+  --ring: 213 58% 52%;
+}

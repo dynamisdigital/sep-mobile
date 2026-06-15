@@ -1,33 +1,47 @@
-@use "../../../../styles/notion-mobile-typography" as t;
-
 .t-h1 {
-  @include t.notion-heading-1;
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: hsl(var(--foreground));
+  letter-spacing: -0.022em;
 }
 
 .t-h2 {
-  @include t.notion-heading-2;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+  letter-spacing: -0.018em;
 }
 
 .t-h3 {
-  @include t.notion-heading-3;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: hsl(var(--foreground));
 }
 
 .t-base {
-  @include t.notion-text-base;
+  font-size: 1rem;
+  color: hsl(var(--foreground));
 }
 
 .t-secondary {
-  @include t.notion-text-secondary;
+  font-size: 0.875rem;
+  color: hsl(var(--muted-foreground));
 }
 
 .t-caption {
-  @include t.notion-text-caption;
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
 }
 
 .t-label {
-  @include t.notion-label;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: hsl(var(--muted-foreground));
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .t-mono {
-  @include t.notion-mono;
+  font-family: "JetBrains Mono", "Fira Code", monospace;
+  font-size: 0.875rem;
 }

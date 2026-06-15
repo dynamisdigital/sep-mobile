@@ -1,10 +1,11 @@
 <ion-content class="sep-login" [fullscreen]="true">
-  <main class="sep-login__inner">
-    <header class="sep-login__header">
-      <h1 class="sep-login__title">Entrar</h1>
-      <p class="sep-login__subtitle">Acesse sua conta SEP</p>
-    </header>
+  <header class="sep-login__brand">
+    <span class="sep-login__brand-mark">SEP</span>
+    <h1 class="sep-login__title">Entrar</h1>
+    <p class="sep-login__subtitle">Acesse sua conta SEP</p>
+  </header>
 
+  <main class="sep-login__inner">
     <form class="sep-login__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <div class="sep-login__field">
         <ion-input
@@ -47,13 +48,7 @@
         }
       </div>
 
-      <ion-button
-        class="sep-login__submit"
-        type="submit"
-        expand="block"
-        color="primary"
-        [disabled]="submitting()"
-      >
+      <ion-button class="sep-login__submit" type="submit" expand="block" [disabled]="submitting()">
         @if (submitting()) {
           <ion-spinner name="dots"></ion-spinner>
         } @else {

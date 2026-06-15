@@ -1,10 +1,11 @@
 <ion-content class="sep-register" [fullscreen]="true">
-  <main class="sep-register__inner">
-    <header class="sep-register__header">
-      <h1 class="sep-register__title">Criar conta</h1>
-      <p class="sep-register__subtitle">Cadastro publico SEP</p>
-    </header>
+  <header class="sep-register__brand">
+    <span class="sep-register__brand-mark">SEP</span>
+    <h1 class="sep-register__title">Criar conta</h1>
+    <p class="sep-register__subtitle">Cadastro publico SEP</p>
+  </header>
 
+  <main class="sep-register__inner">
     <form class="sep-register__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <div class="sep-register__field">
         <ion-input
@@ -65,7 +66,6 @@
         class="sep-register__submit"
         type="submit"
         expand="block"
-        color="primary"
         [disabled]="submitting()"
       >
         @if (submitting()) {

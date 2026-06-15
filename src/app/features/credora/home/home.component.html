@@ -11,11 +11,16 @@
     <div class="sep-credora-cards">
       @for (card of cards; track card.testid) {
         <article class="sep-credora-card" [attr.data-testid]="card.testid">
-          <div class="sep-credora-card-head">
-            <h2 class="sep-credora-card-title">{{ card.label }}</h2>
-            <span class="sep-credora-card-badge">Em breve</span>
+          <span class="sep-credora-card-chip" [style.--chip-tone]="card.tone" aria-hidden="true">
+            <ion-icon [name]="card.icon"></ion-icon>
+          </span>
+          <div class="sep-credora-card-body">
+            <div class="sep-credora-card-head">
+              <h2 class="sep-credora-card-title">{{ card.label }}</h2>
+              <span class="sep-credora-card-badge">Em breve</span>
+            </div>
+            <p class="sep-credora-card-description">{{ card.description }}</p>
           </div>
-          <p class="sep-credora-card-description">{{ card.description }}</p>
         </article>
       }
     </div>
