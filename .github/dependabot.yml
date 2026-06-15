@@ -1,29 +1,46 @@
 # Configuracao do Dependabot para o sep-mobile.
-# Habilita atualizacoes de versao (npm + github-actions), agrupa familias de
-# pacotes que precisam subir juntas e ignora transitivos de DEV sem fix.
+# Estrategia: agrupar amplamente para reduzir o numero de PRs (de ~1 por dep
+# para no maximo ~5 por ciclo), com limite baixo e ignore de transitivos de DEV
+# sem fix. Ordem dos grupos importa: cada dependencia entra no PRIMEIRO grupo
+# cujo pattern casa.
 version: 2
 updates:
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
       interval: 'weekly'
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
     groups:
-      # @angular/* tem que subir em conjunto (sync de versao); bump unitario
-      # quebra o build. Atualizacoes maiores devem usar `ng update`.
+      # Pacotes Angular sobem em conjunto (sync de versao). Atualizacoes maiores
+      # ainda devem usar `ng update`.
       angular:
         patterns:
           - '@angular/*'
           - '@angular-devkit/*'
           - '@angular-eslint/*'
+          - 'angular-eslint'
       # Stack de teste/bundler: vitest e @vitest/coverage-v8 precisam da MESMA
-      # versao, e vite/@analogjs acompanham. Agrupar evita PRs unitarias quebradas.
+      # versao; vite/@analogjs acompanham.
       test-tooling:
         patterns:
           - 'vitest'
           - '@vitest/*'
           - 'vite'
           - '@analogjs/*'
+      # Catch-all de baixo risco: tudo que nao for Angular/test-tooling, em UMA
+      # PR de minor + patch.
+      minor-and-patch:
+        patterns:
+          - '*'
+        update-types:
+          - 'minor'
+          - 'patch'
+      # Catch-all de majors restantes em UMA PR (revisar com atencao).
+      major-updates:
+        patterns:
+          - '*'
+        update-types:
+          - 'major'
     ignore:
       # Transitivos apenas de toolchain de DEV, sem fix resolvivel upstream e
       # fora do bundle de producao (build usa esbuild, nao webpack-dev-server):
@@ -33,9 +50,25 @@ updates:
       - dependency-name: 'uuid'
       - dependency-name: 'shell-quote'
       - dependency-name: 'hono'
+      # Majors de vitest/@analogjs nao sao aplicaveis no Angular 20: analogjs 2.x
+      # exige @angular/build/private (Angular 21+) e quebra o vitest.config.
+      # Manter na serie 3.x ate uma futura migracao de Angular.
+      - dependency-name: 'vitest'
+        update-types:
+          - 'version-update:semver-major'
+      - dependency-name: '@vitest/*'
+        update-types:
+          - 'version-update:semver-major'
+      - dependency-name: '@analogjs/*'
+        update-types:
+          - 'version-update:semver-major'
 
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
       interval: 'weekly'
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns:
+          - '*'
