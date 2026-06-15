@@ -1,81 +1,84 @@
-@use "../../../../styles/notion-mobile-tokens" as *;
+@use "../../../../styles/sep-mobile-ds-components" as comp;
 
 .sep-register {
-  --background: #{$notion-bg-secondary};
+  --background: hsl(var(--background));
 }
 
-.sep-register__inner {
-  display: flex;
-  flex-direction: column;
-  gap: $notion-space-6;
-  padding: $notion-space-8 $notion-space-6;
-  max-width: 480px;
-  margin: 0 auto;
+.sep-register__brand {
+  @include comp.sep-mobile-auth-brand-panel;
+
+  align-items: flex-start;
+  gap: var(--sep-space-4);
 }
 
-.sep-register__header {
-  display: flex;
-  flex-direction: column;
-  gap: $notion-space-2;
+.sep-register__brand-mark {
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: 0.04em;
+  opacity: 0.9;
 }
 
 .sep-register__title {
   margin: 0;
-  color: $notion-text-primary;
-  font-weight: $notion-font-weight-bold;
-  font-size: $notion-font-size-2xl;
-  font-family: $notion-font-family;
+  font-weight: 700;
+  font-size: 1.75rem;
   letter-spacing: -0.02em;
 }
 
 .sep-register__subtitle {
   margin: 0;
-  color: $notion-text-secondary;
-  font-size: $notion-font-size-base;
-  font-family: $notion-font-family;
+  color: hsl(var(--gradient-foreground) / 88%);
+  font-size: 1rem;
+}
+
+.sep-register__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sep-space-24);
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--sep-space-24);
 }
 
 .sep-register__form {
   display: flex;
   flex-direction: column;
-  gap: $notion-space-4;
+  gap: var(--sep-space-16);
 }
 
 .sep-register__field {
   display: flex;
   flex-direction: column;
-  gap: $notion-space-1;
+  gap: var(--sep-space-4);
 }
 
 .sep-register__error {
   display: block;
-  margin-top: $notion-space-1;
-  font-size: $notion-font-size-xs;
+  margin-top: var(--sep-space-4);
+  font-size: 0.75rem;
 }
 
 .sep-register__submit {
-  --border-radius: #{$notion-radius-md};
+  @include comp.sep-mobile-button-gradient;
 
-  min-height: 48px;
-  margin-top: $notion-space-2;
+  margin-top: var(--sep-space-8);
 }
 
 .sep-register__alt {
   display: flex;
   flex-wrap: wrap;
-  gap: $notion-space-2;
+  gap: var(--sep-space-8);
   justify-content: center;
-  margin: $notion-space-4 0 0;
-  font-size: $notion-font-size-sm;
-  font-family: $notion-font-family;
+  margin: var(--sep-space-16) 0 0;
+  font-size: 0.875rem;
 }
 
 .sep-register__alt-link {
-  color: $notion-color-primary;
-  font-weight: $notion-font-weight-semibold;
+  color: hsl(var(--primary));
+  font-weight: 600;
   text-decoration: none;
 
   &:active {
-    color: $notion-color-primary-shade;
+    color: hsl(var(--primary-hover));
   }
 }

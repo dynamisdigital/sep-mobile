@@ -10,26 +10,31 @@
 
     <section class="sep-welcome__journeys" aria-label="Jornadas">
       <article class="sep-welcome__journey">
-        <h2 class="sep-welcome__journey-title">Sou tomador</h2>
-        <p class="sep-welcome__journey-body">
-          Solicite capital de giro e acompanhe sua proposta em poucos toques.
-        </p>
+        <span class="sep-welcome__chip sep-welcome__chip--primary" aria-hidden="true">
+          <ion-icon name="briefcase-outline"></ion-icon>
+        </span>
+        <div class="sep-welcome__journey-text">
+          <h2 class="sep-welcome__journey-title">Sou tomador</h2>
+          <p class="sep-welcome__journey-body">
+            Solicite capital de giro e acompanhe sua proposta em poucos toques.
+          </p>
+        </div>
       </article>
       <article class="sep-welcome__journey">
-        <h2 class="sep-welcome__journey-title">Sou empresa credora</h2>
-        <p class="sep-welcome__journey-body">
-          Aporte recursos e acompanhe operacoes financiadas pelo app.
-        </p>
+        <span class="sep-welcome__chip sep-welcome__chip--secondary" aria-hidden="true">
+          <ion-icon name="wallet-outline"></ion-icon>
+        </span>
+        <div class="sep-welcome__journey-text">
+          <h2 class="sep-welcome__journey-title">Sou empresa credora</h2>
+          <p class="sep-welcome__journey-body">
+            Aporte recursos e acompanhe operacoes financiadas pelo app.
+          </p>
+        </div>
       </article>
     </section>
 
     <footer class="sep-welcome__actions">
-      <ion-button
-        class="sep-welcome__cta-primary"
-        expand="block"
-        color="primary"
-        routerLink="/login"
-      >
+      <ion-button class="sep-welcome__cta-primary" expand="block" routerLink="/login">
         Entrar
       </ion-button>
       <ion-button
@@ -42,6 +47,7 @@
         Criar conta
       </ion-button>
       <p class="sep-welcome__trust">
+        <ion-icon name="shield-checkmark-outline" aria-hidden="true"></ion-icon>
         Ambiente preparado para cadastro seguro e auditoria das operacoes.
       </p>
     </footer>

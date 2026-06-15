@@ -1,3 +1,5 @@
+@use "../../../../../styles/sep-mobile-ds-components" as comp;
+
 .sep-verify-totp {
   --padding-bottom: 24px;
 
@@ -11,4 +13,8 @@
     gap: 16px;
     margin-top: 16px;
   }
+}
+
+.sep-verify-totp__submit {
+  @include comp.sep-mobile-button-gradient;
 }
