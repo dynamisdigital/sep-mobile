@@ -11,14 +11,18 @@ updates:
       interval: 'weekly'
     open-pull-requests-limit: 5
     groups:
-      # Pacotes Angular sobem em conjunto (sync de versao). Atualizacoes maiores
-      # ainda devem usar `ng update`.
+      # Pacotes Angular sobem em conjunto (sync de versao), SO minor/patch.
+      # Majors (ex: Angular 20 -> 22) sao migracao manual via `ng update` e
+      # estao no ignore abaixo — Dependabot nao deve propor.
       angular:
         patterns:
           - '@angular/*'
           - '@angular-devkit/*'
           - '@angular-eslint/*'
           - 'angular-eslint'
+        update-types:
+          - 'minor'
+          - 'patch'
       # Stack de teste/bundler: vitest e @vitest/coverage-v8 precisam da MESMA
       # versao; vite/@analogjs acompanham.
       test-tooling:
@@ -60,6 +64,21 @@ updates:
         update-types:
           - 'version-update:semver-major'
       - dependency-name: '@analogjs/*'
+        update-types:
+          - 'version-update:semver-major'
+      # Majors do Angular (20 -> 21/22...) exigem `ng update` + Node 22+ e
+      # quebram a stack atual (CI Node 20, vitest/analog fixados no Angular 20).
+      # Fazer como migracao deliberada, nunca por bump automatico.
+      - dependency-name: '@angular/*'
+        update-types:
+          - 'version-update:semver-major'
+      - dependency-name: '@angular-devkit/*'
+        update-types:
+          - 'version-update:semver-major'
+      - dependency-name: '@angular-eslint/*'
+        update-types:
+          - 'version-update:semver-major'
+      - dependency-name: 'angular-eslint'
         update-types:
           - 'version-update:semver-major'
 
