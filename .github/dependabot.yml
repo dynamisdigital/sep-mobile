@@ -1,0 +1,41 @@
+# Configuracao do Dependabot para o sep-mobile.
+# Habilita atualizacoes de versao (npm + github-actions), agrupa familias de
+# pacotes que precisam subir juntas e ignora transitivos de DEV sem fix.
+version: 2
+updates:
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 10
+    groups:
+      # @angular/* tem que subir em conjunto (sync de versao); bump unitario
+      # quebra o build. Atualizacoes maiores devem usar `ng update`.
+      angular:
+        patterns:
+          - '@angular/*'
+          - '@angular-devkit/*'
+          - '@angular-eslint/*'
+      # Stack de teste/bundler: vitest e @vitest/coverage-v8 precisam da MESMA
+      # versao, e vite/@analogjs acompanham. Agrupar evita PRs unitarias quebradas.
+      test-tooling:
+        patterns:
+          - 'vitest'
+          - '@vitest/*'
+          - 'vite'
+          - '@analogjs/*'
+    ignore:
+      # Transitivos apenas de toolchain de DEV, sem fix resolvivel upstream e
+      # fora do bundle de producao (build usa esbuild, nao webpack-dev-server):
+      # - uuid:        build-angular -> webpack-dev-server -> sockjs -> uuid
+      # - shell-quote: build-angular -> webpack-dev-server -> launch-editor -> shell-quote
+      # - hono:        @angular/cli -> @modelcontextprotocol/sdk -> @hono/node-server -> hono
+      - dependency-name: 'uuid'
+      - dependency-name: 'shell-quote'
+      - dependency-name: 'hono'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 10
