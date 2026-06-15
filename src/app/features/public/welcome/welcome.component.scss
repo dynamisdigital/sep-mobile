@@ -1,7 +1,7 @@
 @use "../../../../styles/sep-mobile-ds-components" as comp;
 
 .sep-welcome {
-  --background: hsl(var(--background));
+  --background: var(--ion-background-color);
 }
 
 .sep-welcome__inner {

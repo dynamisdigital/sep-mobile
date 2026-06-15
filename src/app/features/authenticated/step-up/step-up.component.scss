@@ -1,5 +1,5 @@
 .sep-step-up {
-  --background: hsl(var(--background));
+  --background: var(--ion-background-color);
   --padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
 }
 
@@ -53,7 +53,7 @@
   padding: var(--sep-space-12) var(--sep-space-16);
   font-size: 1rem;
   color: hsl(var(--foreground));
-  background: hsl(var(--background));
+  background: hsl(var(--card));
   border: 1px solid hsl(var(--input));
   border-radius: var(--sep-radius-md);
 
