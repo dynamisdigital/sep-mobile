@@ -4,7 +4,7 @@
   --color-selected: var(--ion-tab-bar-color-selected);
   --border: 1px solid var(--ion-tab-bar-border-color);
 
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  // safe-area-inset-bottom e reservada no global.scss (ion-tab-bar); nao repetir aqui.
 
   ion-tab-button {
     --ripple-color: transparent;

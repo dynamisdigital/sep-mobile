@@ -68,7 +68,9 @@ ion-tab-bar {
   --color: var(--ion-tab-bar-color);
   --color-selected: var(--ion-tab-bar-color-selected);
 
-  height: calc(56px + env(safe-area-inset-bottom, 0));
+  // Reserva da safe-area fica so aqui (fonte unica) para nao somar duas vezes.
+  min-height: 56px;
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
 // Em ion-tabs, o ion-router-outlet fica absoluto sobre a viewport. No Chromium
