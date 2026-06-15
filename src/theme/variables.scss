@@ -1,74 +1,108 @@
 // =============================================================================
-// CSS variables Ionic mapeadas para tokens Notion mobile (M-Sprint 1)
+// CSS variables Ionic mapeadas para o New Design System SEP (M-Sprint 12)
 // =============================================================================
-// Aqui mapeamos as variaveis --ion-* expostas pelos componentes Ionic para os
-// tokens warm do Notion. Componentes Ionic continuam funcionando, mas agora
-// "parecem" Notion sem reescreve-los.
+// Mapeia as variaveis --ion-* expostas pelos componentes Ionic para a paleta do
+// New Design System SEP. Os componentes Ionic continuam funcionando, mas agora
+// "parecem" o design vigente. shade/tint/contrast/rgb derivam das cores Sass de
+// `styles/_sep-mobile-ds-tokens.scss` via `sass:color`.
 // Ver: https://ionicframework.com/docs/theming/colors
+// Substitui o mapeamento Notion das M-Sprints 0-5.
 // =============================================================================
 
-@use "../styles/notion-mobile-tokens" as notion;
+@use "sass:color";
+@use "sass:math";
+@use "../styles/sep-mobile-ds-tokens" as ds;
+
+@function rgb-triplet($c) {
+  $r: math.round(color.channel($c, "red", $space: rgb));
+  $g: math.round(color.channel($c, "green", $space: rgb));
+  $b: math.round(color.channel($c, "blue", $space: rgb));
+
+  @return "#{$r}, #{$g}, #{$b}";
+}
 
 :root {
   // ---------------------------------------------------------------------------
-  // Cor primaria (azul Notion)
+  // Cor primaria (azul da marca SEP)
   // ---------------------------------------------------------------------------
-  --ion-color-primary: #{notion.$notion-color-primary};
-  --ion-color-primary-rgb: 35, 131, 226;
-  --ion-color-primary-contrast: #{notion.$notion-text-inverse};
+  --ion-color-primary: #{ds.$sep-primary};
+  --ion-color-primary-rgb: #{rgb-triplet(ds.$sep-primary)};
+  --ion-color-primary-contrast: #fff;
   --ion-color-primary-contrast-rgb: 255, 255, 255;
-  --ion-color-primary-shade: #{notion.$notion-color-primary-shade};
-  --ion-color-primary-tint: #{notion.$notion-color-primary-tint};
+  --ion-color-primary-shade: #{ds.$sep-primary-shade};
+  --ion-color-primary-tint: #{ds.$sep-primary-tint};
 
   // ---------------------------------------------------------------------------
-  // Secundaria (texto secundario do Notion)
+  // Secundaria (verde de suporte da marca)
   // ---------------------------------------------------------------------------
-  --ion-color-secondary: #{notion.$notion-text-secondary};
-  --ion-color-secondary-rgb: 55, 53, 47;
-  --ion-color-secondary-contrast: #{notion.$notion-text-inverse};
+  --ion-color-secondary: #{ds.$sep-secondary};
+  --ion-color-secondary-rgb: #{rgb-triplet(ds.$sep-secondary)};
+  --ion-color-secondary-contrast: #fff;
   --ion-color-secondary-contrast-rgb: 255, 255, 255;
+  --ion-color-secondary-shade: #{ds.$sep-secondary-shade};
+  --ion-color-secondary-tint: #{ds.$sep-secondary-tint};
 
   // ---------------------------------------------------------------------------
   // Semanticas
   // ---------------------------------------------------------------------------
-  --ion-color-success: #{notion.$notion-color-success};
-  --ion-color-success-rgb: 68, 131, 97;
+  --ion-color-success: #{ds.$sep-success};
+  --ion-color-success-rgb: #{rgb-triplet(ds.$sep-success)};
   --ion-color-success-contrast: #fff;
   --ion-color-success-contrast-rgb: 255, 255, 255;
-  --ion-color-warning: #{notion.$notion-color-warning};
-  --ion-color-warning-rgb: 217, 115, 13;
+  --ion-color-warning: #{ds.$sep-warning};
+  --ion-color-warning-rgb: #{rgb-triplet(ds.$sep-warning)};
   --ion-color-warning-contrast: #fff;
-  --ion-color-danger: #{notion.$notion-color-danger};
-  --ion-color-danger-rgb: 212, 76, 71;
+  --ion-color-danger: #{ds.$sep-danger};
+  --ion-color-danger-rgb: #{rgb-triplet(ds.$sep-danger)};
   --ion-color-danger-contrast: #fff;
 
   // ---------------------------------------------------------------------------
-  // Backgrounds (warm Notion)
+  // Backgrounds e texto (light)
   // ---------------------------------------------------------------------------
-  --ion-background-color: #{notion.$notion-bg-primary};
-  --ion-background-color-rgb: 255, 255, 255;
-  --ion-text-color: #{notion.$notion-text-primary};
-  --ion-text-color-rgb: 55, 53, 47;
-  --ion-color-step-50: #{notion.$notion-bg-secondary};
-  --ion-color-step-100: #{notion.$notion-bg-tertiary};
+  --ion-background-color: #{ds.$sep-bg-light};
+  --ion-background-color-rgb: #{rgb-triplet(ds.$sep-bg-light)};
+  --ion-text-color: #{ds.$sep-text-light};
+  --ion-text-color-rgb: #{rgb-triplet(ds.$sep-text-light)};
+  --ion-card-background: #{ds.$sep-card-light};
+  --ion-color-step-50: #{ds.$sep-card-light};
+  --ion-color-step-100: hsl(210deg 20% 94%);
 
   // ---------------------------------------------------------------------------
   // Toolbar (header) e Tab bar (rodape)
   // ---------------------------------------------------------------------------
-  --ion-toolbar-background: #{notion.$notion-bg-primary};
-  --ion-toolbar-color: #{notion.$notion-text-primary};
-  --ion-tab-bar-background: #{notion.$notion-bg-primary};
-  --ion-tab-bar-color: #{notion.$notion-text-secondary};
-  --ion-tab-bar-color-selected: #{notion.$notion-color-primary};
-  --ion-tab-bar-border-color: #{notion.$notion-border};
+  --ion-toolbar-background: #{ds.$sep-card-light};
+  --ion-toolbar-color: #{ds.$sep-text-light};
+  --ion-tab-bar-background: #{ds.$sep-card-light};
+  --ion-tab-bar-color: hsl(214deg 16% 45%);
+  --ion-tab-bar-color-selected: #{ds.$sep-primary};
+  --ion-tab-bar-border-color: #{ds.$sep-border-light};
 
   // ---------------------------------------------------------------------------
-  // Tipografia
+  // Tipografia e feedback de toque
   // ---------------------------------------------------------------------------
-  --ion-font-family: #{notion.$notion-font-family};
+  --ion-font-family: "Inter", -apple-system, blinkmacsystemfont, "Segoe UI", roboto, sans-serif;
+  --ion-tap-highlight: hsl(213deg 58% 43% / 8%);
+}
 
-  // ---------------------------------------------------------------------------
-  // Tap highlight (azul Notion translucido — feedback de toque)
-  // ---------------------------------------------------------------------------
-  --ion-tap-highlight: #{notion.$notion-tap-highlight};
+// -----------------------------------------------------------------------------
+// Dark (ativado por classe .dark/.ion-palette-dark via ThemeService — M-12.3)
+// -----------------------------------------------------------------------------
+
+.dark,
+.ion-palette-dark {
+  --ion-color-primary: #{ds.$sep-primary-tint};
+  --ion-color-primary-rgb: #{rgb-triplet(ds.$sep-primary-tint)};
+  --ion-background-color: #{ds.$sep-bg-dark};
+  --ion-background-color-rgb: #{rgb-triplet(ds.$sep-bg-dark)};
+  --ion-text-color: #{ds.$sep-text-dark};
+  --ion-text-color-rgb: #{rgb-triplet(ds.$sep-text-dark)};
+  --ion-card-background: #{ds.$sep-card-dark};
+  --ion-color-step-50: #{ds.$sep-card-dark};
+  --ion-color-step-100: hsl(220deg 15% 18%);
+  --ion-toolbar-background: #{ds.$sep-card-dark};
+  --ion-toolbar-color: #{ds.$sep-text-dark};
+  --ion-tab-bar-background: #{ds.$sep-card-dark};
+  --ion-tab-bar-color: hsl(214deg 16% 65%);
+  --ion-tab-bar-color-selected: #{ds.$sep-primary-tint};
+  --ion-tab-bar-border-color: #{ds.$sep-border-dark};
 }

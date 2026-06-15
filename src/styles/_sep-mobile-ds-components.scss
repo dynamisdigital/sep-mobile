@@ -1,0 +1,119 @@
+// =============================================================================
+// Primitivos visuais do New Design System SEP — versao mobile (M-Sprint 12)
+// =============================================================================
+// Biblioteca de mixins SCSS que traduz os primitivos do web (F-Sprint 15:
+// sep-icon-chip, sep-quick-tile, sep-button-gradient, sep-auth-brand-panel,
+// sep-card) para o mobile Ionic/Angular, consumindo os tokens de
+// `_sep-mobile-ds-tokens.scss`. Sem trocar a stack: alvos sao elementos HTML
+// nativos e variaveis `--ion-*` de componentes Ionic.
+// =============================================================================
+
+// Chip de icone colorido (fundo translucido + icone no tom). Decorativo.
+// Uso: `@include sep-mobile-icon-chip(--primary);` num wrapper de `ion-icon`.
+@mixin sep-mobile-icon-chip($tone) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: hsl(var(#{$tone}));
+  background: hsl(var(#{$tone}) / 12%);
+  border-radius: var(--sep-radius-md);
+
+  ion-icon {
+    font-size: 20px;
+  }
+}
+
+// Feedback de toque para superficies interativas nao-Ionic (tiles, cards-link).
+// Realce de toque translucido + leve afundamento no `:active`.
+@mixin sep-mobile-touch-state {
+  -webkit-tap-highlight-color: hsl(var(--primary) / 8%);
+  cursor: pointer;
+  transition:
+    transform 0.12s ease-out,
+    box-shadow 0.18s ease-out,
+    border-color 0.18s ease-out;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+// Tile de "Acesso Rapido": superficie tonalizada, raio xl, alvo de toque >= 44px.
+// O icone interno (`.sep-tile-icon`) recebe a cor cheia do tom.
+// Uso: `@include sep-mobile-quick-tile(--primary);`
+@mixin sep-mobile-quick-tile($tone) {
+  @include sep-mobile-touch-state;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sep-space-8);
+  min-height: 88px;
+  padding: var(--sep-space-16) var(--sep-space-12);
+  color: hsl(var(--foreground));
+  text-align: center;
+  text-decoration: none;
+  background: hsl(var(#{$tone}) / 10%);
+  border: 1px solid hsl(var(#{$tone}) / 14%);
+  border-radius: var(--sep-radius-xl);
+
+  .sep-tile-icon {
+    color: hsl(var(#{$tone}));
+    font-size: 26px;
+  }
+
+  &:active {
+    border-color: hsl(var(#{$tone}) / 24%);
+  }
+}
+
+// CTA de destaque: gradiente azul->verde da marca aplicado a um `ion-button`.
+// Uso: `ion-button.sep-cta { @include sep-mobile-button-gradient; }`
+@mixin sep-mobile-button-gradient {
+  --background: var(--gradient-primary);
+  --background-hover: var(--gradient-primary);
+  --background-activated: var(--gradient-primary);
+  --color: hsl(var(--gradient-foreground));
+  --border-radius: var(--sep-radius-md);
+  --box-shadow: var(--shadow-sm);
+  --padding-top: 0;
+  --padding-bottom: 0;
+
+  min-height: var(--sep-touch-target);
+  font-weight: 600;
+  text-transform: none;
+
+  &::part(native) {
+    filter: none;
+    transition: filter 0.2s ease;
+  }
+
+  &:active::part(native) {
+    filter: brightness(1.05);
+  }
+}
+
+// Superficie de card do design system (div nativa, nao `ion-card`).
+@mixin sep-mobile-surface-card {
+  color: hsl(var(--card-foreground));
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--sep-radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+// Painel de marca para superficies publicas (hero/banda com gradiente da marca).
+// No mobile e uma banda compacta no topo, nao uma coluna lateral.
+@mixin sep-mobile-auth-brand-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sep-space-12);
+  padding: var(--sep-space-32) var(--sep-space-24);
+  overflow: hidden;
+  color: hsl(var(--gradient-foreground));
+  background: var(--gradient-primary);
+}

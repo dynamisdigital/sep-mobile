@@ -12,3 +12,9 @@
 @use "notion-mobile-typography" as *;
 @use "notion-mobile-components" as *;
 @use "mixins" as *; // placeholder da M-Sprint 0; opcional
+
+// New Design System SEP (M-Sprint 12). Carregado por ultimo: as custom
+// properties HSL e o dark (.dark/.ion-palette-dark) passam a ser a fonte visual
+// vigente do mobile. Mixins ficam disponiveis para os componentes via @use.
+@use "sep-mobile-ds-tokens" as *;
+@use "sep-mobile-ds-components" as *;
