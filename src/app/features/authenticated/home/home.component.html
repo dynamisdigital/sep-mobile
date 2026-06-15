@@ -8,8 +8,13 @@
     <div class="sep-home-shortcuts">
       @for (shortcut of shortcuts(); track shortcut.link) {
         <a class="sep-home-card" [routerLink]="shortcut.link" [attr.data-testid]="shortcut.testid">
-          <span class="sep-home-card-label">{{ shortcut.label }}</span>
-          <span class="sep-home-card-description">{{ shortcut.description }}</span>
+          <span class="sep-home-card-chip" [style.--chip-tone]="shortcut.tone" aria-hidden="true">
+            <ion-icon [name]="shortcut.icon"></ion-icon>
+          </span>
+          <span class="sep-home-card-text">
+            <span class="sep-home-card-label">{{ shortcut.label }}</span>
+            <span class="sep-home-card-description">{{ shortcut.description }}</span>
+          </span>
         </a>
       }
     </div>
