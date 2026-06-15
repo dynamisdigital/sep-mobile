@@ -1,17 +1,46 @@
 @use "../../../../../styles/sep-mobile-ds-components" as comp;
 
 .sep-verify-totp {
-  --padding-bottom: 24px;
+  --background: hsl(var(--background));
+}
+
+.sep-verify-totp__brand {
+  @include comp.sep-mobile-auth-brand-panel;
+
+  align-items: flex-start;
+  gap: var(--sep-space-4);
+}
+
+.sep-verify-totp__brand-mark {
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: 0.04em;
+  opacity: 0.9;
+}
+
+.sep-verify-totp__title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.02em;
+}
+
+.sep-verify-totp__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sep-space-16);
+  max-width: 480px;
+  margin: 0 auto;
+  padding: var(--sep-space-24);
 
   h2 {
-    margin: 0 0 8px;
+    margin: 0 0 var(--sep-space-8);
   }
 
   form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
-    margin-top: 16px;
+    gap: var(--sep-space-16);
   }
 }
 

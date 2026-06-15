@@ -100,6 +100,11 @@
 }
 
 .sep-welcome__cta-secondary {
+  --background: transparent;
+  --color: hsl(var(--foreground));
+  --border-color: hsl(var(--input));
+  --border-width: 1px;
+  --border-style: solid;
   --border-radius: var(--sep-radius-md);
 
   min-height: var(--sep-touch-target);
