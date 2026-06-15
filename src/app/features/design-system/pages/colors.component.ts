@@ -1,58 +1,63 @@
-import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';
 import { IonContent, IonItem, IonLabel, IonList } from '@ionic/angular/standalone';
 
 interface Cor {
   nome: string;
-  variavel: string;
-  hex: string;
+  token: string;
 }
 
 @Component({
   selector: 'sep-ds-colors',
   standalone: true,
-  imports: [CommonModule, IonContent, IonItem, IonLabel, IonList],
+  imports: [IonContent, IonItem, IonLabel, IonList],
   template: `
     <ion-content class="ion-padding">
-      <h2>Paleta Notion Mobile</h2>
+      <h2>Paleta New Design System SEP</h2>
+      <p class="hint">Amostras vivas via tokens HSL; adaptam ao tema claro/escuro.</p>
       <ion-list>
-        <ion-item *ngFor="let c of cores">
-          <div class="swatch" [style.background]="c.hex"></div>
-          <ion-label>
-            <h3>{{ c.nome }}</h3>
-            <p>
-              <code>{{ c.variavel }}</code> - {{ c.hex }}
-            </p>
-          </ion-label>
-        </ion-item>
+        @for (c of cores; track c.token) {
+          <ion-item>
+            <div class="swatch" [style.background]="'hsl(var(' + c.token + '))'"></div>
+            <ion-label>
+              <h3>{{ c.nome }}</h3>
+              <p>
+                <code>{{ c.token }}</code>
+              </p>
+            </ion-label>
+          </ion-item>
+        }
       </ion-list>
     </ion-content>
   `,
   styles: [
     `
+      .hint {
+        margin: 0 0 16px;
+        font-size: 0.875rem;
+        color: hsl(var(--muted-foreground));
+      }
+
       .swatch {
         width: 44px;
         height: 44px;
-        border-radius: 4px;
         margin-right: 16px;
-        border: 1px solid var(--notion-border, rgba(55, 53, 47, 0.16));
+        border: 1px solid hsl(var(--border));
+        border-radius: var(--sep-radius-md);
       }
     `,
   ],
 })
 export class ColorsComponent {
   cores: Cor[] = [
-    { nome: 'Primary (Notion blue)', variavel: '--ion-color-primary', hex: '#2383E2' },
-    { nome: 'Success', variavel: '--ion-color-success', hex: '#448361' },
-    { nome: 'Warning', variavel: '--ion-color-warning', hex: '#D9730D' },
-    { nome: 'Danger', variavel: '--ion-color-danger', hex: '#D44C47' },
-    { nome: 'Background primary', variavel: '--ion-background-color', hex: '#FFFFFF' },
-    {
-      nome: 'Background secondary (warm)',
-      variavel: '--notion-bg-secondary',
-      hex: '#F7F6F3',
-    },
-    { nome: 'Text primary', variavel: '--ion-text-color', hex: '#37352F' },
-    { nome: 'Text secondary', variavel: '--notion-text-secondary', hex: '#373d2fa6' },
+    { nome: 'Primary', token: '--primary' },
+    { nome: 'Secondary', token: '--secondary' },
+    { nome: 'Success', token: '--success' },
+    { nome: 'Warning', token: '--warning' },
+    { nome: 'Destructive', token: '--destructive' },
+    { nome: 'Background', token: '--background' },
+    { nome: 'Card', token: '--card' },
+    { nome: 'Muted', token: '--muted' },
+    { nome: 'Foreground (texto)', token: '--foreground' },
+    { nome: 'Border', token: '--border' },
   ];
 }
