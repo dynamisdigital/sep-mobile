@@ -16,6 +16,7 @@ updates:
           - '@angular/*'
           - '@angular-devkit/*'
           - '@angular-eslint/*'
+          - 'angular-eslint'
       # Stack de teste/bundler: vitest e @vitest/coverage-v8 precisam da MESMA
       # versao, e vite/@analogjs acompanham. Agrupar evita PRs unitarias quebradas.
       test-tooling:
