@@ -21,6 +21,12 @@
   @return "#{$r}, #{$g}, #{$b}";
 }
 
+// Variantes dark das cores semanticas (design doc, secao Dark mode).
+$secondary-dark: ds.$sep-secondary-tint; // 145 50% 55%
+$success-dark: color.adjust(ds.$sep-success, $lightness: 5%); // 145 50% 55%
+$warning-dark: color.adjust(ds.$sep-warning, $lightness: 5%); // 38 92% 55%
+$danger-dark: color.adjust(ds.$sep-danger, $lightness: 4%); // 0 72% 55%
+
 :root {
   // ---------------------------------------------------------------------------
   // Cor primaria (azul da marca SEP)
@@ -52,9 +58,11 @@
   --ion-color-warning: #{ds.$sep-warning};
   --ion-color-warning-rgb: #{rgb-triplet(ds.$sep-warning)};
   --ion-color-warning-contrast: #fff;
+  --ion-color-warning-contrast-rgb: 255, 255, 255;
   --ion-color-danger: #{ds.$sep-danger};
   --ion-color-danger-rgb: #{rgb-triplet(ds.$sep-danger)};
   --ion-color-danger-contrast: #fff;
+  --ion-color-danger-contrast-rgb: 255, 255, 255;
 
   // ---------------------------------------------------------------------------
   // Backgrounds e texto (light)
@@ -92,6 +100,24 @@
 .ion-palette-dark {
   --ion-color-primary: #{ds.$sep-primary-tint};
   --ion-color-primary-rgb: #{rgb-triplet(ds.$sep-primary-tint)};
+  --ion-color-primary-contrast: #{ds.$sep-bg-dark};
+  --ion-color-primary-contrast-rgb: #{rgb-triplet(ds.$sep-bg-dark)};
+  --ion-color-secondary: #{$secondary-dark};
+  --ion-color-secondary-rgb: #{rgb-triplet($secondary-dark)};
+  --ion-color-secondary-contrast: #{ds.$sep-bg-dark};
+  --ion-color-secondary-contrast-rgb: #{rgb-triplet(ds.$sep-bg-dark)};
+  --ion-color-success: #{$success-dark};
+  --ion-color-success-rgb: #{rgb-triplet($success-dark)};
+  --ion-color-success-contrast: #{ds.$sep-bg-dark};
+  --ion-color-success-contrast-rgb: #{rgb-triplet(ds.$sep-bg-dark)};
+  --ion-color-warning: #{$warning-dark};
+  --ion-color-warning-rgb: #{rgb-triplet($warning-dark)};
+  --ion-color-warning-contrast: #{ds.$sep-bg-dark};
+  --ion-color-warning-contrast-rgb: #{rgb-triplet(ds.$sep-bg-dark)};
+  --ion-color-danger: #{$danger-dark};
+  --ion-color-danger-rgb: #{rgb-triplet($danger-dark)};
+  --ion-color-danger-contrast: #{ds.$sep-text-dark};
+  --ion-color-danger-contrast-rgb: #{rgb-triplet(ds.$sep-text-dark)};
   --ion-background-color: #{ds.$sep-bg-dark};
   --ion-background-color-rgb: #{rgb-triplet(ds.$sep-bg-dark)};
   --ion-text-color: #{ds.$sep-text-dark};
