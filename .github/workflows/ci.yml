@@ -6,6 +6,7 @@
 #   - npm ci com --legacy-peer-deps (vitest@^2 vs peer optional vitest@^3.1.1 do
 #     @angular/build, @testing-library/angular@18.1.1 vs Angular 20 transitive)
 #   - adicionados format:check, lint:scss e build PWA com upload de coverage
+#   - node 22 (exigido por lint-staged@17, eslint-plugin-jsdoc@63 e @capacitor/cli@8.x)
 #   - concurrency cancel-in-progress + timeout 15 min
 # =============================================================================
 
@@ -45,7 +46,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -84,7 +85,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
