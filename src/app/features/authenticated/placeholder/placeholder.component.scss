@@ -1,27 +1,23 @@
-@use "../../../../styles/notion-mobile-tokens" as t;
-
 .sep-placeholder {
-  --background: #{t.$notion-bg-primary};
+  --background: var(--ion-background-color);
   --padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
 
   &-section {
-    padding: t.$notion-space-8 t.$notion-space-4;
+    padding: var(--sep-space-32) var(--sep-space-16);
     text-align: center;
   }
 
   &-title {
-    margin: 0 0 t.$notion-space-2;
-    font-family: t.$notion-font-family;
-    font-size: t.$notion-font-size-2xl;
-    font-weight: t.$notion-font-weight-bold;
-    color: t.$notion-text-primary;
+    margin: 0 0 var(--sep-space-8);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: hsl(var(--foreground));
     letter-spacing: -0.02em;
   }
 
   &-status {
     margin: 0;
-    font-family: t.$notion-font-family;
-    font-size: t.$notion-font-size-sm;
-    color: t.$notion-text-secondary;
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
   }
 }

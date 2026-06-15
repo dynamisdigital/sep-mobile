@@ -1,25 +1,32 @@
-@use "../../../styles/notion-mobile-tokens" as t;
-
 .sep-tab-bar {
-  --background: #{t.$notion-bg-primary};
-  --color: #{t.$notion-text-secondary};
-  --color-selected: #{t.$notion-text-primary};
-  --border: 1px solid #{t.$notion-border};
+  --background: var(--ion-tab-bar-background);
+  --color: var(--ion-tab-bar-color);
+  --color-selected: var(--ion-tab-bar-color-selected);
+  --border: 1px solid var(--ion-tab-bar-border-color);
 
-  font-family: t.$notion-font-family;
+  padding-bottom: env(safe-area-inset-bottom, 0);
 
   ion-tab-button {
     --ripple-color: transparent;
 
-    font-weight: t.$notion-font-weight-regular;
+    font-weight: 400;
 
-    &.tab-selected {
-      font-weight: t.$notion-font-weight-semibold;
+    ion-icon {
+      font-size: 22px;
     }
 
     ion-label {
-      font-size: t.$notion-font-size-xs;
+      font-size: 0.75rem;
       letter-spacing: 0;
+    }
+
+    // Estado ativo mais evidente: icone/label no tom primario, wash de fundo e label em peso forte.
+    &.tab-selected {
+      font-weight: 600;
+
+      &::part(native) {
+        background: hsl(var(--primary) / 10%);
+      }
     }
   }
 }

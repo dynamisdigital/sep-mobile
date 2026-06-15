@@ -13,14 +13,29 @@
       <span class="sep-header-mobile-spacer"></span>
     }
 
-    <button
-      type="button"
-      class="sep-header-mobile-logout"
-      aria-label="Sair"
-      data-testid="sep-header-mobile-logout"
-      (click)="logout()"
-    >
-      Sair
-    </button>
+    <div class="sep-header-mobile-actions">
+      <button
+        type="button"
+        class="sep-header-mobile-theme"
+        [attr.aria-label]="isDark() ? 'Tema claro' : 'Tema escuro'"
+        [attr.aria-pressed]="isDark()"
+        data-testid="sep-header-mobile-theme"
+        (click)="toggleTheme()"
+      >
+        <ion-icon
+          [name]="isDark() ? 'sunny-outline' : 'moon-outline'"
+          aria-hidden="true"
+        ></ion-icon>
+      </button>
+      <button
+        type="button"
+        class="sep-header-mobile-logout"
+        aria-label="Sair"
+        data-testid="sep-header-mobile-logout"
+        (click)="logout()"
+      >
+        Sair
+      </button>
+    </div>
   </div>
 </ion-header>
