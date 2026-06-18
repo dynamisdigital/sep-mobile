@@ -39,12 +39,11 @@ updates:
         update-types:
           - 'minor'
           - 'patch'
-      # Catch-all de majors restantes em UMA PR (revisar com atencao).
-      major-updates:
-        patterns:
-          - '*'
-        update-types:
-          - 'major'
+      # Sem grupo de majors: o Dependabot nao abre PRs de major automaticamente.
+      # Majors (Angular, TypeScript, @eslint/js, stylelint, @testing-library/angular,
+      # ionicons, ...) sao migracao manual deliberada (`ng update`/bump assistido),
+      # pois quebram a stack Angular 20 atual (CI Node 20, TS ~5.9, vitest/analog 3.x).
+      # Os ignore abaixo reforcam por dependencia o que ja era politica.
     ignore:
       # Transitivos apenas de toolchain de DEV, sem fix resolvivel upstream e
       # fora do bundle de producao (build usa esbuild, nao webpack-dev-server):
