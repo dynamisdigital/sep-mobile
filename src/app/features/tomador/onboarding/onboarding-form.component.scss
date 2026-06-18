@@ -1,0 +1,20 @@
+.sep-onboarding-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sep-space-16);
+
+  &-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-4);
+  }
+
+  &-error {
+    font-size: 0.75rem;
+    word-break: break-word;
+  }
+
+  &-submit {
+    margin-top: var(--sep-space-8);
+  }
+}

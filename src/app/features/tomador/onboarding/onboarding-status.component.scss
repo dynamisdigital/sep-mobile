@@ -1,0 +1,51 @@
+.sep-onboarding-status {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sep-space-8);
+
+  &-badge {
+    align-self: flex-start;
+    padding: var(--sep-space-4) var(--sep-space-12);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--sep-radius-sm);
+
+    &.is-aprovado {
+      color: hsl(var(--success));
+      background: hsl(var(--success) / 12%);
+      border-color: hsl(var(--success) / 40%);
+    }
+
+    &.is-reprovado {
+      color: hsl(var(--destructive));
+      background: hsl(var(--destructive) / 12%);
+      border-color: hsl(var(--destructive) / 40%);
+    }
+
+    &.is-pendente {
+      color: hsl(var(--warning));
+      background: hsl(var(--warning) / 12%);
+      border-color: hsl(var(--warning) / 40%);
+    }
+
+    &.is-andamento {
+      color: hsl(var(--primary));
+      background: hsl(var(--primary) / 12%);
+      border-color: hsl(var(--primary) / 40%);
+    }
+  }
+
+  &-result {
+    margin: 0;
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+    word-break: break-word;
+  }
+
+  &-motivo {
+    color: hsl(var(--foreground));
+  }
+}

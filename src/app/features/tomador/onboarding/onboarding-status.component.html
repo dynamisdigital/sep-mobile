@@ -1,0 +1,17 @@
+<div class="sep-onboarding-status">
+  <span
+    class="sep-onboarding-status-badge"
+    [class]="'is-' + variante()"
+    data-testid="sep-onboarding-status-badge"
+  >
+    {{ rotulo() }}
+  </span>
+  @if (resultado(); as r) {
+    <p class="sep-onboarding-status-result" data-testid="sep-onboarding-status-result">
+      Resultado: {{ r.statusFinal }}
+      @if (r.motivo) {
+        <span class="sep-onboarding-status-motivo">- {{ r.motivo }}</span>
+      }
+    </p>
+  }
+</div>

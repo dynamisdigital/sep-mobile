@@ -1,0 +1,201 @@
+@use "../../../../styles/sep-mobile-ds-components" as comp;
+
+.sep-onboarding {
+  --background: var(--ion-background-color);
+  --padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
+
+  &-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-16);
+    padding: var(--sep-space-24) var(--sep-space-16) var(--sep-space-48);
+  }
+
+  &-head {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+  }
+
+  &-back {
+    align-self: flex-start;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: hsl(var(--primary));
+    text-decoration: none;
+  }
+
+  &-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: hsl(var(--foreground));
+    letter-spacing: -0.02em;
+  }
+
+  &-intro {
+    margin: 0;
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+    word-break: break-word;
+  }
+
+  &-steps {
+    display: flex;
+    gap: var(--sep-space-8);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &-step {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--sep-space-4);
+    align-items: center;
+    padding: var(--sep-space-8) var(--sep-space-4);
+    text-align: center;
+
+    &-index {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: hsl(var(--muted-foreground));
+      background: hsl(var(--muted));
+      border-radius: 50%;
+    }
+
+    &-label {
+      font-size: 0.75rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    &.is-active .sep-onboarding-step-index {
+      color: hsl(var(--primary-foreground));
+      background: hsl(var(--primary));
+    }
+
+    &.is-active .sep-onboarding-step-label {
+      font-weight: 600;
+      color: hsl(var(--foreground));
+    }
+  }
+
+  &-choices,
+  &-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+  }
+
+  // Botoes-cartao (escolha PF/PJ e acoes de status) compartilham superficie + toque.
+  &-choice,
+  &-action {
+    @include comp.sep-mobile-touch-state;
+
+    width: 100%;
+    min-height: 48px;
+    padding: var(--sep-space-16);
+    font-size: 1rem;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+    text-align: left;
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--sep-radius-md);
+  }
+
+  &-choice {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-4);
+
+    &-description {
+      font-size: 0.875rem;
+      font-weight: 400;
+      color: hsl(var(--muted-foreground));
+    }
+  }
+
+  &-action {
+    text-align: center;
+
+    &.is-primary {
+      color: hsl(var(--primary-foreground));
+      background: hsl(var(--primary));
+      border-color: hsl(var(--primary));
+    }
+
+    &[disabled] {
+      opacity: 0.6;
+    }
+  }
+
+  &-back-step {
+    align-self: flex-start;
+    padding: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: hsl(var(--primary));
+    background: none;
+    border: none;
+  }
+
+  &-docs {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+
+    &-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+    }
+
+    &-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sep-space-4);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    &-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: var(--sep-space-8) var(--sep-space-12);
+      font-size: 0.875rem;
+      color: hsl(var(--foreground));
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--sep-radius-sm);
+    }
+
+    &-pld {
+      font-size: 0.75rem;
+      color: hsl(var(--muted-foreground));
+    }
+  }
+
+  &-erro {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-4);
+    margin: 0;
+    padding: var(--sep-space-12);
+    font-size: 0.875rem;
+    color: hsl(var(--destructive));
+    background: hsl(var(--destructive) / 8%);
+    border: 1px solid hsl(var(--destructive) / 30%);
+    border-radius: var(--sep-radius-md);
+    word-break: break-word;
+  }
+}

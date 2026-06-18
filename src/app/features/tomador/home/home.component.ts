@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { IonContent, IonIcon } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -27,6 +28,8 @@ interface PlaceholderShortcut {
   testid: string;
   icon: string;
   tone: string;
+  // Quando presente, o atalho navega para a rota; caso contrario exibe "Em breve".
+  route?: string;
 }
 
 const CARDS: readonly PlaceholderCard[] = [
@@ -60,6 +63,7 @@ const SHORTCUTS: readonly PlaceholderShortcut[] = [
     testid: 'sep-tomador-shortcut-onboarding',
     icon: 'cloud-upload-outline',
     tone: 'var(--primary)',
+    route: '/app/onboarding',
   },
   {
     label: 'Solicitar emprestimo',
@@ -87,6 +91,7 @@ const SHORTCUTS: readonly PlaceholderShortcut[] = [
 })
 export class TomadorHomeComponent {
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly user = this.auth.currentUser;
   readonly cards = CARDS;
@@ -104,7 +109,15 @@ export class TomadorHomeComponent {
     });
   }
 
-  showSoon(): void {
+  onShortcut(shortcut: PlaceholderShortcut): void {
+    if (shortcut.route) {
+      void this.router.navigateByUrl(shortcut.route);
+      return;
+    }
+    this.showSoon();
+  }
+
+  private showSoon(): void {
     this.soonMessage.set('Funcionalidade em breve.');
     setTimeout(() => this.soonMessage.set(null), 2500);
   }
