@@ -87,11 +87,19 @@ describe('OnboardingMobileService', () => {
     await promise;
   });
 
-  it('verificarPessoa POST /onboarding/pessoa/{id}/verificar', async () => {
+  it('verificarPessoa POST /onboarding/pessoa/{id}/verificar (202 Accepted)', async () => {
     const promise = service.verificarPessoa(ID);
     const req = httpMock.expectOne(`${PESSOA}/${ID}/verificar`);
     expect(req.request.method).toBe('POST');
-    req.flush(null, { status: 204, statusText: 'No Content' });
+    req.flush(null, { status: 202, statusText: 'Accepted' });
+    await promise;
+  });
+
+  it('verificarEmpresa POST /onboarding/empresa/{id}/verificar (202 Accepted)', async () => {
+    const promise = service.verificarEmpresa(ID);
+    const req = httpMock.expectOne(`${EMPRESA}/${ID}/verificar`);
+    expect(req.request.method).toBe('POST');
+    req.flush(null, { status: 202, statusText: 'Accepted' });
     await promise;
   });
 
