@@ -64,11 +64,6 @@
         <ion-select-option [value]="tipo.valor">{{ tipo.rotulo }}</ion-select-option>
       }
     </ion-select>
-    @if (form.controls.tipoSocietario.touched && form.controls.tipoSocietario.invalid) {
-      <ion-note color="danger" class="sep-onboarding-form-error">
-        <span>Tipo societario obrigatorio</span>
-      </ion-note>
-    }
   </div>
 
   <div class="sep-onboarding-form-field">
@@ -85,11 +80,6 @@
         <ion-select-option [value]="porte.valor">{{ porte.rotulo }}</ion-select-option>
       }
     </ion-select>
-    @if (form.controls.porte.touched && form.controls.porte.invalid) {
-      <ion-note color="danger" class="sep-onboarding-form-error">
-        <span>Porte obrigatorio</span>
-      </ion-note>
-    }
   </div>
 
   @if (errorMessage(); as msg) {

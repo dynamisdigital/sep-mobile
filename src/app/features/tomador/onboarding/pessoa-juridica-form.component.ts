@@ -63,12 +63,14 @@ export class PessoaJuridicaFormComponent {
   protected readonly tiposSocietarios = TIPOS_SOCIETARIOS;
   protected readonly portes = PORTES;
 
+  // tipoSocietario, porte e nomeFantasia sao opcionais no backend (colunas nullable);
+  // o form nao adiciona obrigatoriedade alem da documentada (cnpj + razaoSocial).
   readonly form = this.fb.nonNullable.group({
     cnpj: ['', [Validators.required, Validators.pattern(CNPJ_PATTERN)]],
     razaoSocial: ['', [Validators.required]],
     nomeFantasia: [''],
-    tipoSocietario: ['' as TipoSocietario | '', [Validators.required]],
-    porte: ['' as PorteEmpresa | '', [Validators.required]],
+    tipoSocietario: ['' as TipoSocietario | ''],
+    porte: ['' as PorteEmpresa | ''],
   });
 
   submit(): void {
@@ -81,8 +83,8 @@ export class PessoaJuridicaFormComponent {
       cnpj: valor.cnpj,
       razaoSocial: valor.razaoSocial,
       nomeFantasia: valor.nomeFantasia || undefined,
-      tipoSocietario: valor.tipoSocietario as TipoSocietario,
-      porte: valor.porte as PorteEmpresa,
+      tipoSocietario: valor.tipoSocietario || undefined,
+      porte: valor.porte || undefined,
     };
     this.iniciar.emit(request);
   }

@@ -17,13 +17,13 @@ function build(): PessoaJuridicaFormComponent {
 describe('PessoaJuridicaFormComponent', () => {
   beforeEach(() => TestBed.resetTestingModule());
 
-  it('declara os campos obrigatorios de PJ', () => {
+  it('exige apenas cnpj e razao social; tipo/porte/fantasia sao opcionais', () => {
     const form = build().form;
     expect(form.controls.cnpj.hasError('required')).toBe(true);
     expect(form.controls.razaoSocial.hasError('required')).toBe(true);
-    expect(form.controls.tipoSocietario.hasError('required')).toBe(true);
-    expect(form.controls.porte.hasError('required')).toBe(true);
-    // Nome fantasia e opcional.
+    // Backend aceita estes campos nulos (colunas nullable).
+    expect(form.controls.tipoSocietario.hasError('required')).toBe(false);
+    expect(form.controls.porte.hasError('required')).toBe(false);
     expect(form.controls.nomeFantasia.hasError('required')).toBe(false);
   });
 
@@ -33,6 +33,21 @@ describe('PessoaJuridicaFormComponent', () => {
     component.iniciar.subscribe(emitido);
     component.submit();
     expect(emitido).not.toHaveBeenCalled();
+  });
+
+  it('submit so com cnpj e razao social emite tipo/porte/fantasia como undefined', () => {
+    const component = build();
+    let emitido: IniciarOnboardingEmpresaRequest | undefined;
+    component.iniciar.subscribe((p) => (emitido = p));
+    component.form.patchValue({ cnpj: '12345678000190', razaoSocial: 'Acme Ltda' });
+    component.submit();
+    expect(emitido).toEqual({
+      cnpj: '12345678000190',
+      razaoSocial: 'Acme Ltda',
+      nomeFantasia: undefined,
+      tipoSocietario: undefined,
+      porte: undefined,
+    });
   });
 
   it('submit valido emite o payload PJ; nome fantasia vazio vira undefined', () => {
