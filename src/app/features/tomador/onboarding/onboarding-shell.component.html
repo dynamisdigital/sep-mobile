@@ -1,0 +1,205 @@
+<sep-header-mobile />
+<ion-content class="sep-onboarding">
+  <section class="sep-onboarding-section">
+    <header class="sep-onboarding-head">
+      <a class="sep-onboarding-back" routerLink="/app/inicio" data-testid="sep-onboarding-back">
+        Voltar
+      </a>
+      <h1 class="sep-onboarding-title" data-testid="sep-onboarding-title">Onboarding</h1>
+      <p class="sep-onboarding-intro">Complete seu cadastro para liberar o acesso aos produtos.</p>
+    </header>
+
+    @if (etapa() !== 'selecionar') {
+      <ol class="sep-onboarding-steps" data-testid="sep-onboarding-steps">
+        @for (passo of passos; track passo.etapa; let i = $index) {
+          <li
+            class="sep-onboarding-step"
+            [class.is-active]="i === etapaAtualIndice()"
+            [class.is-done]="i < etapaAtualIndice()"
+          >
+            <span class="sep-onboarding-step-index">{{ i + 1 }}</span>
+            <span class="sep-onboarding-step-label">{{ passo.rotulo }}</span>
+          </li>
+        }
+      </ol>
+    }
+
+    @switch (etapa()) {
+      @case ('selecionar') {
+        <div class="sep-onboarding-choices" data-testid="sep-onboarding-choices">
+          <button
+            type="button"
+            class="sep-onboarding-choice"
+            (click)="selecionarTipo('PF')"
+            data-testid="sep-onboarding-choice-pf"
+          >
+            <span class="sep-onboarding-choice-label">Pessoa fisica</span>
+            <span class="sep-onboarding-choice-description">
+              KYC: dados pessoais, documentos e verificacao.
+            </span>
+          </button>
+          <button
+            type="button"
+            class="sep-onboarding-choice"
+            (click)="selecionarTipo('PJ')"
+            data-testid="sep-onboarding-choice-pj"
+          >
+            <span class="sep-onboarding-choice-label">Empresa</span>
+            <span class="sep-onboarding-choice-description">
+              KYB: dados da empresa, representantes e documentos.
+            </span>
+          </button>
+        </div>
+      }
+      @case ('dados') {
+        <button
+          type="button"
+          class="sep-onboarding-back-step"
+          (click)="voltarSelecao()"
+          data-testid="sep-onboarding-voltar-selecao"
+        >
+          Trocar tipo de cadastro
+        </button>
+        @if (tipo() === 'PF') {
+          <sep-pessoa-fisica-form
+            [submitting]="submitting()"
+            [errorMessage]="errorMessage()"
+            (iniciar)="onIniciarPessoa($event)"
+          />
+        } @else {
+          <sep-pessoa-juridica-form
+            [submitting]="submitting()"
+            [errorMessage]="errorMessage()"
+            (iniciar)="onIniciarEmpresa($event)"
+          />
+        }
+      }
+      @case ('documentos') {
+        <sep-document-upload
+          [tipos]="tiposDocumento()"
+          [enviando]="enviandoDocumento()"
+          [errorMessage]="documentoError()"
+          (enviar)="onEnviarDocumento($event)"
+        />
+        @if (status(); as atual) {
+          <div class="sep-onboarding-docs" data-testid="sep-onboarding-docs">
+            <h2 class="sep-onboarding-docs-title">Documentos enviados</h2>
+            @if (atual.documentosEnviados.length === 0) {
+              <p class="sep-onboarding-intro" data-testid="sep-onboarding-docs-vazio">
+                Nenhum documento enviado ainda.
+              </p>
+            } @else {
+              <ul class="sep-onboarding-docs-list" data-testid="sep-onboarding-docs-lista">
+                @for (doc of atual.documentosEnviados; track doc.id) {
+                  <li class="sep-onboarding-docs-item">{{ doc.tipo }}</li>
+                }
+              </ul>
+            }
+          </div>
+        }
+        @if (errorMessage(); as msg) {
+          <p class="sep-onboarding-erro" role="status" data-testid="sep-onboarding-erro-doc">
+            <span>{{ msg }}</span>
+            <button
+              type="button"
+              class="sep-onboarding-back-step"
+              (click)="atualizarStatus()"
+              data-testid="sep-onboarding-retry-doc"
+            >
+              Tentar novamente
+            </button>
+          </p>
+        }
+        <button
+          type="button"
+          class="sep-onboarding-action is-primary"
+          (click)="irParaStatus()"
+          data-testid="sep-onboarding-ir-status"
+        >
+          Ver status do cadastro
+        </button>
+      }
+      @case ('status') {
+        @if (status(); as atual) {
+          <sep-onboarding-status [status]="atual.status" [resultado]="atual.resultado" />
+
+          <div class="sep-onboarding-docs" data-testid="sep-onboarding-status-docs">
+            <h2 class="sep-onboarding-docs-title">Documentos enviados</h2>
+            @if (atual.documentosEnviados.length === 0) {
+              <p class="sep-onboarding-intro">Nenhum documento enviado ainda.</p>
+            } @else {
+              <ul class="sep-onboarding-docs-list">
+                @for (doc of atual.documentosEnviados; track doc.id) {
+                  <li class="sep-onboarding-docs-item">{{ doc.tipo }}</li>
+                }
+              </ul>
+            }
+          </div>
+
+          @if (representantes().length > 0) {
+            <div class="sep-onboarding-docs" data-testid="sep-onboarding-representantes">
+              <h2 class="sep-onboarding-docs-title">Representantes</h2>
+              <ul class="sep-onboarding-docs-list">
+                @for (rep of representantes(); track rep.id) {
+                  <li class="sep-onboarding-docs-item">
+                    {{ rep.nome }} - {{ rep.cargo }}
+                    @if (rep.pld; as pld) {
+                      <span class="sep-onboarding-docs-pld">PLD: {{ pld.statusPld }}</span>
+                    }
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+        } @else if (carregandoStatus()) {
+          <p class="sep-onboarding-intro" data-testid="sep-onboarding-status-carregando">
+            Carregando status...
+          </p>
+        }
+
+        @if (errorMessage(); as msg) {
+          <p class="sep-onboarding-erro" role="status" data-testid="sep-onboarding-erro">
+            <span>{{ msg }}</span>
+          </p>
+        }
+
+        <div class="sep-onboarding-actions">
+          <button
+            type="button"
+            class="sep-onboarding-action is-primary"
+            (click)="onVerificar()"
+            [disabled]="verificando()"
+            data-testid="sep-onboarding-verificar"
+          >
+            {{ verificando() ? 'Verificando...' : 'Iniciar verificacao' }}
+          </button>
+          <button
+            type="button"
+            class="sep-onboarding-action"
+            (click)="atualizarStatus()"
+            [disabled]="carregandoStatus()"
+            data-testid="sep-onboarding-atualizar"
+          >
+            Atualizar
+          </button>
+          <button
+            type="button"
+            class="sep-onboarding-back-step"
+            (click)="voltarDocumentos()"
+            data-testid="sep-onboarding-voltar-docs"
+          >
+            Voltar aos documentos
+          </button>
+          <button
+            type="button"
+            class="sep-onboarding-back-step"
+            (click)="recomecar()"
+            data-testid="sep-onboarding-recomecar"
+          >
+            Recomecar cadastro
+          </button>
+        </div>
+      }
+    }
+  </section>
+</ion-content>

@@ -1,0 +1,59 @@
+<div class="sep-doc-upload">
+  <div class="sep-doc-upload-field">
+    <ion-select
+      label="Tipo de documento"
+      labelPlacement="stacked"
+      fill="outline"
+      interface="action-sheet"
+      [value]="tipoSelecionado()"
+      (ionChange)="aoSelecionarTipo($event.detail.value)"
+      aria-label="Tipo de documento"
+      data-testid="sep-doc-tipo"
+    >
+      @for (tipo of tipos(); track tipo) {
+        <ion-select-option [value]="tipo">{{ rotulo(tipo) }}</ion-select-option>
+      }
+    </ion-select>
+  </div>
+
+  <label class="sep-doc-upload-file">
+    <input
+      #fileInput
+      type="file"
+      accept="image/*,application/pdf"
+      (change)="aoSelecionarArquivo($event)"
+      data-testid="sep-doc-file"
+    />
+    <span class="sep-doc-upload-file-label">Selecionar arquivo</span>
+  </label>
+
+  @if (arquivo(); as selecionado) {
+    <p class="sep-doc-upload-selected" data-testid="sep-doc-selected">
+      {{ selecionado.name }} ({{ tamanhoLegivel(selecionado.size) }})
+    </p>
+  }
+
+  @if (erroLocal(); as erro) {
+    <ion-note color="danger" class="sep-doc-upload-error" data-testid="sep-doc-erro-local">
+      {{ erro }}
+    </ion-note>
+  }
+  @if (errorMessage(); as erro) {
+    <ion-note color="danger" class="sep-doc-upload-error" data-testid="sep-doc-erro">
+      {{ erro }}
+    </ion-note>
+  }
+
+  <ion-button
+    expand="block"
+    [disabled]="!podeEnviar() || enviando()"
+    (click)="enviarDocumento()"
+    data-testid="sep-doc-submit"
+  >
+    @if (enviando()) {
+      <ion-spinner name="dots"></ion-spinner>
+    } @else {
+      <span>Enviar documento</span>
+    }
+  </ion-button>
+</div>

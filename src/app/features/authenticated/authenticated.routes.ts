@@ -21,6 +21,14 @@ export const AUTHENTICATED_ROUTES: Routes = [
         data: { tab: 'inicio' },
       },
       {
+        path: 'onboarding',
+        loadComponent: () =>
+          import('../tomador/onboarding/onboarding-shell.component').then(
+            (m) => m.OnboardingShellComponent,
+          ),
+        data: { tab: 'inicio' },
+      },
+      {
         path: 'propostas',
         loadComponent: () =>
           import('./placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
