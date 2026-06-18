@@ -74,10 +74,32 @@
           />
         }
       }
+      @case ('documentos') {
+        <sep-document-upload
+          [tipos]="tiposDocumento()"
+          [enviando]="enviandoDocumento()"
+          [errorMessage]="documentoError()"
+          (enviar)="onEnviarDocumento($event)"
+        />
+        @if (status(); as atual) {
+          <div class="sep-onboarding-docs" data-testid="sep-onboarding-docs">
+            <h2 class="sep-onboarding-docs-title">Documentos enviados</h2>
+            @if (atual.documentosEnviados.length === 0) {
+              <p class="sep-onboarding-intro" data-testid="sep-onboarding-docs-vazio">
+                Nenhum documento enviado ainda.
+              </p>
+            } @else {
+              <ul class="sep-onboarding-docs-list" data-testid="sep-onboarding-docs-lista">
+                @for (doc of atual.documentosEnviados; track doc.id) {
+                  <li class="sep-onboarding-docs-item">{{ doc.tipo }}</li>
+                }
+              </ul>
+            }
+          </div>
+        }
+      }
       @default {
-        <p class="sep-onboarding-intro" data-testid="sep-onboarding-dados-ok">
-          Cadastro iniciado. O envio de documentos sera habilitado na proxima etapa.
-        </p>
+        <p class="sep-onboarding-intro">Acompanhe o status do seu cadastro.</p>
       }
     }
   </section>

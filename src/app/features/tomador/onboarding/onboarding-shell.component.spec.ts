@@ -85,14 +85,28 @@ describe('OnboardingShellComponent', () => {
     expect(component.etapa()).toBe('selecionar');
   });
 
-  it('submit PF valido chama iniciarPessoa e avanca para documentos', async () => {
-    const iniciarPessoa = vi.fn().mockResolvedValue({
+  function statusPf(documentosEnviados: { id: string; tipo: string }[] = []) {
+    return {
       id: 'pf-1',
       status: 'INICIADO',
       dataCriacao: 'x',
       dataModificacao: 'x',
-    });
-    const component = build({ iniciarPessoa });
+      documentosEnviados,
+      resultado: null,
+    };
+  }
+
+  it('submit PF valido chama iniciarPessoa, avanca para documentos e carrega status', async () => {
+    const iniciarPessoa = vi
+      .fn()
+      .mockResolvedValue({
+        id: 'pf-1',
+        status: 'INICIADO',
+        dataCriacao: 'x',
+        dataModificacao: 'x',
+      });
+    const consultarPessoa = vi.fn().mockResolvedValue(statusPf());
+    const component = build({ iniciarPessoa, consultarPessoa });
     component.selecionarTipo('PF');
     const payload = {
       cpf: '12345678901',
@@ -101,8 +115,10 @@ describe('OnboardingShellComponent', () => {
     };
     await component.onIniciarPessoa(payload);
     expect(iniciarPessoa).toHaveBeenCalledWith(payload);
+    expect(consultarPessoa).toHaveBeenCalledWith('pf-1');
     expect(component.onboardingId()).toBe('pf-1');
     expect(component.etapa()).toBe('documentos');
+    expect(component.status()).not.toBeNull();
   });
 
   it('submit PJ valido chama iniciarEmpresa', async () => {
@@ -114,7 +130,24 @@ describe('OnboardingShellComponent', () => {
       dataCriacao: 'x',
       dataModificacao: 'x',
     });
-    const component = build({ iniciarEmpresa });
+    const consultarEmpresa = vi.fn().mockResolvedValue({
+      id: 'pj-1',
+      status: 'INICIADO',
+      dataCriacao: 'x',
+      dataModificacao: 'x',
+      dadosEmpresa: {
+        cnpj: '12.345.678/0001-90',
+        razaoSocial: 'Acme',
+        nomeFantasia: null,
+        tipoSocietario: null,
+        porte: null,
+      },
+      documentosEnviados: [],
+      representantes: [],
+      resultado: null,
+    });
+    const component = build({ iniciarEmpresa, consultarEmpresa });
+    component.selecionarTipo('PJ');
     const payload = {
       cnpj: '12345678000190',
       razaoSocial: 'Acme Ltda',
@@ -124,7 +157,38 @@ describe('OnboardingShellComponent', () => {
     };
     await component.onIniciarEmpresa(payload);
     expect(iniciarEmpresa).toHaveBeenCalledWith(payload);
+    expect(consultarEmpresa).toHaveBeenCalledWith('pj-1');
     expect(component.onboardingId()).toBe('pj-1');
+  });
+
+  it('onEnviarDocumento PF envia ao backend e recarrega o status', async () => {
+    const arquivo = new File(['x'], 'rg.png', { type: 'image/png' });
+    const enviarDocumentoPessoa = vi.fn().mockResolvedValue(undefined);
+    const consultarPessoa = vi.fn().mockResolvedValue(statusPf([{ id: 'd1', tipo: 'RG' }]));
+    const component = build({ enviarDocumentoPessoa, consultarPessoa });
+    component.selecionarTipo('PF');
+    component.onboardingId.set('pf-1');
+
+    await component.onEnviarDocumento({ tipo: 'RG', arquivo });
+
+    expect(enviarDocumentoPessoa).toHaveBeenCalledWith('pf-1', 'RG', arquivo);
+    expect(consultarPessoa).toHaveBeenCalledWith('pf-1');
+    expect(component.status()?.documentosEnviados).toHaveLength(1);
+    expect(component.documentoError()).toBeNull();
+  });
+
+  it('erro no upload vira feedback amigavel sem derrubar a jornada', async () => {
+    const arquivo = new File(['x'], 'rg.png', { type: 'image/png' });
+    const erro = new HttpErrorResponse({ status: 400, error: { message: 'Documento invalido' } });
+    const enviarDocumentoPessoa = vi.fn().mockRejectedValue(erro);
+    const component = build({ enviarDocumentoPessoa });
+    component.selecionarTipo('PF');
+    component.onboardingId.set('pf-1');
+
+    await component.onEnviarDocumento({ tipo: 'RG', arquivo });
+
+    expect(component.documentoError()).toBe('Documento invalido');
+    expect(component.etapa()).toBe('documentos');
   });
 
   it('erro do backend vira feedback amigavel e mantem a etapa de dados', async () => {

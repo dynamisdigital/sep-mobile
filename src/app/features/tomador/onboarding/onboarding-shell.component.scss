@@ -139,4 +139,35 @@
     background: none;
     border: none;
   }
+
+  &-docs {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+
+    &-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+    }
+
+    &-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sep-space-4);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    &-item {
+      padding: var(--sep-space-8) var(--sep-space-12);
+      font-size: 0.875rem;
+      color: hsl(var(--foreground));
+      background: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--sep-radius-sm);
+    }
+  }
 }
