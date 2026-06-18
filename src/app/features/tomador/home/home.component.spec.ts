@@ -56,11 +56,15 @@ describe('TomadorHomeComponent', () => {
     const onboarding = el.querySelector(
       '[data-testid="sep-tomador-shortcut-onboarding"]',
     ) as HTMLButtonElement;
+    const solicitar = el.querySelector(
+      '[data-testid="sep-tomador-shortcut-solicitar"]',
+    ) as HTMLButtonElement;
     expect(onboarding).not.toBeNull();
-    expect(el.querySelector('[data-testid="sep-tomador-shortcut-solicitar"]')).not.toBeNull();
+    expect(solicitar).not.toBeNull();
     expect(el.querySelector('[data-testid="sep-tomador-shortcut-acompanhar"]')).not.toBeNull();
-    // Onboarding navega: nao deve exibir badge "Em breve".
+    // Onboarding navega: nao exibe badge "Em breve"; atalhos sem rota continuam exibindo.
     expect(onboarding.querySelector('.sep-tomador-card-badge')).toBeNull();
+    expect(solicitar.querySelector('.sep-tomador-card-badge')?.textContent).toContain('Em breve');
   });
 
   it('clique em Onboarding navega para /app/onboarding', () => {
