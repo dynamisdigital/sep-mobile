@@ -45,4 +45,14 @@ describe('OnboardingJourneyStore', () => {
     mem.set('sep.onboarding.journey', '{corrompido');
     expect(await store.carregar()).toBeNull();
   });
+
+  it('carregar retorna null com forma parcial (sem onboardingId)', async () => {
+    mem.set('sep.onboarding.journey', JSON.stringify({ tipo: 'PF' }));
+    expect(await store.carregar()).toBeNull();
+  });
+
+  it('carregar retorna null com tipo invalido', async () => {
+    mem.set('sep.onboarding.journey', JSON.stringify({ tipo: 'XX', onboardingId: 'abc' }));
+    expect(await store.carregar()).toBeNull();
+  });
 });

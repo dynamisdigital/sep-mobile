@@ -20,7 +20,7 @@ export class OnboardingJourneyStore {
       return null;
     }
     try {
-      return JSON.parse(value) as OnboardingJourney;
+      return validar(JSON.parse(value));
     } catch {
       return null;
     }
@@ -33,4 +33,21 @@ export class OnboardingJourneyStore {
   async limpar(): Promise<void> {
     await Preferences.remove({ key: JOURNEY_KEY });
   }
+}
+
+// Valida a forma do ponteiro persistido: descarta conteudo parcial/corrompido em vez
+// de propagar um onboardingId ausente para a jornada.
+function validar(parsed: unknown): OnboardingJourney | null {
+  if (
+    typeof parsed === 'object' &&
+    parsed !== null &&
+    'tipo' in parsed &&
+    'onboardingId' in parsed
+  ) {
+    const { tipo, onboardingId } = parsed as Record<string, unknown>;
+    if ((tipo === 'PF' || tipo === 'PJ') && typeof onboardingId === 'string' && onboardingId) {
+      return { tipo, onboardingId };
+    }
+  }
+  return null;
 }
