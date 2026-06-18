@@ -1,3 +1,5 @@
+@use "../../../../styles/sep-mobile-ds-components" as comp;
+
 .sep-onboarding {
   --background: var(--ion-background-color);
   --padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
@@ -36,5 +38,105 @@
     font-size: 0.875rem;
     color: hsl(var(--muted-foreground));
     word-break: break-word;
+  }
+
+  &-steps {
+    display: flex;
+    gap: var(--sep-space-8);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &-step {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--sep-space-4);
+    align-items: center;
+    padding: var(--sep-space-8) var(--sep-space-4);
+    text-align: center;
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--sep-radius-md);
+
+    &-index {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: hsl(var(--muted-foreground));
+      background: hsl(var(--muted));
+      border-radius: 50%;
+    }
+
+    &-label {
+      font-size: 0.75rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    &.is-active {
+      border-color: hsl(var(--primary));
+
+      .sep-onboarding-step-index {
+        color: hsl(var(--primary-foreground));
+        background: hsl(var(--primary));
+      }
+
+      .sep-onboarding-step-label {
+        font-weight: 600;
+        color: hsl(var(--foreground));
+      }
+    }
+
+    &.is-done .sep-onboarding-step-index {
+      color: hsl(var(--primary));
+      background: hsl(var(--primary) / 12%);
+    }
+  }
+
+  &-choices {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-12);
+  }
+
+  &-choice {
+    @include comp.sep-mobile-touch-state;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-4);
+    width: 100%;
+    min-height: 48px;
+    padding: var(--sep-space-16);
+    text-align: left;
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--sep-radius-md);
+
+    &-label {
+      font-size: 1rem;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+    }
+
+    &-description {
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
+    }
+  }
+
+  &-back-step {
+    align-self: flex-start;
+    padding: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: hsl(var(--primary));
+    background: none;
+    border: none;
   }
 }

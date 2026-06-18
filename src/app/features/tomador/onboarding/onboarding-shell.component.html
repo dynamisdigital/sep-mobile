@@ -8,5 +8,77 @@
       <h1 class="sep-onboarding-title" data-testid="sep-onboarding-title">Onboarding</h1>
       <p class="sep-onboarding-intro">Complete seu cadastro para liberar o acesso aos produtos.</p>
     </header>
+
+    @if (etapa() !== 'selecionar') {
+      <ol class="sep-onboarding-steps" data-testid="sep-onboarding-steps">
+        @for (passo of passos; track passo.etapa; let i = $index) {
+          <li
+            class="sep-onboarding-step"
+            [class.is-active]="i === etapaAtualIndice()"
+            [class.is-done]="i < etapaAtualIndice()"
+          >
+            <span class="sep-onboarding-step-index">{{ i + 1 }}</span>
+            <span class="sep-onboarding-step-label">{{ passo.rotulo }}</span>
+          </li>
+        }
+      </ol>
+    }
+
+    @switch (etapa()) {
+      @case ('selecionar') {
+        <div class="sep-onboarding-choices" data-testid="sep-onboarding-choices">
+          <button
+            type="button"
+            class="sep-onboarding-choice"
+            (click)="selecionarTipo('PF')"
+            data-testid="sep-onboarding-choice-pf"
+          >
+            <span class="sep-onboarding-choice-label">Pessoa fisica</span>
+            <span class="sep-onboarding-choice-description">
+              KYC: dados pessoais, documentos e verificacao.
+            </span>
+          </button>
+          <button
+            type="button"
+            class="sep-onboarding-choice"
+            (click)="selecionarTipo('PJ')"
+            data-testid="sep-onboarding-choice-pj"
+          >
+            <span class="sep-onboarding-choice-label">Empresa</span>
+            <span class="sep-onboarding-choice-description">
+              KYB: dados da empresa, representantes e documentos.
+            </span>
+          </button>
+        </div>
+      }
+      @case ('dados') {
+        <button
+          type="button"
+          class="sep-onboarding-back-step"
+          (click)="voltarSelecao()"
+          data-testid="sep-onboarding-voltar-selecao"
+        >
+          Trocar tipo de cadastro
+        </button>
+        @if (tipo() === 'PF') {
+          <sep-pessoa-fisica-form
+            [submitting]="submitting()"
+            [errorMessage]="errorMessage()"
+            (iniciar)="onIniciarPessoa($event)"
+          />
+        } @else {
+          <sep-pessoa-juridica-form
+            [submitting]="submitting()"
+            [errorMessage]="errorMessage()"
+            (iniciar)="onIniciarEmpresa($event)"
+          />
+        }
+      }
+      @default {
+        <p class="sep-onboarding-intro" data-testid="sep-onboarding-dados-ok">
+          Cadastro iniciado. O envio de documentos sera habilitado na proxima etapa.
+        </p>
+      }
+    }
   </section>
 </ion-content>
