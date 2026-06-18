@@ -71,7 +71,7 @@
     "@angular/compiler-cli": "^20.3.25",
     "@angular/language-service": "^20.3.25",
     "@capacitor/cli": "8.4.0",
-    "@eslint/js": "^9.39.4",
+    "@eslint/js": "^10.0.1",
     "@ionic/angular-toolkit": "^12.0.0",
     "@playwright/test": "^1.61.0",
     "@testing-library/angular": "^18.1.1",
