@@ -1,0 +1,49 @@
+.sep-doc-upload {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sep-space-12);
+
+  &-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-4);
+  }
+
+  &-file {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: var(--sep-space-12);
+    color: hsl(var(--primary));
+    cursor: pointer;
+    background: hsl(var(--card));
+    border: 1px dashed hsl(var(--border));
+    border-radius: var(--sep-radius-md);
+
+    input[type="file"] {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+    }
+
+    &-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+  }
+
+  &-selected {
+    margin: 0;
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+    word-break: break-word;
+  }
+
+  &-error {
+    font-size: 0.75rem;
+    word-break: break-word;
+  }
+}

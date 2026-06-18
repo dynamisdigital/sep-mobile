@@ -1,0 +1,76 @@
+<form class="sep-onboarding-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <div class="sep-onboarding-form-field">
+    <ion-input
+      label="CPF"
+      labelPlacement="stacked"
+      fill="outline"
+      inputmode="numeric"
+      autocomplete="off"
+      formControlName="cpf"
+      placeholder="000.000.000-00"
+      data-testid="sep-onboarding-pf-cpf"
+    ></ion-input>
+    @if (form.controls.cpf.touched && form.controls.cpf.invalid) {
+      <ion-note color="danger" class="sep-onboarding-form-error">
+        @if (form.controls.cpf.hasError('required')) {
+          <span>CPF obrigatorio</span>
+        } @else {
+          <span>CPF invalido</span>
+        }
+      </ion-note>
+    }
+  </div>
+
+  <div class="sep-onboarding-form-field">
+    <ion-input
+      label="Nome completo"
+      labelPlacement="stacked"
+      fill="outline"
+      autocapitalize="words"
+      formControlName="nomeCompleto"
+      placeholder="Seu nome completo"
+      data-testid="sep-onboarding-pf-nome"
+    ></ion-input>
+    @if (form.controls.nomeCompleto.touched && form.controls.nomeCompleto.invalid) {
+      <ion-note color="danger" class="sep-onboarding-form-error">
+        <span>Nome obrigatorio</span>
+      </ion-note>
+    }
+  </div>
+
+  <div class="sep-onboarding-form-field">
+    <ion-input
+      label="Data de nascimento"
+      labelPlacement="stacked"
+      fill="outline"
+      type="date"
+      formControlName="dataNascimento"
+      data-testid="sep-onboarding-pf-nascimento"
+    ></ion-input>
+    @if (form.controls.dataNascimento.touched && form.controls.dataNascimento.invalid) {
+      <ion-note color="danger" class="sep-onboarding-form-error">
+        <span>Data de nascimento obrigatoria</span>
+      </ion-note>
+    }
+  </div>
+
+  @if (errorMessage(); as msg) {
+    <ion-note color="danger" class="sep-onboarding-form-error" data-testid="sep-onboarding-pf-erro">
+      {{ msg }}
+    </ion-note>
+  }
+
+  <ion-button
+    class="sep-onboarding-form-submit"
+    type="submit"
+    expand="block"
+    [disabled]="submitting()"
+    data-testid="sep-onboarding-pf-submit"
+  >
+    @if (submitting()) {
+      <ion-spinner name="dots"></ion-spinner>
+    } @else {
+      <span>Continuar</span>
+    }
+  </ion-button>
+</form>

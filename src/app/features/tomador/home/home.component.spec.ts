@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UsuarioResponse } from '../../../core/api/api.models';
@@ -50,17 +50,36 @@ describe('TomadorHomeComponent', () => {
     expect(el.querySelector('[data-testid="sep-tomador-card-parcelas"]')).not.toBeNull();
   });
 
-  it('renderiza 3 atalhos com badge Em breve', () => {
+  it('renderiza 3 atalhos; onboarding ja ativo (sem badge Em breve)', () => {
     const fixture = setup(cliente);
     const el: HTMLElement = fixture.nativeElement;
-    expect(el.querySelector('[data-testid="sep-tomador-shortcut-onboarding"]')).not.toBeNull();
-    expect(el.querySelector('[data-testid="sep-tomador-shortcut-solicitar"]')).not.toBeNull();
+    const onboarding = el.querySelector(
+      '[data-testid="sep-tomador-shortcut-onboarding"]',
+    ) as HTMLButtonElement;
+    const solicitar = el.querySelector(
+      '[data-testid="sep-tomador-shortcut-solicitar"]',
+    ) as HTMLButtonElement;
+    expect(onboarding).not.toBeNull();
+    expect(solicitar).not.toBeNull();
     expect(el.querySelector('[data-testid="sep-tomador-shortcut-acompanhar"]')).not.toBeNull();
-    const badges = el.querySelectorAll('.sep-tomador-card-badge');
-    expect(badges.length).toBeGreaterThanOrEqual(6);
+    // Onboarding navega: nao exibe badge "Em breve"; atalhos sem rota continuam exibindo.
+    expect(onboarding.querySelector('.sep-tomador-card-badge')).toBeNull();
+    expect(solicitar.querySelector('.sep-tomador-card-badge')?.textContent).toContain('Em breve');
   });
 
-  it('clique em atalho exibe feedback Em breve', async () => {
+  it('clique em Onboarding navega para /app/onboarding', () => {
+    const fixture = setup(cliente);
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    const el: HTMLElement = fixture.nativeElement;
+    const btn = el.querySelector(
+      '[data-testid="sep-tomador-shortcut-onboarding"]',
+    ) as HTMLButtonElement;
+    btn.click();
+    expect(navSpy).toHaveBeenCalledWith('/app/onboarding');
+  });
+
+  it('clique em atalho sem rota exibe feedback Em breve', async () => {
     vi.useFakeTimers();
     const fixture = setup(cliente);
     const el: HTMLElement = fixture.nativeElement;

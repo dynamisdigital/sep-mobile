@@ -1,0 +1,104 @@
+<form class="sep-onboarding-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <div class="sep-onboarding-form-field">
+    <ion-input
+      label="CNPJ"
+      labelPlacement="stacked"
+      fill="outline"
+      inputmode="numeric"
+      autocomplete="off"
+      formControlName="cnpj"
+      placeholder="00.000.000/0000-00"
+      data-testid="sep-onboarding-pj-cnpj"
+    ></ion-input>
+    @if (form.controls.cnpj.touched && form.controls.cnpj.invalid) {
+      <ion-note color="danger" class="sep-onboarding-form-error">
+        @if (form.controls.cnpj.hasError('required')) {
+          <span>CNPJ obrigatorio</span>
+        } @else {
+          <span>CNPJ invalido</span>
+        }
+      </ion-note>
+    }
+  </div>
+
+  <div class="sep-onboarding-form-field">
+    <ion-input
+      label="Razao social"
+      labelPlacement="stacked"
+      fill="outline"
+      autocapitalize="words"
+      formControlName="razaoSocial"
+      placeholder="Razao social da empresa"
+      data-testid="sep-onboarding-pj-razao"
+    ></ion-input>
+    @if (form.controls.razaoSocial.touched && form.controls.razaoSocial.invalid) {
+      <ion-note color="danger" class="sep-onboarding-form-error">
+        <span>Razao social obrigatoria</span>
+      </ion-note>
+    }
+  </div>
+
+  <div class="sep-onboarding-form-field">
+    <ion-input
+      label="Nome fantasia (opcional)"
+      labelPlacement="stacked"
+      fill="outline"
+      autocapitalize="words"
+      formControlName="nomeFantasia"
+      placeholder="Nome fantasia"
+      data-testid="sep-onboarding-pj-fantasia"
+    ></ion-input>
+  </div>
+
+  <div class="sep-onboarding-form-field">
+    <ion-select
+      label="Tipo societario"
+      labelPlacement="stacked"
+      fill="outline"
+      interface="action-sheet"
+      formControlName="tipoSocietario"
+      aria-label="Tipo societario"
+      data-testid="sep-onboarding-pj-tipo"
+    >
+      @for (tipo of tiposSocietarios; track tipo.valor) {
+        <ion-select-option [value]="tipo.valor">{{ tipo.rotulo }}</ion-select-option>
+      }
+    </ion-select>
+  </div>
+
+  <div class="sep-onboarding-form-field">
+    <ion-select
+      label="Porte"
+      labelPlacement="stacked"
+      fill="outline"
+      interface="action-sheet"
+      formControlName="porte"
+      aria-label="Porte"
+      data-testid="sep-onboarding-pj-porte"
+    >
+      @for (porte of portes; track porte.valor) {
+        <ion-select-option [value]="porte.valor">{{ porte.rotulo }}</ion-select-option>
+      }
+    </ion-select>
+  </div>
+
+  @if (errorMessage(); as msg) {
+    <ion-note color="danger" class="sep-onboarding-form-error" data-testid="sep-onboarding-pj-erro">
+      {{ msg }}
+    </ion-note>
+  }
+
+  <ion-button
+    class="sep-onboarding-form-submit"
+    type="submit"
+    expand="block"
+    [disabled]="submitting()"
+    data-testid="sep-onboarding-pj-submit"
+  >
+    @if (submitting()) {
+      <ion-spinner name="dots"></ion-spinner>
+    } @else {
+      <span>Continuar</span>
+    }
+  </ion-button>
+</form>
