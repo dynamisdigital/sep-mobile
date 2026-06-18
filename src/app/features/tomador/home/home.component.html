@@ -32,7 +32,7 @@
           type="button"
           class="sep-tomador-shortcut"
           [attr.data-testid]="shortcut.testid"
-          (click)="showSoon()"
+          (click)="onShortcut(shortcut)"
         >
           <span
             class="sep-tomador-card-chip"
@@ -45,7 +45,9 @@
             <span class="sep-tomador-shortcut-label">{{ shortcut.label }}</span>
             <span class="sep-tomador-shortcut-description">{{ shortcut.description }}</span>
           </span>
-          <span class="sep-tomador-card-badge">Em breve</span>
+          @if (!shortcut.route) {
+            <span class="sep-tomador-card-badge">Em breve</span>
+          }
         </button>
       }
     </div>
