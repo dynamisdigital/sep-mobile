@@ -43,6 +43,7 @@ test.describe('M-Sprint 6 - onboarding do tomador (MSW)', () => {
       buffer: Buffer.from('conteudo-de-teste'),
     });
     await page.getByTestId('sep-doc-tipo').click();
+    await expect(page.locator('ion-action-sheet')).toBeVisible({ timeout: 5_000 });
     await page.locator('ion-action-sheet').getByText('RG', { exact: true }).click();
     await page.getByTestId('sep-doc-submit').click();
 
