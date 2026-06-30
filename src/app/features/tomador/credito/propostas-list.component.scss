@@ -1,0 +1,112 @@
+@use "../../../../styles/sep-mobile-ds-components" as comp;
+
+.sep-propostas {
+  --background: var(--ion-background-color);
+  --padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
+
+  &-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-16);
+    padding: var(--sep-space-24) var(--sep-space-16) var(--sep-space-48);
+  }
+
+  &-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+  }
+
+  &-title {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: hsl(var(--foreground));
+  }
+
+  &-filtro {
+    --padding-start: var(--sep-space-12);
+    --padding-end: var(--sep-space-12);
+
+    width: 100%;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--sep-radius-md);
+  }
+
+  &-estado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sep-space-12);
+    padding: var(--sep-space-32) var(--sep-space-16);
+    text-align: center;
+    color: hsl(var(--muted-foreground));
+  }
+
+  &-lista {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-12);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &-erro-inline {
+    margin: 0;
+    font-size: 0.875rem;
+    color: hsl(var(--destructive));
+  }
+
+  &-cta {
+    @include comp.sep-mobile-touch-state;
+
+    min-height: var(--sep-touch-target);
+    padding: 0 var(--sep-space-16);
+    font-weight: 600;
+    color: hsl(var(--primary-foreground));
+    background: hsl(var(--primary));
+    border: none;
+    border-radius: var(--sep-radius-md);
+
+    &:disabled {
+      opacity: 0.6;
+    }
+  }
+}
+
+.sep-proposta-item {
+  @include comp.sep-mobile-surface-card;
+  @include comp.sep-mobile-touch-state;
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--sep-space-8);
+  width: 100%;
+  min-height: var(--sep-touch-target);
+  padding: var(--sep-space-16);
+  text-align: left;
+
+  &-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sep-space-8);
+  }
+
+  &-tipo {
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  &-valor {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: hsl(var(--foreground));
+  }
+
+  &-meta {
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+  }
+}
