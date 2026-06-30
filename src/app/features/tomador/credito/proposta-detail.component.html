@@ -1,0 +1,59 @@
+<sep-header-mobile />
+<ion-content class="sep-proposta-detail">
+  <section class="sep-proposta-detail-section">
+    @if (carregando()) {
+      <div class="sep-proposta-detail-estado" data-testid="sep-proposta-detail-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+    } @else if (erro()) {
+      <div class="sep-proposta-detail-estado" data-testid="sep-proposta-detail-erro">
+        <p>{{ erro() }}</p>
+        <ion-button expand="block" (click)="carregar()" data-testid="sep-proposta-detail-retry">
+          Tentar novamente
+        </ion-button>
+      </div>
+    } @else if (proposta(); as p) {
+      <header class="sep-proposta-detail-header">
+        <h1 class="sep-proposta-detail-tipo">{{ rotuloTipo(p.tipoOperacao) }}</h1>
+        <sep-proposta-status [status]="p.status" />
+      </header>
+
+      <dl class="sep-proposta-detail-grid">
+        <div class="sep-proposta-detail-row">
+          <dt>Valor solicitado</dt>
+          <dd data-testid="sep-proposta-detail-valor">{{ valorFormatado(p) }}</dd>
+        </div>
+        <div class="sep-proposta-detail-row">
+          <dt>Prazo</dt>
+          <dd>{{ p.prazoMeses }} meses</dd>
+        </div>
+        <div class="sep-proposta-detail-row">
+          <dt>Criada em</dt>
+          <dd>{{ dataFormatada(p.dataCriacao) }}</dd>
+        </div>
+        <div class="sep-proposta-detail-row">
+          <dt>Atualizada em</dt>
+          <dd>{{ dataFormatada(p.dataModificacao) }}</dd>
+        </div>
+      </dl>
+
+      @if (p.parecer; as parecer) {
+        <section class="sep-proposta-detail-parecer" data-testid="sep-proposta-detail-parecer">
+          <h2 class="sep-proposta-detail-subtitle">Parecer da analise</h2>
+          <p class="sep-proposta-detail-parecer-decisao">{{ rotuloDecisao(parecer.decisao) }}</p>
+          <p class="sep-proposta-detail-parecer-justificativa">{{ parecer.justificativa }}</p>
+          <p class="sep-proposta-detail-parecer-data">{{ dataFormatada(parecer.dataParecer) }}</p>
+        </section>
+      }
+
+      <ion-button
+        expand="block"
+        fill="outline"
+        (click)="abrirOpenFinance()"
+        data-testid="sep-proposta-detail-open-finance"
+      >
+        Compartilhar Open Finance
+      </ion-button>
+    }
+  </section>
+</ion-content>

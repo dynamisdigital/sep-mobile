@@ -1,0 +1,100 @@
+@use "../../../../styles/sep-mobile-ds-components" as comp;
+
+.sep-open-finance {
+  --background: var(--ion-background-color);
+  --padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
+
+  &-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-16);
+    padding: var(--sep-space-24) var(--sep-space-16) var(--sep-space-48);
+  }
+
+  &-title {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: hsl(var(--foreground));
+  }
+
+  &-estado {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-16);
+    padding: var(--sep-space-24) 0;
+    color: hsl(var(--muted-foreground));
+    text-align: center;
+  }
+
+  &-help {
+    margin: 0;
+    color: hsl(var(--muted-foreground));
+  }
+
+  &-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-16);
+  }
+
+  &-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-4);
+  }
+
+  &-status {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-16);
+  }
+
+  &-badge {
+    align-self: flex-start;
+    padding: var(--sep-space-4) var(--sep-space-12);
+    font-weight: 600;
+    border-radius: var(--sep-radius-pill, 999px);
+    color: hsl(var(--primary));
+    background: hsl(var(--primary) / 12%);
+
+    &[data-status="AUTORIZADO"] {
+      color: hsl(var(--success));
+      background: hsl(var(--success) / 12%);
+    }
+
+    &[data-status="NEGADO"],
+    &[data-status="EXPIRADO"] {
+      color: hsl(var(--destructive));
+      background: hsl(var(--destructive) / 12%);
+    }
+  }
+
+  &-agregados {
+    @include comp.sep-mobile-surface-card;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-12);
+    margin: 0;
+    padding: var(--sep-space-16);
+  }
+
+  &-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sep-space-12);
+
+    dt {
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    dd {
+      margin: 0;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+    }
+  }
+}

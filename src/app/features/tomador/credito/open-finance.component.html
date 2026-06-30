@@ -1,0 +1,115 @@
+<sep-header-mobile />
+<ion-content class="sep-open-finance">
+  <section class="sep-open-finance-section">
+    <h1 class="sep-open-finance-title">Open Finance</h1>
+
+    @if (carregando()) {
+      <div class="sep-open-finance-estado" data-testid="sep-open-finance-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+        @if (retorno()) {
+          <p>Consultando autorizacao...</p>
+        }
+      </div>
+    } @else if (semConsentimento() && !retorno()) {
+      <form class="sep-open-finance-form" [formGroup]="form" (ngSubmit)="iniciar()" novalidate>
+        <p class="sep-open-finance-help">
+          Compartilhe seus dados bancarios via Open Finance para apoiar a analise. Voce sera levado
+          ao seu banco para autorizar.
+        </p>
+        <div class="sep-open-finance-field">
+          <ion-input
+            label="CPF ou CNPJ (somente numeros)"
+            labelPlacement="stacked"
+            fill="outline"
+            inputmode="numeric"
+            autocomplete="off"
+            formControlName="documento"
+            placeholder="00000000000"
+            data-testid="sep-open-finance-documento"
+          ></ion-input>
+          @if (form.controls.documento.touched && form.controls.documento.invalid) {
+            <ion-note color="danger">
+              @if (form.controls.documento.hasError('required')) {
+                <span>Documento obrigatorio</span>
+              } @else {
+                <span>Informe CPF (11) ou CNPJ (14 digitos), somente numeros</span>
+              }
+            </ion-note>
+          }
+        </div>
+        @if (erro(); as msg) {
+          <ion-note color="danger" role="status" data-testid="sep-open-finance-erro">{{
+            msg
+          }}</ion-note>
+        }
+        <ion-button
+          type="submit"
+          expand="block"
+          [disabled]="enviando()"
+          data-testid="sep-open-finance-iniciar"
+        >
+          @if (enviando()) {
+            <ion-spinner name="dots"></ion-spinner>
+          } @else {
+            <span>Autorizar no meu banco</span>
+          }
+        </ion-button>
+      </form>
+    } @else if (erro()) {
+      <div class="sep-open-finance-estado" data-testid="sep-open-finance-erro-estado">
+        <p>{{ erro() }}</p>
+        <ion-button expand="block" (click)="consultar()" data-testid="sep-open-finance-retry">
+          Atualizar
+        </ion-button>
+      </div>
+    } @else if (status(); as st) {
+      <div class="sep-open-finance-status">
+        <span
+          class="sep-open-finance-badge"
+          [attr.data-status]="st.statusConsentimento"
+          data-testid="sep-open-finance-status"
+        >
+          {{ rotuloStatus(st.statusConsentimento) }}
+        </span>
+
+        @if (agregados(); as mov) {
+          <dl class="sep-open-finance-agregados" data-testid="sep-open-finance-agregados">
+            <div class="sep-open-finance-row">
+              <dt>Media de entradas</dt>
+              <dd>{{ valorFormatado(mov.mediaEntradasMensal) }}</dd>
+            </div>
+            <div class="sep-open-finance-row">
+              <dt>Media de saidas</dt>
+              <dd>{{ valorFormatado(mov.mediaSaidasMensal) }}</dd>
+            </div>
+            <div class="sep-open-finance-row">
+              <dt>Saldo medio</dt>
+              <dd>{{ valorFormatado(mov.saldoMedio) }}</dd>
+            </div>
+            @if (mov.numeroMesesAvaliados !== null) {
+              <div class="sep-open-finance-row">
+                <dt>Meses avaliados</dt>
+                <dd>{{ mov.numeroMesesAvaliados }}</dd>
+              </div>
+            }
+            @if (mov.dataRecebimento) {
+              <div class="sep-open-finance-row">
+                <dt>Recebido em</dt>
+                <dd>{{ dataFormatada(mov.dataRecebimento) }}</dd>
+              </div>
+            }
+          </dl>
+        }
+
+        <ion-button
+          fill="outline"
+          expand="block"
+          (click)="consultar()"
+          data-testid="sep-open-finance-atualizar"
+        >
+          Atualizar status
+        </ion-button>
+      </div>
+    }
+  </section>
+</ion-content>
