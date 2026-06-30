@@ -30,11 +30,12 @@ export const AUTHENTICATED_ROUTES: Routes = [
       },
       {
         path: 'propostas',
+        canActivate: [roleGuard],
         loadComponent: () =>
           import('../tomador/credito/propostas-list.component').then(
             (m) => m.PropostasListComponent,
           ),
-        data: { tab: 'propostas', title: 'Propostas' },
+        data: { roles: ['CLIENTE'], tab: 'propostas', title: 'Propostas' },
       },
       {
         path: 'parcelas',

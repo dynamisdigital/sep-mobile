@@ -118,6 +118,25 @@ describe('PropostasListComponent', () => {
     expect(component.ultimaPagina()).toBe(true);
   });
 
+  it('ignora resposta obsoleta quando um novo carregar comeca antes da anterior resolver', async () => {
+    let resolveA: (p: PageResponse<PropostaResponse>) => void = () => undefined;
+    let resolveB: (p: PageResponse<PropostaResponse>) => void = () => undefined;
+    const listar = vi
+      .fn()
+      .mockReturnValueOnce(new Promise<PageResponse<PropostaResponse>>((r) => (resolveA = r)))
+      .mockReturnValueOnce(new Promise<PageResponse<PropostaResponse>>((r) => (resolveB = r)));
+    const { component } = setup(listar);
+
+    const primeira = component.carregar();
+    const segunda = component.carregar();
+    resolveB(pagina([proposta({ id: 'b' })]));
+    await segunda;
+    resolveA(pagina([proposta({ id: 'a' })]));
+    await primeira;
+
+    expect(component.propostas().map((p) => p.id)).toEqual(['b']);
+  });
+
   it('carregarMais nao chama o backend quando ja esta na ultima pagina', async () => {
     const { component, stub } = setup(vi.fn().mockResolvedValue(pagina([proposta()], true)));
     await component.carregar();

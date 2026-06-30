@@ -210,8 +210,10 @@ export interface CriarPropostaRequest {
   prazoMeses: number;
 }
 
-// Score do motor interno: apenas espelha a resposta. O mobile nao recalcula nem explica a formula.
+// Score do motor interno: apenas espelha a resposta. O mobile nao recalcula nem explica a
+// formula; `valor` chega no DTO por fidelidade, mas nao e exibido ao tomador (Task M-7.4).
 export interface ScoreInternoResponse {
+  valor: number;
   statusSugerido: StatusProposta;
   falhas: number;
   pendencias: number;

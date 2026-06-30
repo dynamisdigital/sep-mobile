@@ -76,24 +76,37 @@ export class PropostasListComponent implements OnInit {
   readonly ultimaPagina = signal(true);
 
   private pagina = 0;
+  // Sequencia da requisicao atual: cada `carregar()` invalida respostas anteriores ainda
+  // em voo (troca rapida de filtro ou filtro durante `carregarMais`), evitando que uma
+  // resposta obsoleta sobrescreva ou acrescente itens do filtro anterior.
+  private geracao = 0;
 
   ngOnInit(): void {
     void this.carregar();
   }
 
   async carregar(): Promise<void> {
+    const geracao = ++this.geracao;
     this.carregando.set(true);
     this.erro.set(null);
     this.pagina = 0;
     try {
       const page = await this.credito.listarPropostas(this.params(0));
+      if (geracao !== this.geracao) {
+        return;
+      }
       this.propostas.set(page.content);
       this.ultimaPagina.set(page.last);
     } catch {
+      if (geracao !== this.geracao) {
+        return;
+      }
       this.propostas.set([]);
       this.erro.set('Nao foi possivel carregar as propostas. Tente novamente.');
     } finally {
-      this.carregando.set(false);
+      if (geracao === this.geracao) {
+        this.carregando.set(false);
+      }
     }
   }
 
@@ -101,15 +114,22 @@ export class PropostasListComponent implements OnInit {
     if (this.carregandoMais() || this.ultimaPagina()) {
       return;
     }
+    const geracao = this.geracao;
     this.carregandoMais.set(true);
     this.erro.set(null);
     try {
       const proxima = this.pagina + 1;
       const page = await this.credito.listarPropostas(this.params(proxima));
+      if (geracao !== this.geracao) {
+        return;
+      }
       this.pagina = proxima;
       this.propostas.update((atual) => [...atual, ...page.content]);
       this.ultimaPagina.set(page.last);
     } catch {
+      if (geracao !== this.geracao) {
+        return;
+      }
       this.erro.set('Nao foi possivel carregar mais propostas. Tente novamente.');
     } finally {
       this.carregandoMais.set(false);

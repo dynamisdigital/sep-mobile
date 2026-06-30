@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { authGuard } from '../../core/guards/auth.guard';
+import { roleGuard } from '../../core/guards/role.guard';
 import { AUTHENTICATED_ROUTES } from './authenticated.routes';
 
 describe('AUTHENTICATED_ROUTES', () => {
@@ -23,5 +24,11 @@ describe('AUTHENTICATED_ROUTES', () => {
     expect(propostas?.data?.['tab']).toBe('propostas');
     const loaded = (await propostas?.loadComponent?.()) as { name: string };
     expect(loaded.name).toContain('PropostasListComponent');
+  });
+
+  it('restringe a rota propostas a CLIENTE (ADMIN nao acessa a jornada do tomador)', () => {
+    const propostas = children.find((route) => route.path === 'propostas');
+    expect(propostas?.canActivate).toContain(roleGuard);
+    expect(propostas?.data?.['roles']).toEqual(['CLIENTE']);
   });
 });
