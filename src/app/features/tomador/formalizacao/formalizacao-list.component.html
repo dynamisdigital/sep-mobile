@@ -1,0 +1,77 @@
+<sep-header-mobile />
+<ion-content class="sep-formalizacao">
+  <ion-refresher slot="fixed" (ionRefresh)="recarregar($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <section class="sep-formalizacao-section">
+    <header class="sep-formalizacao-header">
+      <h1 class="sep-formalizacao-title">Formalizacao</h1>
+      <p class="sep-formalizacao-subtitle">Propostas aprovadas, prontas para abrir o contrato.</p>
+    </header>
+
+    @if (carregando()) {
+      <div class="sep-formalizacao-estado" data-testid="sep-formalizacao-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Carregando propostas...</p>
+      </div>
+    } @else if (erro() && propostas().length === 0) {
+      <div class="sep-formalizacao-estado" data-testid="sep-formalizacao-erro">
+        <p>{{ erro() }}</p>
+        <button
+          type="button"
+          class="sep-formalizacao-cta"
+          (click)="carregar()"
+          data-testid="sep-formalizacao-retry"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    } @else if (propostas().length === 0) {
+      <div class="sep-formalizacao-estado" data-testid="sep-formalizacao-vazio">
+        <p>Nenhuma proposta aprovada para formalizar.</p>
+      </div>
+    } @else {
+      <ul class="sep-formalizacao-lista">
+        @for (p of propostas(); track p.id) {
+          <li>
+            <button
+              type="button"
+              class="sep-formalizacao-item"
+              data-testid="sep-formalizacao-item"
+              (click)="abrirFormalizacao(p.id)"
+            >
+              <span class="sep-formalizacao-item-tipo">{{ rotuloTipo(p.tipoOperacao) }}</span>
+              <span class="sep-formalizacao-item-valor">{{ valorFormatado(p) }}</span>
+              <span class="sep-formalizacao-item-meta">
+                {{ p.prazoMeses }} meses &middot; {{ dataFormatada(p.dataCriacao) }}
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+
+      @if (erro()) {
+        <p
+          class="sep-formalizacao-erro-inline"
+          role="status"
+          data-testid="sep-formalizacao-erro-inline"
+        >
+          {{ erro() }}
+        </p>
+      }
+
+      @if (!ultimaPagina()) {
+        <button
+          type="button"
+          class="sep-formalizacao-cta"
+          (click)="carregarMais()"
+          [disabled]="carregandoMais()"
+          data-testid="sep-formalizacao-mais"
+        >
+          {{ carregandoMais() ? 'Carregando...' : 'Carregar mais' }}
+        </button>
+      }
+    }
+  </section>
+</ion-content>

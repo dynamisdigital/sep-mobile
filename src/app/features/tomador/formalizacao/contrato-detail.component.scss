@@ -1,0 +1,89 @@
+@use "../../../../styles/sep-mobile-ds-components" as comp;
+
+.sep-contrato-detail {
+  --background: var(--ion-background-color);
+  --padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
+
+  &-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-16);
+    padding: var(--sep-space-24) var(--sep-space-16) var(--sep-space-48);
+  }
+
+  &-estado {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-16);
+    padding: var(--sep-space-24) 0;
+    color: hsl(var(--muted-foreground));
+    text-align: center;
+  }
+
+  &-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sep-space-8);
+  }
+
+  &-tipo {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: hsl(var(--foreground));
+  }
+
+  &-status {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: hsl(var(--muted-foreground));
+  }
+
+  &-grid {
+    @include comp.sep-mobile-surface-card;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-12);
+    margin: 0;
+    padding: var(--sep-space-16);
+  }
+
+  &-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--sep-space-12);
+
+    dt {
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    dd {
+      margin: 0;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+      text-align: right;
+    }
+  }
+
+  &-versao {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+  }
+
+  &-subtitle {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  &-vazio {
+    margin: 0;
+    color: hsl(var(--muted-foreground));
+  }
+}

@@ -66,4 +66,37 @@ describe('AUTHENTICATED_ROUTES', () => {
     const loaded = (await consent?.loadComponent?.()) as { name: string };
     expect(loaded.name).toContain('OpenFinanceComponent');
   });
+
+  it('registra a entrada de formalizacao restrita a CLIENTE com lazy load', async () => {
+    const lista = children.find((route) => route.path === 'formalizacao');
+    expect(lista).toBeDefined();
+    expect(lista?.canActivate).toContain(roleGuard);
+    expect(lista?.data?.['roles']).toEqual(['CLIENTE']);
+    expect(lista?.data?.['tab']).toBe('propostas');
+    const loaded = (await lista?.loadComponent?.()) as { name: string };
+    expect(loaded.name).toContain('FormalizacaoListComponent');
+  });
+
+  it('registra o detalhe do contrato por proposta restrito a CLIENTE com lazy load', async () => {
+    const porProposta = children.find(
+      (route) => route.path === 'formalizacao/proposta/:propostaId',
+    );
+    expect(porProposta).toBeDefined();
+    expect(porProposta?.canActivate).toContain(roleGuard);
+    expect(porProposta?.data?.['roles']).toEqual(['CLIENTE']);
+    expect(porProposta?.data?.['tab']).toBe('propostas');
+    const loaded = (await porProposta?.loadComponent?.()) as { name: string };
+    expect(loaded.name).toContain('ContratoDetailComponent');
+  });
+
+  it('registra o detalhe do contrato por id restrito a CLIENTE com lazy load', async () => {
+    const porContrato = children.find(
+      (route) => route.path === 'formalizacao/contratos/:contratoId',
+    );
+    expect(porContrato).toBeDefined();
+    expect(porContrato?.canActivate).toContain(roleGuard);
+    expect(porContrato?.data?.['roles']).toEqual(['CLIENTE']);
+    const loaded = (await porContrato?.loadComponent?.()) as { name: string };
+    expect(loaded.name).toContain('ContratoDetailComponent');
+  });
 });

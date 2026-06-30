@@ -1,0 +1,55 @@
+<sep-header-mobile />
+<ion-content class="sep-contrato-detail">
+  <section class="sep-contrato-detail-section">
+    @if (carregando()) {
+      <div class="sep-contrato-detail-estado" data-testid="sep-contrato-detail-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+    } @else if (erro()) {
+      <div class="sep-contrato-detail-estado" data-testid="sep-contrato-detail-erro">
+        <p>{{ erro() }}</p>
+        <ion-button expand="block" (click)="carregar()" data-testid="sep-contrato-detail-retry">
+          Tentar novamente
+        </ion-button>
+      </div>
+    } @else if (contrato(); as c) {
+      <header class="sep-contrato-detail-header">
+        <h1 class="sep-contrato-detail-tipo">{{ rotuloTipo(c.tipo) }}</h1>
+        <span class="sep-contrato-detail-status" data-testid="sep-contrato-detail-status">
+          {{ rotuloStatus(c.status) }}
+        </span>
+      </header>
+
+      <dl class="sep-contrato-detail-grid">
+        <div class="sep-contrato-detail-row">
+          <dt>Criado em</dt>
+          <dd>{{ dataFormatada(c.dataCriacao) }}</dd>
+        </div>
+        <div class="sep-contrato-detail-row">
+          <dt>Atualizado em</dt>
+          <dd>{{ dataFormatada(c.dataModificacao) }}</dd>
+        </div>
+      </dl>
+
+      @if (c.versaoVigente; as versao) {
+        <section class="sep-contrato-detail-versao" data-testid="sep-contrato-detail-versao">
+          <h2 class="sep-contrato-detail-subtitle">Versao vigente</h2>
+          <dl class="sep-contrato-detail-grid">
+            <div class="sep-contrato-detail-row">
+              <dt>Numero</dt>
+              <dd>{{ versao.numero }}</dd>
+            </div>
+            <div class="sep-contrato-detail-row">
+              <dt>Gerada em</dt>
+              <dd>{{ dataFormatada(versao.dataGeracao) }}</dd>
+            </div>
+          </dl>
+        </section>
+      } @else {
+        <p class="sep-contrato-detail-vazio" data-testid="sep-contrato-detail-sem-versao">
+          A versao do contrato ainda nao esta disponivel.
+        </p>
+      }
+    }
+  </section>
+</ion-content>
