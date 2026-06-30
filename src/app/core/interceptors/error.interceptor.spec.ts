@@ -72,17 +72,39 @@ describe('errorInterceptor', () => {
   });
 
   it('outros erros nao redirecionam', async () => {
-    const errorPromise = new Promise<unknown>((resolve) => {
+    const errorPromise = new Promise<HttpErrorResponse>((resolve) => {
       http.get('/api/v1/auth/me').subscribe({
-        next: () => resolve('ok'),
+        next: () => undefined,
         error: (err) => resolve(err),
       });
     });
     const req = httpMock.expectOne('/api/v1/auth/me');
-    req.flush({ message: 'boom' }, { status: 500, statusText: 'Server Error' });
-    await errorPromise;
+    req.flush(
+      { message: 'Erro interno.', traceId: 'trace-mobile-1' },
+      { status: 500, statusText: 'Server Error' },
+    );
+    const error = await errorPromise;
     expect(routerStub.navigateByUrl).not.toHaveBeenCalled();
     expect(authStub.clearSession).not.toHaveBeenCalled();
+    expect(error.error.message).toBe('Erro interno. Código de suporte: trace-mobile-1.');
+  });
+
+  it('4xx preserva mensagem sem codigo de suporte', async () => {
+    const errorPromise = new Promise<HttpErrorResponse>((resolve) => {
+      http.post('/api/v1/propostas', {}).subscribe({
+        next: () => undefined,
+        error: (err) => resolve(err),
+      });
+    });
+    const req = httpMock.expectOne('/api/v1/propostas');
+    req.flush(
+      { message: 'Proposta invalida.', traceId: 'trace-mobile-2' },
+      { status: 422, statusText: 'Unprocessable Entity' },
+    );
+
+    const error = await errorPromise;
+
+    expect(error.error.message).toBe('Proposta invalida.');
   });
 
   afterEach(() => httpMock.verify());
