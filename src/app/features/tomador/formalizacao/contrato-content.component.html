@@ -1,0 +1,57 @@
+<article class="sep-contrato-content" data-testid="sep-contrato-detail-versao">
+  <header class="sep-contrato-content-head">
+    <h2 class="sep-contrato-content-subtitle">Versao {{ versao().numero }}</h2>
+    @if (vigente()) {
+      <span class="sep-contrato-content-badge" data-testid="sep-contrato-detail-badge-vigente">
+        Vigente
+      </span>
+    } @else {
+      <span class="sep-contrato-content-badge sep-contrato-content-badge--historica"
+        >Historica</span
+      >
+    }
+  </header>
+
+  <p class="sep-contrato-content-data">Gerada em {{ dataFormatada(versao().dataGeracao) }}</p>
+
+  <div class="sep-contrato-content-hash">
+    <span class="sep-contrato-content-hash-label">Hash SHA-256</span>
+    <code class="sep-contrato-content-hash-valor" data-testid="sep-contrato-detail-hash">
+      {{ versao().hashSha256 }}
+    </code>
+    <button
+      type="button"
+      class="sep-contrato-content-hash-copiar"
+      (click)="copiar.emit(versao().hashSha256)"
+      data-testid="sep-contrato-detail-hash-copiar"
+    >
+      {{ hashCopiado() ? 'Copiado' : 'Copiar' }}
+    </button>
+  </div>
+
+  <p class="sep-contrato-content-texto" data-testid="sep-contrato-detail-conteudo">
+    {{ versao().conteudoTexto }}
+  </p>
+
+  @if (versao().clausulas.length > 0) {
+    <ol class="sep-contrato-content-clausulas" data-testid="sep-contrato-detail-clausulas">
+      @for (clausula of versao().clausulas; track clausula.id) {
+        <li class="sep-contrato-content-clausula">
+          <h3 class="sep-contrato-content-clausula-titulo">{{ clausula.titulo }}</h3>
+          <p class="sep-contrato-content-clausula-texto">{{ clausula.texto }}</p>
+        </li>
+      }
+    </ol>
+  }
+
+  @if (!vigente()) {
+    <ion-button
+      expand="block"
+      fill="outline"
+      (click)="voltarVigente.emit()"
+      data-testid="sep-contrato-detail-voltar-vigente"
+    >
+      Voltar para a versao vigente
+    </ion-button>
+  }
+</article>

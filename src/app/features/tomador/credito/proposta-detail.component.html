@@ -54,6 +54,16 @@
       >
         Compartilhar Open Finance
       </ion-button>
+
+      @if (p.status === 'APROVADA') {
+        <ion-button
+          expand="block"
+          (click)="abrirFormalizacao()"
+          data-testid="sep-proposta-detail-formalizacao"
+        >
+          Ver formalizacao
+        </ion-button>
+      }
     }
   </section>
 </ion-content>

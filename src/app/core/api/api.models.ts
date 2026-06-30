@@ -290,3 +290,76 @@ export interface OpenFinanceStatusResponse {
   dataExpiracao: string | null;
   ultimaMovimentacao: MovimentacaoConsolidadaResponse | null;
 }
+
+// DTOs de borda espelhando os contratos reais de `sep-api` (formalizacao Sprints 10-11).
+// Ownership, versionamento, regra contratual, assinatura e validade juridica pertencem ao
+// backend: o mobile apenas apresenta os snapshots, nunca calcula status, hash ou validade.
+// Campos sensiveis (`tomadorId`, `parecerOrigemId`, `ipOrigem`, `userAgentOrigem`,
+// `idEnvelopeExterno`) chegam por fidelidade ao contrato mas nunca sao exibidos ao tomador.
+
+export type StatusFormalizacao =
+  | 'GERADO'
+  | 'AGUARDANDO_ACEITE'
+  | 'ACEITO'
+  | 'EM_ASSINATURA'
+  | 'ASSINADO'
+  | 'RECUSADO'
+  | 'CANCELADO';
+
+export type StatusEnvelope =
+  | 'RASCUNHO'
+  | 'ENVIADO'
+  | 'VISUALIZADO'
+  | 'ASSINADO'
+  | 'RECUSADO'
+  | 'EXPIRADO';
+
+export type TipoContrato = 'MUTUO' | 'CCB' | 'OUTROS';
+
+export interface ClausulaContratoResponse {
+  id: string;
+  ordem: number;
+  titulo: string;
+  texto: string;
+}
+
+export interface VersaoContratoResponse {
+  id: string;
+  numero: number;
+  conteudoTexto: string;
+  hashSha256: string;
+  dataGeracao: string;
+  parecerOrigemId: string | null;
+  clausulas: ClausulaContratoResponse[];
+}
+
+// `ipOrigem` e `userAgentOrigem` chegam por fidelidade ao backend, mas nao agregam valor ao
+// tomador e nao devem ser exibidos.
+export interface AceiteContratoResponse {
+  id: string;
+  versaoId: string;
+  tomadorId: string;
+  dataAceite: string;
+  ipOrigem: string;
+  userAgentOrigem: string;
+}
+
+export interface ContratoResponse {
+  id: string;
+  propostaId: string;
+  tomadorId: string;
+  tipo: TipoContrato;
+  status: StatusFormalizacao;
+  versaoVigente: VersaoContratoResponse | null;
+  aceite: AceiteContratoResponse | null;
+  dataCriacao: string;
+  dataModificacao: string;
+}
+
+// `idEnvelopeExterno` identifica o envelope no provider externo e nao deve ser exibido.
+export interface StatusAssinaturaResponse {
+  statusContrato: StatusFormalizacao;
+  statusEnvelope: StatusEnvelope | null;
+  idEnvelopeExterno: string | null;
+  dataAtualizacaoProvider: string | null;
+}
