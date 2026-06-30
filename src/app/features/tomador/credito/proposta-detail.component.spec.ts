@@ -103,6 +103,19 @@ describe('PropostaDetailComponent', () => {
     expect(component.erro()).toBe('Proposta nao encontrada.');
   });
 
+  it('403 (proposta de outro tomador) expoe a mensagem do backend', async () => {
+    const { component } = setup({
+      consultarProposta: vi
+        .fn()
+        .mockRejectedValue(
+          new HttpErrorResponse({ status: 403, error: { message: 'Proposta de outro tomador' } }),
+        ),
+    });
+    await component.ngOnInit();
+    expect(component.proposta()).toBeNull();
+    expect(component.erro()).toBe('Proposta de outro tomador');
+  });
+
   it('erro generico expoe mensagem de retry', async () => {
     const { component } = setup({
       consultarProposta: vi
