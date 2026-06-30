@@ -526,19 +526,13 @@ const creditoHandlers = [
       }
       const body = (await request.json()) as { cpfCnpjTomador: string; redirectUri: string };
       const agora = new Date().toISOString();
-      // Simula autorizacao instantanea: status AUTORIZADO com agregados ficticios.
+      // Consentimento nasce PENDENTE (consistente com a resposta), sem agregados ainda.
       mapa[id] = {
-        statusConsentimento: 'AUTORIZADO',
+        statusConsentimento: 'PENDENTE',
         dataInicio: agora,
-        dataAutorizacao: agora,
+        dataAutorizacao: null,
         dataExpiracao: null,
-        ultimaMovimentacao: {
-          mediaEntradasMensal: 8500,
-          mediaSaidasMensal: 6200,
-          saldoMedio: 3400,
-          numeroMesesAvaliados: 6,
-          dataRecebimento: agora,
-        },
+        ultimaMovimentacao: null,
       };
       salvarEstado(OPEN_FINANCE_KEY, mapa);
       // O provider mock "redireciona" de volta pela propria redirectUri do app.
@@ -555,7 +549,9 @@ const creditoHandlers = [
   ),
 
   http.get(`${baseUrl}/credito/propostas/:id/open-finance`, ({ params }) => {
-    const estado = lerOpenFinance()[String(params['id'])];
+    const id = String(params['id']);
+    const mapa = lerOpenFinance();
+    const estado = mapa[id];
     if (!estado) {
       return HttpResponse.json(
         errorResponse(
@@ -566,6 +562,21 @@ const creditoHandlers = [
         ),
         { status: 404 },
       );
+    }
+    // Simula a autorizacao concluindo durante o handoff: o primeiro GET apos PENDENTE
+    // avanca para AUTORIZADO com agregados ficticios e persiste o novo estado.
+    if (estado.statusConsentimento === 'PENDENTE') {
+      const agora = new Date().toISOString();
+      estado.statusConsentimento = 'AUTORIZADO';
+      estado.dataAutorizacao = agora;
+      estado.ultimaMovimentacao = {
+        mediaEntradasMensal: 8500,
+        mediaSaidasMensal: 6200,
+        saldoMedio: 3400,
+        numeroMesesAvaliados: 6,
+        dataRecebimento: agora,
+      };
+      salvarEstado(OPEN_FINANCE_KEY, mapa);
     }
     return HttpResponse.json(estado, { status: 200 });
   }),

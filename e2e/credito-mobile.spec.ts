@@ -65,10 +65,12 @@ test.describe('M-Sprint 7 - credito e Open Finance (MSW)', () => {
     await jornadaCredito(page);
 
     // Assercoes negativas (LGPD): nada de trilha de regras, parecerista ou PII bancaria.
+    // Normaliza NFD + remove acentos para capturar variacoes como "Agencia"/"Agência".
     const corpo = await page.locator('body').innerText();
-    expect(corpo).not.toContain('parecerista');
-    expect(corpo).not.toContain('pareceristaId');
-    expect(corpo.toLowerCase()).not.toContain('agencia');
+    const normalizado = corpo.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+    expect(normalizado).not.toContain('parecerista');
+    expect(normalizado).not.toContain('agencia');
+    expect(normalizado).not.toContain('conta corrente');
     expect(corpo).not.toContain('12345678901');
   });
 
