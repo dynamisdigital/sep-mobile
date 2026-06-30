@@ -360,4 +360,215 @@ const onboardingHandlers = [
   }),
 ];
 
-export const handlers = [...baseHandlers, ...onboardingHandlers];
+// --- Credito + Open Finance (Sprints 8-9) -------------------------------------------
+// Estado em memoria para dev + e2e. Gatilhos por `solicitacaoOnboardingId`:
+//   - so zeros  -> 422 (onboarding nao esta APROVADO_FINAL);
+//   - 'inexistente' -> 404. Qualquer outro -> 201 (proposta EM_ANALISE).
+// O consentimento Open Finance simula autorizacao instantanea: o provider "redireciona"
+// de volta pela propria redirectUri do app, deixando o status AUTORIZADO com agregados
+// ficticios (sem PII bancaria real: nada de conta/agencia/titular/documento).
+
+const TOMADOR_ID = usuarioCliente.id;
+
+interface PropostaMock {
+  id: string;
+  tomadorId: string;
+  solicitacaoOnboardingId: string;
+  tipoOperacao: string;
+  valorSolicitado: number;
+  moeda: string;
+  prazoMeses: number;
+  status: string;
+  dataCriacao: string;
+  dataModificacao: string;
+  score: null;
+  parecer: null;
+}
+
+interface OpenFinanceMock {
+  statusConsentimento: string;
+  dataInicio: string;
+  dataAutorizacao: string | null;
+  dataExpiracao: string | null;
+  ultimaMovimentacao: {
+    mediaEntradasMensal: number;
+    mediaSaidasMensal: number;
+    saldoMedio: number;
+    numeroMesesAvaliados: number;
+    dataRecebimento: string;
+  } | null;
+}
+
+// Estado persistido em localStorage (quando disponivel) para sobreviver ao reload do handoff
+// Open Finance no e2e; em node (vitest server) cai para memoria via try/catch.
+const PROPOSTAS_KEY = 'mock.credito.propostas';
+const OPEN_FINANCE_KEY = 'mock.credito.openfinance';
+
+function lerEstado<T>(chave: string, padrao: T): T {
+  try {
+    const raw = globalThis.localStorage?.getItem(chave);
+    return raw ? (JSON.parse(raw) as T) : padrao;
+  } catch {
+    return padrao;
+  }
+}
+
+function salvarEstado(chave: string, valor: unknown): void {
+  try {
+    globalThis.localStorage?.setItem(chave, JSON.stringify(valor));
+  } catch {
+    // node (vitest): sem localStorage — os handlers de credito nao sao usados la.
+  }
+}
+
+function lerPropostas(): PropostaMock[] {
+  return lerEstado<PropostaMock[]>(PROPOSTAS_KEY, []);
+}
+
+function lerOpenFinance(): Record<string, OpenFinanceMock> {
+  return lerEstado<Record<string, OpenFinanceMock>>(OPEN_FINANCE_KEY, {});
+}
+
+function pageResponse<T>(lista: T[], page: number, size: number) {
+  const inicio = page * size;
+  const conteudo = lista.slice(inicio, inicio + size);
+  return {
+    content: conteudo,
+    totalElements: lista.length,
+    totalPages: Math.max(1, Math.ceil(lista.length / size)),
+    number: page,
+    size,
+    first: page === 0,
+    last: inicio + size >= lista.length,
+    numberOfElements: conteudo.length,
+    empty: conteudo.length === 0,
+  };
+}
+
+const creditoHandlers = [
+  http.get(`${baseUrl}/credito/propostas`, ({ request }) => {
+    const url = new URL(request.url);
+    const status = url.searchParams.get('status');
+    const page = Number(url.searchParams.get('page') ?? '0');
+    const size = Number(url.searchParams.get('size') ?? '20');
+    const lista = lerPropostas().filter((p) => !status || p.status === status);
+    return HttpResponse.json(pageResponse(lista, page, size), { status: 200 });
+  }),
+
+  http.get(`${baseUrl}/credito/propostas/:id`, ({ params }) => {
+    const proposta = lerPropostas().find((p) => p.id === String(params['id']));
+    if (!proposta) {
+      return HttpResponse.json(
+        errorResponse(404, 'Not Found', 'Proposta nao encontrada', '/api/v1/credito/propostas'),
+        { status: 404 },
+      );
+    }
+    return HttpResponse.json(proposta, { status: 200 });
+  }),
+
+  http.post(`${baseUrl}/credito/propostas`, async ({ request }) => {
+    const body = (await request.json()) as {
+      solicitacaoOnboardingId: string;
+      tipoOperacao: string;
+      valorSolicitado: number;
+      prazoMeses: number;
+    };
+    const path = '/api/v1/credito/propostas';
+    const onboardingId = soDigitos(body.solicitacaoOnboardingId);
+    if (/^0+$/.test(onboardingId)) {
+      return HttpResponse.json(
+        errorResponse(422, 'Unprocessable Entity', 'Onboarding nao esta APROVADO_FINAL', path),
+        { status: 422 },
+      );
+    }
+    if (body.solicitacaoOnboardingId === 'inexistente') {
+      return HttpResponse.json(errorResponse(404, 'Not Found', 'Onboarding nao encontrado', path), {
+        status: 404,
+      });
+    }
+    const lista = lerPropostas();
+    const id = `prop-mock-${lista.length + 1}`;
+    const agora = new Date().toISOString();
+    const proposta: PropostaMock = {
+      id,
+      tomadorId: TOMADOR_ID,
+      solicitacaoOnboardingId: body.solicitacaoOnboardingId,
+      tipoOperacao: body.tipoOperacao,
+      valorSolicitado: body.valorSolicitado,
+      moeda: 'BRL',
+      prazoMeses: body.prazoMeses,
+      status: 'EM_ANALISE',
+      dataCriacao: agora,
+      dataModificacao: agora,
+      score: null,
+      parecer: null,
+    };
+    salvarEstado(PROPOSTAS_KEY, [...lista, proposta]);
+    return HttpResponse.json(proposta, { status: 201 });
+  }),
+
+  http.post(
+    `${baseUrl}/credito/propostas/:id/open-finance/consentimento`,
+    async ({ params, request }) => {
+      const id = String(params['id']);
+      const path = '/api/v1/credito/propostas';
+      if (!lerPropostas().some((p) => p.id === id)) {
+        return HttpResponse.json(errorResponse(404, 'Not Found', 'Proposta nao encontrada', path), {
+          status: 404,
+        });
+      }
+      const mapa = lerOpenFinance();
+      if (mapa[id]?.statusConsentimento === 'PENDENTE') {
+        return HttpResponse.json(
+          errorResponse(409, 'Conflict', 'Ja existe consentimento PENDENTE', path),
+          { status: 409 },
+        );
+      }
+      const body = (await request.json()) as { cpfCnpjTomador: string; redirectUri: string };
+      const agora = new Date().toISOString();
+      // Simula autorizacao instantanea: status AUTORIZADO com agregados ficticios.
+      mapa[id] = {
+        statusConsentimento: 'AUTORIZADO',
+        dataInicio: agora,
+        dataAutorizacao: agora,
+        dataExpiracao: null,
+        ultimaMovimentacao: {
+          mediaEntradasMensal: 8500,
+          mediaSaidasMensal: 6200,
+          saldoMedio: 3400,
+          numeroMesesAvaliados: 6,
+          dataRecebimento: agora,
+        },
+      };
+      salvarEstado(OPEN_FINANCE_KEY, mapa);
+      // O provider mock "redireciona" de volta pela propria redirectUri do app.
+      return HttpResponse.json(
+        {
+          consentimentoId: `consent-mock-${id}`,
+          status: 'PENDENTE',
+          urlAutorizacao: body.redirectUri,
+          dataExpiracao: null,
+        },
+        { status: 201 },
+      );
+    },
+  ),
+
+  http.get(`${baseUrl}/credito/propostas/:id/open-finance`, ({ params }) => {
+    const estado = lerOpenFinance()[String(params['id'])];
+    if (!estado) {
+      return HttpResponse.json(
+        errorResponse(
+          404,
+          'Not Found',
+          'Consentimento nao encontrado',
+          '/api/v1/credito/propostas',
+        ),
+        { status: 404 },
+      );
+    }
+    return HttpResponse.json(estado, { status: 200 });
+  }),
+];
+
+export const handlers = [...baseHandlers, ...onboardingHandlers, ...creditoHandlers];
