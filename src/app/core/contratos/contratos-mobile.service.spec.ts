@@ -110,6 +110,13 @@ describe('ContratosMobileService', () => {
     expect(result.hashSha256).toBeNull();
   });
 
+  it('baixarDocumentoAssinado falha quando o corpo do PDF vem vazio (documento legal)', async () => {
+    const promise = service.baixarDocumentoAssinado(ID);
+    const req = httpMock.expectOne(`${CONTRATOS}/${ID}/documento-assinado`);
+    req.flush(new Blob([]));
+    await expect(promise).rejects.toThrow('indisponivel');
+  });
+
   it.each([403, 404, 409])('propaga erro HTTP %i para tratamento na UI', async (status) => {
     const promise = service.consultarPorId(ID);
     const req = httpMock.expectOne(`${CONTRATOS}/${ID}`);

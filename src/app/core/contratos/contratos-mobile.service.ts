@@ -67,8 +67,13 @@ export class ContratosMobileService {
         responseType: 'blob',
       }),
     );
+    const blob = response.body;
+    // Documento legal: corpo ausente/vazio e erro explicito, nunca um PDF vazio "bem-sucedido".
+    if (!blob || blob.size === 0) {
+      throw new Error('Documento assinado indisponivel.');
+    }
     return {
-      blob: response.body ?? new Blob([], { type: 'application/pdf' }),
+      blob,
       nomeArquivo: extrairNomeArquivo(response, contratoId),
       hashSha256: response.headers.get('X-Document-Hash-Sha256'),
     };
