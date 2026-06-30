@@ -44,8 +44,9 @@
         }
 
         <button
-          type="submit"
+          type="button"
           class="sep-step-up-submit"
+          (click)="submit()"
           [disabled]="submitting()"
           data-testid="sep-step-up-submit"
         >
