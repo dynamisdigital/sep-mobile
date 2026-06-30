@@ -190,3 +190,101 @@ export interface StatusOnboardingEmpresaResponse {
   representantes: RepresentanteLegalResponse[];
   resultado: ResultadoOnboardingResponse | null;
 }
+
+// DTOs de borda espelhando os contratos reais de `sep-api` (credito Sprints 8-9).
+// Score, parecer, elegibilidade e decisoes de credito pertencem ao backend: o mobile
+// apenas apresenta esses valores; nunca calcula score, juros, CET, IOF ou transicao.
+
+export type StatusProposta = 'EM_ANALISE' | 'PRE_APROVADA' | 'APROVADA' | 'REJEITADA' | 'PENDENCIA';
+
+export type TipoOperacao = 'CAPITAL_GIRO' | 'OUTROS';
+
+export type StatusConsentimento = 'PENDENTE' | 'AUTORIZADO' | 'NEGADO' | 'EXPIRADO';
+
+export type DecisaoParecer = 'APROVAR' | 'REJEITAR' | 'PENDENCIA';
+
+export interface CriarPropostaRequest {
+  solicitacaoOnboardingId: string;
+  tipoOperacao: TipoOperacao;
+  valorSolicitado: number;
+  prazoMeses: number;
+}
+
+// Score do motor interno: apenas espelha a resposta. O mobile nao recalcula nem explica a formula.
+export interface ScoreInternoResponse {
+  statusSugerido: StatusProposta;
+  falhas: number;
+  pendencias: number;
+  dataCalculo: string;
+}
+
+// Parecer manual da mesa de credito: apenas espelha a resposta. `pareceristaId` chega no DTO
+// mas nao deve ser exibido ao tomador (Task M-7.4).
+export interface ParecerCreditoResponse {
+  id: string;
+  propostaId: string;
+  pareceristaId: string;
+  decisao: DecisaoParecer;
+  justificativa: string;
+  scoreMotorSnapshot: number | null;
+  versao: number;
+  dataParecer: string;
+}
+
+export interface PropostaResponse {
+  id: string;
+  tomadorId: string;
+  solicitacaoOnboardingId: string;
+  tipoOperacao: TipoOperacao;
+  valorSolicitado: number;
+  moeda: string;
+  prazoMeses: number;
+  status: StatusProposta;
+  dataCriacao: string;
+  dataModificacao: string;
+  score: ScoreInternoResponse | null;
+  parecer: ParecerCreditoResponse | null;
+}
+
+// Espelha Spring Page; o mobile usa apenas o subconjunto necessario para paginar a lista.
+export interface PageResponse<T> {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  first: boolean;
+  last: boolean;
+  numberOfElements: number;
+  empty: boolean;
+}
+
+export interface IniciarConsentimentoOpenFinanceRequest {
+  cpfCnpjTomador: string;
+  redirectUri: string;
+}
+
+export interface IniciarConsentimentoOpenFinanceResponse {
+  consentimentoId: string;
+  status: StatusConsentimento;
+  urlAutorizacao: string;
+  dataExpiracao: string;
+}
+
+// Agregados sanitizados do snapshot Open Finance. Backend nunca expoe transacoes, conta,
+// agencia, titular ou CPF/CNPJ nesta camada (LGPD).
+export interface MovimentacaoConsolidadaResponse {
+  mediaEntradasMensal: number;
+  mediaSaidasMensal: number;
+  saldoMedio: number;
+  numeroMesesAvaliados: number | null;
+  dataRecebimento: string | null;
+}
+
+export interface OpenFinanceStatusResponse {
+  statusConsentimento: StatusConsentimento;
+  dataInicio: string;
+  dataAutorizacao: string | null;
+  dataExpiracao: string | null;
+  ultimaMovimentacao: MovimentacaoConsolidadaResponse | null;
+}
