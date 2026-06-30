@@ -47,6 +47,15 @@ export const AUTHENTICATED_ROUTES: Routes = [
         data: { roles: ['CLIENTE'], tab: 'propostas', title: 'Solicitar credito' },
       },
       {
+        path: 'propostas/:id',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('../tomador/credito/proposta-detail.component').then(
+            (m) => m.PropostaDetailComponent,
+          ),
+        data: { roles: ['CLIENTE'], tab: 'propostas', title: 'Proposta' },
+      },
+      {
         path: 'parcelas',
         loadComponent: () =>
           import('./placeholder/placeholder.component').then((m) => m.PlaceholderComponent),

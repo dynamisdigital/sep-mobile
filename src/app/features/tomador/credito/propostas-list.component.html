@@ -54,9 +54,7 @@
             >
               <span class="sep-proposta-item-top">
                 <span class="sep-proposta-item-tipo">{{ rotuloTipo(p.tipoOperacao) }}</span>
-                <span class="sep-proposta-status" [attr.data-variante]="variante(p.status)">
-                  {{ rotuloStatus(p.status) }}
-                </span>
+                <sep-proposta-status [status]="p.status" />
               </span>
               <span class="sep-proposta-item-valor">{{ valorFormatado(p) }}</span>
               <span class="sep-proposta-item-meta">

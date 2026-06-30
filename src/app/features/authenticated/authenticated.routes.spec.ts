@@ -41,4 +41,19 @@ describe('AUTHENTICATED_ROUTES', () => {
     const loaded = (await nova?.loadComponent?.()) as { name: string };
     expect(loaded.name).toContain('PropostaCreateComponent');
   });
+
+  it('registra a rota de detalhe propostas/:id restrita a CLIENTE com lazy load', async () => {
+    const detalhe = children.find((route) => route.path === 'propostas/:id');
+    expect(detalhe).toBeDefined();
+    expect(detalhe?.canActivate).toContain(roleGuard);
+    expect(detalhe?.data?.['roles']).toEqual(['CLIENTE']);
+    expect(detalhe?.data?.['tab']).toBe('propostas');
+    const loaded = (await detalhe?.loadComponent?.()) as { name: string };
+    expect(loaded.name).toContain('PropostaDetailComponent');
+  });
+
+  it('coloca propostas/nova antes de propostas/:id (literal nao e capturado pelo parametro)', () => {
+    const paths = children.map((route) => route.path);
+    expect(paths.indexOf('propostas/nova')).toBeLessThan(paths.indexOf('propostas/:id'));
+  });
 });

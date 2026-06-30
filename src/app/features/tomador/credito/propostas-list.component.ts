@@ -15,19 +15,11 @@ import {
   ListarPropostasParams,
 } from '../../../core/credito/credito-mobile.service';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
+import { PropostaStatusComponent } from './proposta-status.component';
 
 type FiltroStatus = StatusProposta | 'TODAS';
-type VarianteStatus = 'aprovado' | 'reprovado' | 'pendente' | 'andamento';
 
 const PAGE_SIZE = 20;
-
-const ROTULOS_STATUS: Record<StatusProposta, string> = {
-  EM_ANALISE: 'Em analise',
-  PRE_APROVADA: 'Pre-aprovada',
-  PENDENCIA: 'Pendencia',
-  APROVADA: 'Aprovada',
-  REJEITADA: 'Rejeitada',
-};
 
 const ROTULOS_TIPO: Record<TipoOperacao, string> = {
   CAPITAL_GIRO: 'Capital de giro',
@@ -57,6 +49,7 @@ const FILTROS: readonly { value: FiltroStatus; label: string }[] = [
     IonSelectOption,
     IonSpinner,
     HeaderMobileComponent,
+    PropostaStatusComponent,
   ],
   templateUrl: './propostas-list.component.html',
   styleUrl: './propostas-list.component.scss',
@@ -154,16 +147,8 @@ export class PropostasListComponent implements OnInit {
     void this.router.navigate(['/app/propostas', id]);
   }
 
-  protected rotuloStatus(status: StatusProposta): string {
-    return ROTULOS_STATUS[status];
-  }
-
   protected rotuloTipo(tipo: TipoOperacao): string {
     return ROTULOS_TIPO[tipo];
-  }
-
-  protected variante(status: StatusProposta): VarianteStatus {
-    return varianteDoStatus(status);
   }
 
   protected valorFormatado(proposta: PropostaResponse): string {
@@ -187,19 +172,5 @@ export class PropostasListComponent implements OnInit {
       params.status = this.filtroStatus() as StatusProposta;
     }
     return params;
-  }
-}
-
-function varianteDoStatus(status: StatusProposta): VarianteStatus {
-  switch (status) {
-    case 'APROVADA':
-      return 'aprovado';
-    case 'REJEITADA':
-      return 'reprovado';
-    case 'PENDENCIA':
-      return 'pendente';
-    case 'EM_ANALISE':
-    case 'PRE_APROVADA':
-      return 'andamento';
   }
 }

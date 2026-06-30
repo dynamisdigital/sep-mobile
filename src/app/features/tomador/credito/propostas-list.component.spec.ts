@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PageResponse, PropostaResponse, StatusProposta } from '../../../core/api/api.models';
+import { PageResponse, PropostaResponse } from '../../../core/api/api.models';
 import { CreditoMobileService } from '../../../core/credito/credito-mobile.service';
 import { PropostasListComponent } from './propostas-list.component';
 
@@ -153,18 +153,10 @@ describe('PropostasListComponent', () => {
     expect(navSpy).toHaveBeenCalledWith(['/app/propostas', 'xyz']);
   });
 
-  it('mapeia rotulo e variante de cada status sem inferir transicao', () => {
+  it('mapeia o rotulo do tipo de operacao (status fica no sep-proposta-status)', () => {
     const { component } = setup();
-    const view = component as unknown as {
-      rotuloStatus(s: StatusProposta): string;
-      variante(s: StatusProposta): string;
-      rotuloTipo(t: 'CAPITAL_GIRO' | 'OUTROS'): string;
-    };
-    expect(view.rotuloStatus('PRE_APROVADA')).toBe('Pre-aprovada');
-    expect(view.variante('PRE_APROVADA')).toBe('andamento');
-    expect(view.variante('APROVADA')).toBe('aprovado');
-    expect(view.variante('REJEITADA')).toBe('reprovado');
-    expect(view.variante('PENDENCIA')).toBe('pendente');
+    const view = component as unknown as { rotuloTipo(t: 'CAPITAL_GIRO' | 'OUTROS'): string };
     expect(view.rotuloTipo('CAPITAL_GIRO')).toBe('Capital de giro');
+    expect(view.rotuloTipo('OUTROS')).toBe('Outros');
   });
 });
