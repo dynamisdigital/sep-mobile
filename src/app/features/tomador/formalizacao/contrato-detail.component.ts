@@ -51,12 +51,13 @@ const ROTULOS_ENVELOPE: Record<StatusEnvelope, string> = {
 };
 
 // Status de formalizacao em que a fase de assinatura ja faz sentido exibir (pos-aceite).
+// CANCELADO fica de fora: o backend so cancela contrato pre-aceite (GERADO/AGUARDANDO_ACEITE),
+// entao um contrato cancelado nunca entrou na assinatura.
 const STATUS_FASE_ASSINATURA: readonly StatusFormalizacao[] = [
   'ACEITO',
   'EM_ASSINATURA',
   'ASSINADO',
   'RECUSADO',
-  'CANCELADO',
 ];
 
 // Detalhe e leitura do contrato de formalizacao. Entra por proposta (`consultarPorProposta`) ou
@@ -100,6 +101,7 @@ export class ContratoDetailComponent implements OnInit {
   readonly erroAceite = signal<string | null>(null);
   readonly statusAssinatura = signal<StatusAssinaturaResponse | null>(null);
   readonly atualizandoStatus = signal(false);
+  readonly erroStatus = signal<string | null>(null);
   readonly baixandoDocumento = signal(false);
   readonly erroDocumento = signal<string | null>(null);
 
@@ -272,11 +274,14 @@ export class ContratoDetailComponent implements OnInit {
     }
   }
 
-  async consultarStatusAssinatura(): Promise<void> {
+  // Devolve true em sucesso. Mantem o snapshot anterior em falha (status e complementar e nao
+  // invalida o aceite ja registrado).
+  async consultarStatusAssinatura(): Promise<boolean> {
     try {
       this.statusAssinatura.set(await this.contratos.consultarStatusAssinatura(this.contratoId));
+      return true;
     } catch {
-      // Status e complementar; sua falha nao invalida o aceite nem descarta o status anterior.
+      return false;
     }
   }
 
@@ -285,11 +290,12 @@ export class ContratoDetailComponent implements OnInit {
       return;
     }
     this.atualizandoStatus.set(true);
-    try {
-      await this.consultarStatusAssinatura();
-    } finally {
-      this.atualizandoStatus.set(false);
+    this.erroStatus.set(null);
+    const ok = await this.consultarStatusAssinatura();
+    if (!ok) {
+      this.erroStatus.set('Nao foi possivel atualizar o status. Tente novamente.');
     }
+    this.atualizandoStatus.set(false);
   }
 
   // Baixa o PDF assinado pela API autenticada do SEP. O blob e transitorio: a URL de objeto e
@@ -433,6 +439,7 @@ export class ContratoDetailComponent implements OnInit {
     this.erroAceite.set(null);
     this.statusAssinatura.set(null);
     this.atualizandoStatus.set(false);
+    this.erroStatus.set(null);
     this.baixandoDocumento.set(false);
     this.erroDocumento.set(null);
   }

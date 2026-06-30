@@ -16,7 +16,7 @@
       <header class="sep-contrato-detail-header">
         <h1 class="sep-contrato-detail-tipo">{{ rotuloTipo(c.tipo) }}</h1>
         <span class="sep-contrato-detail-status" data-testid="sep-contrato-detail-status">
-          {{ rotuloStatus(c.status) }}
+          {{ rotuloStatus(statusContratoEfetivo() ?? c.status) }}
         </span>
       </header>
 
@@ -135,6 +135,16 @@
           >
             {{ atualizandoStatus() ? 'Atualizando...' : 'Atualizar status' }}
           </button>
+
+          @if (erroStatus(); as msg) {
+            <p
+              class="sep-contrato-detail-documento-erro"
+              role="alert"
+              data-testid="sep-contrato-detail-status-erro"
+            >
+              {{ msg }}
+            </p>
+          }
 
           @if (documentoDisponivel()) {
             <ion-button

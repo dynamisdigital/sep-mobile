@@ -467,6 +467,16 @@ describe('ContratoDetailComponent', () => {
     await component.atualizarStatus();
     await component.atualizarStatus();
     expect(component.statusAssinatura()?.statusEnvelope).toBe('ENVIADO');
+    expect(component.erroStatus()).toContain('Tente novamente');
+  });
+
+  it('contrato CANCELADO nao exibe a fase de assinatura (cancelamento e pre-aceite)', async () => {
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      { consultarPorId: vi.fn().mockResolvedValue(contratoFixture('CANCELADO')) },
+    );
+    await component.ngOnInit();
+    expect(component.mostrarAssinatura()).toBe(false);
   });
 
   it('documentoDisponivel apenas quando o status efetivo e ASSINADO', async () => {
