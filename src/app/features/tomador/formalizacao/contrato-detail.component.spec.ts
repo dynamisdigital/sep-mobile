@@ -36,6 +36,8 @@ function setup(
     registrarAceite: svc.registrarAceite ?? vi.fn().mockResolvedValue(contratoFixture('ACEITO')),
     consultarStatusAssinatura:
       svc.consultarStatusAssinatura ?? vi.fn().mockResolvedValue(statusAssinaturaFixture()),
+    baixarDocumentoAssinado:
+      svc.baixarDocumentoAssinado ?? vi.fn().mockResolvedValue(documentoFixture()),
   };
   const activatedRoute = {
     snapshot: {
@@ -408,6 +410,120 @@ describe('ContratoDetailComponent', () => {
     expect(consultarPorId).toHaveBeenCalledTimes(2);
     expect(component.erroAceite()).toContain('Tente novamente');
   });
+
+  // ---- M-8.5: status de assinatura e documento ----
+
+  it('a fase de assinatura aparece pos-aceite e nao em AGUARDANDO_ACEITE', async () => {
+    const aguardando = setup({ contratoId: CONTRATO_ID });
+    await aguardando.component.ngOnInit();
+    expect(aguardando.component.mostrarAssinatura()).toBe(false);
+
+    const emAssinatura = setup(
+      { contratoId: CONTRATO_ID },
+      { consultarPorId: vi.fn().mockResolvedValue(contratoFixture('EM_ASSINATURA')) },
+    );
+    await emAssinatura.component.ngOnInit();
+    expect(emAssinatura.component.mostrarAssinatura()).toBe(true);
+  });
+
+  it('atualizarStatus busca o snapshot e expoe o envelope', async () => {
+    const consultarStatusAssinatura = vi.fn().mockResolvedValue({
+      statusContrato: 'EM_ASSINATURA',
+      statusEnvelope: 'ENVIADO',
+      idEnvelopeExterno: 'env-externo-1',
+      dataAtualizacaoProvider: '2026-06-30T10:00:00-03:00',
+    });
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      {
+        consultarPorId: vi.fn().mockResolvedValue(contratoFixture('EM_ASSINATURA')),
+        consultarStatusAssinatura,
+      },
+    );
+    await component.ngOnInit();
+    await component.atualizarStatus();
+    expect(consultarStatusAssinatura).toHaveBeenCalledWith(CONTRATO_ID);
+    expect(component.statusAssinatura()?.statusEnvelope).toBe('ENVIADO');
+  });
+
+  it('falha ao atualizar status preserva o snapshot anterior', async () => {
+    const consultarStatusAssinatura = vi
+      .fn()
+      .mockResolvedValueOnce({
+        statusContrato: 'EM_ASSINATURA',
+        statusEnvelope: 'ENVIADO',
+        idEnvelopeExterno: null,
+        dataAtualizacaoProvider: null,
+      })
+      .mockRejectedValueOnce(new Error('rede'));
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      {
+        consultarPorId: vi.fn().mockResolvedValue(contratoFixture('EM_ASSINATURA')),
+        consultarStatusAssinatura,
+      },
+    );
+    await component.ngOnInit();
+    await component.atualizarStatus();
+    await component.atualizarStatus();
+    expect(component.statusAssinatura()?.statusEnvelope).toBe('ENVIADO');
+  });
+
+  it('documentoDisponivel apenas quando o status efetivo e ASSINADO', async () => {
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      { consultarPorId: vi.fn().mockResolvedValue(contratoFixture('ASSINADO')) },
+    );
+    await component.ngOnInit();
+    expect(component.documentoDisponivel()).toBe(true);
+  });
+
+  it('baixarDocumento cria a URL de objeto, baixa e revoga (sem persistir)', async () => {
+    const createObjectURL = vi.fn(() => 'blob:fake-url');
+    const revokeObjectURL = vi.fn();
+    Object.defineProperty(URL, 'createObjectURL', { value: createObjectURL, configurable: true });
+    Object.defineProperty(URL, 'revokeObjectURL', { value: revokeObjectURL, configurable: true });
+    const clickSpy = vi
+      .spyOn(HTMLAnchorElement.prototype, 'click')
+      .mockImplementation(() => undefined);
+    const baixarDocumentoAssinado = vi.fn().mockResolvedValue(documentoFixture());
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      {
+        consultarPorId: vi.fn().mockResolvedValue(contratoFixture('ASSINADO')),
+        baixarDocumentoAssinado,
+      },
+    );
+    await component.ngOnInit();
+    await component.baixarDocumento();
+    expect(baixarDocumentoAssinado).toHaveBeenCalledWith(CONTRATO_ID);
+    expect(createObjectURL).toHaveBeenCalledTimes(1);
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:fake-url');
+    expect(component.erroDocumento()).toBeNull();
+    clickSpy.mockRestore();
+  });
+
+  it('baixarDocumento trata 409 (documento indisponivel) sem assumir sucesso', async () => {
+    const createObjectURL = vi.fn(() => 'blob:fake-url');
+    const revokeObjectURL = vi.fn();
+    Object.defineProperty(URL, 'createObjectURL', { value: createObjectURL, configurable: true });
+    Object.defineProperty(URL, 'revokeObjectURL', { value: revokeObjectURL, configurable: true });
+    const baixarDocumentoAssinado = vi
+      .fn()
+      .mockRejectedValue(new HttpErrorResponse({ status: 409 }));
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      {
+        consultarPorId: vi.fn().mockResolvedValue(contratoFixture('ASSINADO')),
+        baixarDocumentoAssinado,
+      },
+    );
+    await component.ngOnInit();
+    await component.baixarDocumento();
+    expect(component.erroDocumento()).toContain('disponivel');
+    expect(createObjectURL).not.toHaveBeenCalled();
+  });
 });
 
 function contratoFixture(
@@ -468,5 +584,13 @@ function statusAssinaturaFixture() {
     statusEnvelope: null,
     idEnvelopeExterno: null,
     dataAtualizacaoProvider: null,
+  };
+}
+
+function documentoFixture() {
+  return {
+    blob: new Blob(['%PDF-1.4 ficticio'], { type: 'application/pdf' }),
+    nomeArquivo: `contrato-${CONTRATO_ID}-assinado.pdf`,
+    hashSha256: 'hash-doc',
   };
 }

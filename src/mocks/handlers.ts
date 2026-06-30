@@ -22,7 +22,9 @@ const usuarioCliente: UsuarioResponse = {
   criadoPor: 'system',
   modificadoPor: 'system',
   precisaRedefinirSenha: false,
-  mfaHabilitado: false,
+  // MFA habilitado: o aceite contratual (M-8) exige step-up. Apenas change-password e o aceite
+  // consomem esta flag, ambos na submissao; os demais smokes nao tocam step-up.
+  mfaHabilitado: true,
 };
 
 function errorResponse(
@@ -582,4 +584,163 @@ const creditoHandlers = [
   }),
 ];
 
-export const handlers = [...baseHandlers, ...onboardingHandlers, ...creditoHandlers];
+// --- Step-up authentication (5F-FIX-05) --------------------------------------------
+// Challenge + token ficticios. O token e de uso unico no store do app; aqui o complete
+// devolve sempre o mesmo valor para o e2e. Nenhum segredo real e usado.
+const stepUpHandlers = [
+  http.post(`${baseUrl}/auth/step-up/initiate`, () =>
+    HttpResponse.json({ stepUpChallengeId: 'mock-step-up-challenge' }, { status: 200 }),
+  ),
+
+  http.post(`${baseUrl}/auth/step-up/complete`, () =>
+    HttpResponse.json({ stepUpToken: 'mock-step-up-token' }, { status: 200 }),
+  ),
+];
+
+// --- Formalizacao / contratos (Sprints 10-11; M-Sprint 8) ---------------------------
+// Estado minimo em localStorage para sobreviver ao reload do step-up no e2e (em node cai
+// para memoria). So responde para a proposta/contrato semeados pelo smoke; demais ids -> 404,
+// entao os outros smokes nao sao afetados. Dados e PDF integralmente ficticios; nenhum
+// conteudo real, token ou PII e persistido. O envelope avanca a cada consulta ate ASSINADO.
+
+const PROPOSTA_FORMALIZACAO_ID = 'prop-formalizacao-1';
+const CONTRATO_FORMALIZACAO_ID = 'contrato-mock-1';
+const FORMALIZACAO_KEY = 'mock.formalizacao';
+
+interface FormalizacaoState {
+  status: string;
+}
+
+function lerFormalizacao(): FormalizacaoState {
+  return lerEstado<FormalizacaoState>(FORMALIZACAO_KEY, { status: 'AGUARDANDO_ACEITE' });
+}
+
+function versaoContratoMock(numero: number) {
+  return {
+    id: `versao-mock-${numero}`,
+    numero,
+    conteudoTexto:
+      `Versao ${numero} - condicoes gerais ficticias do contrato de mutuo. ` +
+      'Este texto e apenas um exemplo para leitura no aplicativo.',
+    hashSha256: `mockhash000000000000000000000000000000000000000000000000000000${numero}`,
+    dataGeracao: '2026-06-20T10:00:00-03:00',
+    parecerOrigemId: null,
+    clausulas: [
+      {
+        id: `cl-${numero}-1`,
+        ordem: 1,
+        titulo: 'OBJETO',
+        texto: 'O objeto do contrato e ficticio.',
+      },
+      { id: `cl-${numero}-2`, ordem: 2, titulo: 'PRAZO', texto: 'O prazo do contrato e ficticio.' },
+    ],
+  };
+}
+
+function contratoMock(status: string) {
+  return {
+    id: CONTRATO_FORMALIZACAO_ID,
+    propostaId: PROPOSTA_FORMALIZACAO_ID,
+    tomadorId: TOMADOR_ID,
+    tipo: 'MUTUO',
+    status,
+    versaoVigente: versaoContratoMock(2),
+    aceite: null,
+    dataCriacao: '2026-06-20T10:00:00-03:00',
+    dataModificacao: '2026-06-20T10:05:00-03:00',
+  };
+}
+
+function contratoNaoEncontrado(path: string) {
+  return HttpResponse.json(errorResponse(404, 'Not Found', 'Contrato nao encontrado', path), {
+    status: 404,
+  });
+}
+
+const formalizacaoHandlers = [
+  http.get(`${baseUrl}/contratos/proposta/:propostaId`, ({ params }) => {
+    if (String(params['propostaId']) !== PROPOSTA_FORMALIZACAO_ID) {
+      return contratoNaoEncontrado('/api/v1/contratos/proposta');
+    }
+    return HttpResponse.json(contratoMock(lerFormalizacao().status), { status: 200 });
+  }),
+
+  http.get(`${baseUrl}/contratos/:id/versoes`, ({ params }) => {
+    if (String(params['id']) !== CONTRATO_FORMALIZACAO_ID) {
+      return contratoNaoEncontrado('/api/v1/contratos/versoes');
+    }
+    return HttpResponse.json([versaoContratoMock(1), versaoContratoMock(2)], { status: 200 });
+  }),
+
+  http.patch(`${baseUrl}/contratos/:id/aceite`, ({ params, request }) => {
+    const path = '/api/v1/contratos/aceite';
+    if (String(params['id']) !== CONTRATO_FORMALIZACAO_ID) {
+      return contratoNaoEncontrado(path);
+    }
+    if (!request.headers.get('X-Step-Up-Token')) {
+      return HttpResponse.json(errorResponse(403, 'Forbidden', 'step-up obrigatorio', path), {
+        status: 403,
+      });
+    }
+    salvarEstado(FORMALIZACAO_KEY, { status: 'ACEITO' });
+    return HttpResponse.json(contratoMock('ACEITO'), { status: 200 });
+  }),
+
+  http.get(`${baseUrl}/contratos/:id/assinatura/status`, ({ params }) => {
+    if (String(params['id']) !== CONTRATO_FORMALIZACAO_ID) {
+      return contratoNaoEncontrado('/api/v1/contratos/assinatura/status');
+    }
+    const atual = lerFormalizacao().status;
+    // Avanca o ciclo a cada consulta: ACEITO -> EM_ASSINATURA -> ASSINADO (e permanece).
+    const proximo =
+      atual === 'ACEITO' ? 'EM_ASSINATURA' : atual === 'EM_ASSINATURA' ? 'ASSINADO' : atual;
+    salvarEstado(FORMALIZACAO_KEY, { status: proximo });
+    const statusEnvelope =
+      proximo === 'EM_ASSINATURA' ? 'ENVIADO' : proximo === 'ASSINADO' ? 'ASSINADO' : null;
+    return HttpResponse.json(
+      {
+        statusContrato: proximo,
+        statusEnvelope,
+        idEnvelopeExterno: statusEnvelope ? 'env-ext-mock' : null,
+        dataAtualizacaoProvider: statusEnvelope ? '2026-06-21T09:00:00-03:00' : null,
+      },
+      { status: 200 },
+    );
+  }),
+
+  http.get(`${baseUrl}/contratos/:id/documento-assinado`, ({ params }) => {
+    const path = '/api/v1/contratos/documento-assinado';
+    if (String(params['id']) !== CONTRATO_FORMALIZACAO_ID) {
+      return contratoNaoEncontrado(path);
+    }
+    if (lerFormalizacao().status !== 'ASSINADO') {
+      return HttpResponse.json(
+        errorResponse(409, 'Conflict', 'Documento ainda nao assinado', path),
+        { status: 409 },
+      );
+    }
+    return new HttpResponse('%PDF-1.4 documento ficticio assinado', {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename="contrato-${CONTRATO_FORMALIZACAO_ID}-assinado.pdf"`,
+        'X-Document-Hash-Sha256': 'mockdochash0000000000000000000000000000000000000000000000000001',
+      },
+    });
+  }),
+
+  http.get(`${baseUrl}/contratos/:id`, ({ params }) => {
+    if (String(params['id']) !== CONTRATO_FORMALIZACAO_ID) {
+      return contratoNaoEncontrado('/api/v1/contratos');
+    }
+    return HttpResponse.json(contratoMock(lerFormalizacao().status), { status: 200 });
+  }),
+];
+
+export const handlers = [
+  ...baseHandlers,
+  ...onboardingHandlers,
+  ...creditoHandlers,
+  ...stepUpHandlers,
+  ...formalizacaoHandlers,
+];

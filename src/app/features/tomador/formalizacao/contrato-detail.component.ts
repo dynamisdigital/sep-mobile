@@ -14,6 +14,7 @@ import {
   ApiErrorResponse,
   ContratoResponse,
   StatusAssinaturaResponse,
+  StatusEnvelope,
   StatusFormalizacao,
   TipoContrato,
   VersaoContratoResponse,
@@ -40,14 +41,33 @@ const ROTULOS_STATUS: Record<StatusFormalizacao, string> = {
   CANCELADO: 'Cancelado',
 };
 
+const ROTULOS_ENVELOPE: Record<StatusEnvelope, string> = {
+  RASCUNHO: 'Rascunho',
+  ENVIADO: 'Enviado',
+  VISUALIZADO: 'Visualizado',
+  ASSINADO: 'Assinado',
+  RECUSADO: 'Recusado',
+  EXPIRADO: 'Expirado',
+};
+
+// Status de formalizacao em que a fase de assinatura ja faz sentido exibir (pos-aceite).
+const STATUS_FASE_ASSINATURA: readonly StatusFormalizacao[] = [
+  'ACEITO',
+  'EM_ASSINATURA',
+  'ASSINADO',
+  'RECUSADO',
+  'CANCELADO',
+];
+
 // Detalhe e leitura do contrato de formalizacao. Entra por proposta (`consultarPorProposta`) ou
 // direto por contrato (`consultarPorId`); apos a primeira resposta usa `contrato.id` como
 // identidade. Apresenta tipo, status, datas, a versao vigente (texto + clausulas + hash) e um
 // historico somente leitura. Conteudo e renderizado como texto puro (interpolacao), nunca HTML;
 // o hash nao e recalculado nem validado. Ownership, versionamento e validade ficam no backend.
 // Aceite so vale para a versao vigente em AGUARDANDO_ACEITE, exige confirmacao explicita e step-up
-// (sem bypass pelo mobile); documento/assinatura (M-8.5) chegam depois. IDs internos, dados de
-// aceite e envelope externo nao sao exibidos.
+// (sem bypass pelo mobile). Pos-aceite, exibe o status da assinatura (atualizado sob demanda, sem
+// polling) e, quando ASSINADO, permite baixar o PDF assinado como blob transitorio. IDs internos,
+// dados de aceite e o identificador do envelope externo nao sao exibidos.
 @Component({
   selector: 'sep-contrato-detail',
   standalone: true,
@@ -79,6 +99,9 @@ export class ContratoDetailComponent implements OnInit {
   readonly aceitando = signal(false);
   readonly erroAceite = signal<string | null>(null);
   readonly statusAssinatura = signal<StatusAssinaturaResponse | null>(null);
+  readonly atualizandoStatus = signal(false);
+  readonly baixandoDocumento = signal(false);
+  readonly erroDocumento = signal<string | null>(null);
 
   // Aceite so e oferecido para a versao vigente em AGUARDANDO_ACEITE e ao titular CLIENTE. Versao
   // historica nunca habilita aceite. Ownership real e validado pelo backend.
@@ -91,6 +114,24 @@ export class ContratoDetailComponent implements OnInit {
       this.auth.currentUser()?.role === 'CLIENTE'
     );
   });
+
+  // Status efetivo: o snapshot de assinatura (mais recente) tem prioridade sobre o status embutido
+  // no contrato; o app nunca calcula transicao, apenas reflete o backend.
+  readonly statusContratoEfetivo = computed<StatusFormalizacao | null>(
+    () => this.statusAssinatura()?.statusContrato ?? this.contrato()?.status ?? null,
+  );
+
+  // A fase de assinatura (envelope + documento) so e exibida apos o aceite.
+  readonly mostrarAssinatura = computed<boolean>(() => {
+    const status = this.statusContratoEfetivo();
+    return status !== null && STATUS_FASE_ASSINATURA.includes(status);
+  });
+
+  // Documento so quando o estado indica assinatura concluida; a disponibilidade final e confirmada
+  // pelo endpoint (que pode responder 409 se ainda nao houver PDF).
+  readonly documentoDisponivel = computed<boolean>(
+    () => this.statusContratoEfetivo() === 'ASSINADO',
+  );
 
   // Versao mostrada na leitura: a selecionada no historico ou, por padrao, a vigente embutida no
   // contrato. Se a selecao nao estiver no historico carregado, cai para a vigente.
@@ -235,9 +276,52 @@ export class ContratoDetailComponent implements OnInit {
     try {
       this.statusAssinatura.set(await this.contratos.consultarStatusAssinatura(this.contratoId));
     } catch {
-      // Status e complementar; sua falha nao invalida o aceite ja registrado. Detalhe em M-8.5.
-      this.statusAssinatura.set(null);
+      // Status e complementar; sua falha nao invalida o aceite nem descarta o status anterior.
     }
+  }
+
+  async atualizarStatus(): Promise<void> {
+    if (this.atualizandoStatus()) {
+      return;
+    }
+    this.atualizandoStatus.set(true);
+    try {
+      await this.consultarStatusAssinatura();
+    } finally {
+      this.atualizandoStatus.set(false);
+    }
+  }
+
+  // Baixa o PDF assinado pela API autenticada do SEP. O blob e transitorio: a URL de objeto e
+  // criada no momento do download e revogada em seguida. Nada (blob, hash, token) e persistido nem
+  // logado, e o conteudo do PDF nunca entra no DOM.
+  async baixarDocumento(): Promise<void> {
+    if (this.baixandoDocumento()) {
+      return;
+    }
+    this.baixandoDocumento.set(true);
+    this.erroDocumento.set(null);
+    let url: string | null = null;
+    try {
+      const documento = await this.contratos.baixarDocumentoAssinado(this.contratoId);
+      url = URL.createObjectURL(documento.blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = documento.nomeArquivo;
+      link.rel = 'noopener';
+      link.click();
+    } catch (err) {
+      this.erroDocumento.set(this.mensagemErroDocumento(err));
+    } finally {
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+      this.baixandoDocumento.set(false);
+    }
+  }
+
+  protected rotuloEnvelope(status: StatusEnvelope): string {
+    return ROTULOS_ENVELOPE[status];
   }
 
   async copiarHash(hash: string): Promise<void> {
@@ -328,11 +412,29 @@ export class ContratoDetailComponent implements OnInit {
     this.hashCopiado.set(false);
   }
 
+  private mensagemErroDocumento(err: unknown): string {
+    if (err instanceof HttpErrorResponse) {
+      if (err.status === 409) {
+        return 'O documento ainda nao esta disponivel.';
+      }
+      if (err.status === 404) {
+        return 'Documento nao encontrado.';
+      }
+      if (err.status === 403) {
+        return 'Voce nao tem acesso a este documento.';
+      }
+    }
+    return 'Nao foi possivel baixar o documento. Tente novamente.';
+  }
+
   private resetarAceite(): void {
     this.confirmacaoAberta.set(false);
     this.aceitando.set(false);
     this.erroAceite.set(null);
     this.statusAssinatura.set(null);
+    this.atualizandoStatus.set(false);
+    this.baixandoDocumento.set(false);
+    this.erroDocumento.set(null);
   }
 
   private mensagemErro(err: unknown): string {

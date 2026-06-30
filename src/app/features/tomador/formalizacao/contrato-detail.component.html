@@ -100,6 +100,65 @@
         </p>
       }
 
+      @if (mostrarAssinatura()) {
+        <section
+          class="sep-contrato-detail-assinatura"
+          data-testid="sep-contrato-detail-assinatura"
+        >
+          <h2 class="sep-contrato-detail-subtitle">Assinatura</h2>
+
+          @if (statusAssinatura(); as status) {
+            <dl class="sep-contrato-detail-grid">
+              <div class="sep-contrato-detail-row">
+                <dt>Status</dt>
+                <dd data-testid="sep-contrato-detail-assinatura-status">
+                  {{ rotuloStatus(status.statusContrato) }}
+                </dd>
+              </div>
+              @if (status.statusEnvelope; as envelope) {
+                <div class="sep-contrato-detail-row">
+                  <dt>Envelope</dt>
+                  <dd data-testid="sep-contrato-detail-envelope">{{ rotuloEnvelope(envelope) }}</dd>
+                </div>
+              }
+            </dl>
+          } @else {
+            <p class="sep-contrato-detail-vazio">Atualize para ver o andamento da assinatura.</p>
+          }
+
+          <button
+            type="button"
+            class="sep-contrato-detail-status-atualizar"
+            (click)="atualizarStatus()"
+            [disabled]="atualizandoStatus()"
+            data-testid="sep-contrato-detail-status-atualizar"
+          >
+            {{ atualizandoStatus() ? 'Atualizando...' : 'Atualizar status' }}
+          </button>
+
+          @if (documentoDisponivel()) {
+            <ion-button
+              expand="block"
+              (click)="baixarDocumento()"
+              [disabled]="baixandoDocumento()"
+              data-testid="sep-contrato-detail-documento"
+            >
+              {{ baixandoDocumento() ? 'Baixando...' : 'Baixar contrato assinado' }}
+            </ion-button>
+          }
+
+          @if (erroDocumento(); as msg) {
+            <p
+              class="sep-contrato-detail-documento-erro"
+              role="alert"
+              data-testid="sep-contrato-detail-documento-erro"
+            >
+              {{ msg }}
+            </p>
+          }
+        </section>
+      }
+
       @if (contrato()?.versaoVigente) {
         <section class="sep-contrato-detail-historico">
           @if (!historicoAberto()) {

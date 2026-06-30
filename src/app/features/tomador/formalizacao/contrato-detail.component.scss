@@ -125,6 +125,29 @@
     }
   }
 
+  &-assinatura {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-12);
+  }
+
+  &-status-atualizar {
+    align-self: flex-start;
+    min-height: var(--sep-touch-target);
+    padding: 0 var(--sep-space-16);
+    font-weight: 600;
+    color: hsl(var(--primary));
+    background: transparent;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--sep-radius-md);
+  }
+
+  &-documento-erro {
+    margin: 0;
+    font-size: 0.875rem;
+    color: hsl(var(--destructive));
+  }
+
   &-historico {
     display: flex;
     flex-direction: column;
