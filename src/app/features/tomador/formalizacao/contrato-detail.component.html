@@ -31,24 +31,135 @@
         </div>
       </dl>
 
-      @if (c.versaoVigente; as versao) {
-        <section class="sep-contrato-detail-versao" data-testid="sep-contrato-detail-versao">
-          <h2 class="sep-contrato-detail-subtitle">Versao vigente</h2>
-          <dl class="sep-contrato-detail-grid">
-            <div class="sep-contrato-detail-row">
-              <dt>Numero</dt>
-              <dd>{{ versao.numero }}</dd>
-            </div>
-            <div class="sep-contrato-detail-row">
-              <dt>Gerada em</dt>
-              <dd>{{ dataFormatada(versao.dataGeracao) }}</dd>
-            </div>
-          </dl>
-        </section>
+      @if (versaoExibida(); as versao) {
+        <article class="sep-contrato-detail-versao" data-testid="sep-contrato-detail-versao">
+          <header class="sep-contrato-detail-versao-head">
+            <h2 class="sep-contrato-detail-subtitle">Versao {{ versao.numero }}</h2>
+            @if (exibindoVigente()) {
+              <span
+                class="sep-contrato-detail-badge"
+                data-testid="sep-contrato-detail-badge-vigente"
+              >
+                Vigente
+              </span>
+            } @else {
+              <span class="sep-contrato-detail-badge sep-contrato-detail-badge--historica">
+                Historica
+              </span>
+            }
+          </header>
+
+          <p class="sep-contrato-detail-versao-data">
+            Gerada em {{ dataFormatada(versao.dataGeracao) }}
+          </p>
+
+          <div class="sep-contrato-detail-hash">
+            <dt>Hash SHA-256</dt>
+            <code class="sep-contrato-detail-hash-valor" data-testid="sep-contrato-detail-hash">
+              {{ versao.hashSha256 }}
+            </code>
+            <button
+              type="button"
+              class="sep-contrato-detail-hash-copiar"
+              (click)="copiarHash(versao.hashSha256)"
+              data-testid="sep-contrato-detail-hash-copiar"
+            >
+              {{ hashCopiado() ? 'Copiado' : 'Copiar' }}
+            </button>
+          </div>
+
+          <p class="sep-contrato-detail-conteudo" data-testid="sep-contrato-detail-conteudo">
+            {{ versao.conteudoTexto }}
+          </p>
+
+          @if (versao.clausulas.length > 0) {
+            <ol class="sep-contrato-detail-clausulas" data-testid="sep-contrato-detail-clausulas">
+              @for (clausula of versao.clausulas; track clausula.id) {
+                <li class="sep-contrato-detail-clausula">
+                  <h3 class="sep-contrato-detail-clausula-titulo">{{ clausula.titulo }}</h3>
+                  <p class="sep-contrato-detail-clausula-texto">{{ clausula.texto }}</p>
+                </li>
+              }
+            </ol>
+          }
+
+          @if (!exibindoVigente()) {
+            <ion-button
+              expand="block"
+              fill="outline"
+              (click)="voltarParaVigente()"
+              data-testid="sep-contrato-detail-voltar-vigente"
+            >
+              Voltar para a versao vigente
+            </ion-button>
+          }
+        </article>
       } @else {
         <p class="sep-contrato-detail-vazio" data-testid="sep-contrato-detail-sem-versao">
           A versao do contrato ainda nao esta disponivel.
         </p>
+      }
+
+      @if (contrato()?.versaoVigente) {
+        <section class="sep-contrato-detail-historico">
+          @if (!historicoAberto()) {
+            <button
+              type="button"
+              class="sep-contrato-detail-historico-toggle"
+              (click)="abrirHistorico()"
+              data-testid="sep-contrato-detail-historico-abrir"
+            >
+              Ver historico de versoes
+            </button>
+          } @else {
+            <h2 class="sep-contrato-detail-subtitle">Historico de versoes</h2>
+            @if (carregandoVersoes()) {
+              <div
+                class="sep-contrato-detail-estado"
+                data-testid="sep-contrato-detail-historico-loading"
+              >
+                <ion-spinner name="crescent"></ion-spinner>
+              </div>
+            } @else if (erroVersoes()) {
+              <p
+                class="sep-contrato-detail-historico-erro"
+                role="status"
+                data-testid="sep-contrato-detail-historico-erro"
+              >
+                {{ erroVersoes() }}
+              </p>
+              <button
+                type="button"
+                class="sep-contrato-detail-historico-toggle"
+                (click)="carregarVersoes()"
+                data-testid="sep-contrato-detail-historico-retry"
+              >
+                Tentar novamente
+              </button>
+            } @else {
+              <ul class="sep-contrato-detail-historico-lista">
+                @for (versao of versoes(); track versao.id) {
+                  <li>
+                    <button
+                      type="button"
+                      class="sep-contrato-detail-historico-item"
+                      data-testid="sep-contrato-detail-historico-item"
+                      (click)="selecionarVersao(versao.id)"
+                    >
+                      <span>Versao {{ versao.numero }}</span>
+                      <span class="sep-contrato-detail-historico-item-meta">
+                        {{ dataFormatada(versao.dataGeracao) }}
+                        @if (ehVigente(versao)) {
+                          &middot; vigente
+                        }
+                      </span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          }
+        </section>
       }
     }
   </section>

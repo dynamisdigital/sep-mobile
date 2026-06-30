@@ -4,12 +4,18 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ContratoResponse, StatusFormalizacao } from '../../../core/api/api.models';
+import {
+  ContratoResponse,
+  StatusFormalizacao,
+  VersaoContratoResponse,
+} from '../../../core/api/api.models';
 import { ContratosMobileService } from '../../../core/contratos/contratos-mobile.service';
 import { ContratoDetailComponent } from './contrato-detail.component';
 
 const CONTRATO_ID = '1f1d4920-3f55-6f48-9b3e-aa1234567890';
 const PROPOSTA_ID = '2f1d4920-3f55-6f48-9b3e-bb1234567890';
+const VERSAO_1_ID = '9f1d4920-3f55-6f48-9b3e-000000000001';
+const VERSAO_2_ID = '9f1d4920-3f55-6f48-9b3e-000000000002';
 
 // Instance-based: Ionic nao monta no happy-dom. UI renderizada validada no smoke Playwright (M-8.5).
 function setup(
@@ -21,6 +27,8 @@ function setup(
       svc.consultarPorProposta ?? vi.fn().mockResolvedValue(contratoFixture('AGUARDANDO_ACEITE')),
     consultarPorId:
       svc.consultarPorId ?? vi.fn().mockResolvedValue(contratoFixture('AGUARDANDO_ACEITE')),
+    listarVersoes:
+      svc.listarVersoes ?? vi.fn().mockResolvedValue([versaoFixture(1), versaoFixture(2)]),
   };
   const activatedRoute = {
     snapshot: {
@@ -105,6 +113,90 @@ describe('ContratoDetailComponent', () => {
     expect(component.contrato()?.status).toBe('ACEITO');
     expect(component.erro()).toBeNull();
   });
+
+  it('por padrao exibe a versao vigente embutida no contrato', async () => {
+    const { component } = setup({ contratoId: CONTRATO_ID });
+    await component.ngOnInit();
+    expect(component.versaoExibida()?.id).toBe(VERSAO_2_ID);
+    expect(component.exibindoVigente()).toBe(true);
+  });
+
+  it('conteudo e clausulas chegam sem transformacao (texto literal, sem parse de HTML)', async () => {
+    const conteudoComTag = 'Clausula <script>alert(1)</script> & <b>texto</b>';
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      {
+        consultarPorId: vi.fn().mockResolvedValue(
+          contratoFixture('AGUARDANDO_ACEITE', {
+            versaoVigente: versaoFixture(2, { conteudoTexto: conteudoComTag }),
+          }),
+        ),
+      },
+    );
+    await component.ngOnInit();
+    // O valor cru e preservado; a renderizacao por interpolacao do template escapa as tags.
+    expect(component.versaoExibida()?.conteudoTexto).toBe(conteudoComTag);
+    expect(component.versaoExibida()?.clausulas.map((c) => c.ordem)).toEqual([1, 2]);
+  });
+
+  it('abre o historico carregando as versoes uma unica vez, em ordem ascendente', async () => {
+    const listarVersoes = vi.fn().mockResolvedValue([versaoFixture(1), versaoFixture(2)]);
+    const { component } = setup({ contratoId: CONTRATO_ID }, { listarVersoes });
+    await component.ngOnInit();
+    await component.abrirHistorico();
+    await component.abrirHistorico();
+    expect(listarVersoes).toHaveBeenCalledTimes(1);
+    expect(component.versoes().map((v) => v.numero)).toEqual([1, 2]);
+    expect(component.historicoAberto()).toBe(true);
+  });
+
+  it('selecionar versao historica nao altera a vigente e desabilita a marca de vigente', async () => {
+    const { component } = setup({ contratoId: CONTRATO_ID });
+    await component.ngOnInit();
+    await component.abrirHistorico();
+    component.selecionarVersao(VERSAO_1_ID);
+    expect(component.versaoExibida()?.id).toBe(VERSAO_1_ID);
+    expect(component.exibindoVigente()).toBe(false);
+    // A vigente do contrato permanece intacta.
+    expect(component.contrato()?.versaoVigente?.id).toBe(VERSAO_2_ID);
+    component.voltarParaVigente();
+    expect(component.versaoExibida()?.id).toBe(VERSAO_2_ID);
+    expect(component.exibindoVigente()).toBe(true);
+  });
+
+  it('falha ao carregar o historico nao impede a leitura da versao vigente', async () => {
+    const listarVersoes = vi.fn().mockRejectedValue(new Error('rede'));
+    const { component } = setup({ contratoId: CONTRATO_ID }, { listarVersoes });
+    await component.ngOnInit();
+    await component.abrirHistorico();
+    expect(component.erroVersoes()).not.toBeNull();
+    expect(component.versaoExibida()?.id).toBe(VERSAO_2_ID);
+    expect(component.exibindoVigente()).toBe(true);
+  });
+
+  it('contrato sem versao vigente nao tem versao exibida', async () => {
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      {
+        consultarPorId: vi
+          .fn()
+          .mockResolvedValue(contratoFixture('GERADO', { versaoVigente: null })),
+      },
+    );
+    await component.ngOnInit();
+    expect(component.versaoExibida()).toBeNull();
+    expect(component.erro()).toBeNull();
+  });
+
+  it('copiarHash usa a clipboard e marca o estado copiado', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const { component } = setup({ contratoId: CONTRATO_ID });
+    await component.ngOnInit();
+    await component.copiarHash('hash-da-versao-2');
+    expect(writeText).toHaveBeenCalledWith('hash-da-versao-2');
+    expect(component.hashCopiado()).toBe(true);
+  });
 });
 
 function contratoFixture(
@@ -117,18 +209,29 @@ function contratoFixture(
     tomadorId: '3f1d4920-3f55-6f48-9b3e-cc1234567890',
     tipo: 'MUTUO',
     status,
-    versaoVigente: {
-      id: '9f1d4920-3f55-6f48-9b3e-000000000001',
-      numero: 1,
-      conteudoTexto: 'Conteudo da versao 1',
-      hashSha256: 'ba7816bf8f01cfea414140de5dae2223',
-      dataGeracao: '2026-06-30T09:00:00-03:00',
-      parecerOrigemId: null,
-      clausulas: [],
-    },
+    versaoVigente: versaoFixture(2),
     aceite: null,
     dataCriacao: '2026-06-30T09:00:00-03:00',
     dataModificacao: '2026-06-30T09:00:00-03:00',
+    ...over,
+  };
+}
+
+function versaoFixture(
+  numero: number,
+  over: Partial<VersaoContratoResponse> = {},
+): VersaoContratoResponse {
+  return {
+    id: numero === 1 ? VERSAO_1_ID : VERSAO_2_ID,
+    numero,
+    conteudoTexto: `Conteudo da versao ${numero}`,
+    hashSha256: `hash-da-versao-${numero}`,
+    dataGeracao: '2026-06-30T09:00:00-03:00',
+    parecerOrigemId: null,
+    clausulas: [
+      { id: `c-${numero}-1`, ordem: 1, titulo: 'OBJETO', texto: 'Texto da clausula 1.' },
+      { id: `c-${numero}-2`, ordem: 2, titulo: 'PRAZO', texto: 'Texto da clausula 2.' },
+    ],
     ...over,
   };
 }
