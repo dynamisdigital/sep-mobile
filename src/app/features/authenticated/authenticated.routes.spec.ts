@@ -16,4 +16,12 @@ describe('AUTHENTICATED_ROUTES', () => {
     expect(onboarding).toBeDefined();
     expect(onboarding?.loadComponent).toBeTypeOf('function');
   });
+
+  it('rota propostas aponta para a lista (substitui o placeholder) e mantem a tab', async () => {
+    const propostas = children.find((route) => route.path === 'propostas');
+    expect(propostas).toBeDefined();
+    expect(propostas?.data?.['tab']).toBe('propostas');
+    const loaded = (await propostas?.loadComponent?.()) as { name: string };
+    expect(loaded.name).toContain('PropostasListComponent');
+  });
 });

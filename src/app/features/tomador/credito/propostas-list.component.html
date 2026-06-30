@@ -1,0 +1,89 @@
+<sep-header-mobile />
+<ion-content class="sep-propostas">
+  <ion-refresher slot="fixed" (ionRefresh)="recarregar($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <section class="sep-propostas-section">
+    <header class="sep-propostas-header">
+      <h1 class="sep-propostas-title">Minhas propostas</h1>
+      <ion-select
+        class="sep-propostas-filtro"
+        label="Status"
+        interface="popover"
+        [value]="filtroStatus()"
+        (ionChange)="aplicarFiltro($event.detail.value)"
+        data-testid="sep-propostas-filtro"
+      >
+        @for (f of filtros; track f.value) {
+          <ion-select-option [value]="f.value">{{ f.label }}</ion-select-option>
+        }
+      </ion-select>
+    </header>
+
+    @if (carregando()) {
+      <div class="sep-propostas-estado" data-testid="sep-propostas-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Carregando propostas...</p>
+      </div>
+    } @else if (erro() && propostas().length === 0) {
+      <div class="sep-propostas-estado" data-testid="sep-propostas-erro">
+        <p>{{ erro() }}</p>
+        <button
+          type="button"
+          class="sep-propostas-cta"
+          (click)="carregar()"
+          data-testid="sep-propostas-retry"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    } @else if (propostas().length === 0) {
+      <div class="sep-propostas-estado" data-testid="sep-propostas-vazio">
+        <p>Voce ainda nao tem propostas.</p>
+      </div>
+    } @else {
+      <ul class="sep-propostas-lista">
+        @for (p of propostas(); track p.id) {
+          <li>
+            <button
+              type="button"
+              class="sep-proposta-item"
+              data-testid="sep-proposta-item"
+              (click)="abrirDetalhe(p.id)"
+            >
+              <span class="sep-proposta-item-top">
+                <span class="sep-proposta-item-tipo">{{ rotuloTipo(p.tipoOperacao) }}</span>
+                <span class="sep-proposta-status" [attr.data-variante]="variante(p.status)">
+                  {{ rotuloStatus(p.status) }}
+                </span>
+              </span>
+              <span class="sep-proposta-item-valor">{{ valorFormatado(p) }}</span>
+              <span class="sep-proposta-item-meta">
+                {{ p.prazoMeses }} meses &middot; {{ dataFormatada(p.dataCriacao) }}
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+
+      @if (erro()) {
+        <p class="sep-propostas-erro-inline" role="status" data-testid="sep-propostas-erro-inline">
+          {{ erro() }}
+        </p>
+      }
+
+      @if (!ultimaPagina()) {
+        <button
+          type="button"
+          class="sep-propostas-cta"
+          (click)="carregarMais()"
+          [disabled]="carregandoMais()"
+          data-testid="sep-propostas-mais"
+        >
+          {{ carregandoMais() ? 'Carregando...' : 'Carregar mais' }}
+        </button>
+      }
+    }
+  </section>
+</ion-content>

@@ -78,6 +78,7 @@ const SHORTCUTS: readonly PlaceholderShortcut[] = [
     testid: 'sep-tomador-shortcut-acompanhar',
     icon: 'search-outline',
     tone: 'var(--warning)',
+    route: '/app/propostas',
   },
 ];
 

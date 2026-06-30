@@ -79,6 +79,18 @@ describe('TomadorHomeComponent', () => {
     expect(navSpy).toHaveBeenCalledWith('/app/onboarding');
   });
 
+  it('clique em Acompanhar proposta navega para /app/propostas', () => {
+    const fixture = setup(cliente);
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    const el: HTMLElement = fixture.nativeElement;
+    const btn = el.querySelector(
+      '[data-testid="sep-tomador-shortcut-acompanhar"]',
+    ) as HTMLButtonElement;
+    btn.click();
+    expect(navSpy).toHaveBeenCalledWith('/app/propostas');
+  });
+
   it('clique em atalho sem rota exibe feedback Em breve', async () => {
     vi.useFakeTimers();
     const fixture = setup(cliente);

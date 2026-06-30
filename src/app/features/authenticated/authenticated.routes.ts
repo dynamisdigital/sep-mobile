@@ -31,7 +31,9 @@ export const AUTHENTICATED_ROUTES: Routes = [
       {
         path: 'propostas',
         loadComponent: () =>
-          import('./placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
+          import('../tomador/credito/propostas-list.component').then(
+            (m) => m.PropostasListComponent,
+          ),
         data: { tab: 'propostas', title: 'Propostas' },
       },
       {
