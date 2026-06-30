@@ -156,8 +156,14 @@ export class ContratoDetailComponent implements OnInit {
     if (!navigator.clipboard) {
       return;
     }
-    await navigator.clipboard.writeText(hash);
-    this.hashCopiado.set(true);
+    // Clipboard pode ser negada (permissao/contexto inseguro). Falha nao bloqueia a leitura: o
+    // hash continua visivel e selecionavel; apenas nao marcamos "Copiado".
+    try {
+      await navigator.clipboard.writeText(hash);
+      this.hashCopiado.set(true);
+    } catch {
+      this.hashCopiado.set(false);
+    }
   }
 
   protected ehVigente(versao: VersaoContratoResponse): boolean {

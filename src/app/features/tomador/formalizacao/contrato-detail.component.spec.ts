@@ -197,6 +197,15 @@ describe('ContratoDetailComponent', () => {
     expect(writeText).toHaveBeenCalledWith('hash-da-versao-2');
     expect(component.hashCopiado()).toBe(true);
   });
+
+  it('copiarHash trata falha da clipboard sem lancar nem marcar copiado', async () => {
+    const writeText = vi.fn().mockRejectedValue(new Error('clipboard negada'));
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const { component } = setup({ contratoId: CONTRATO_ID });
+    await component.ngOnInit();
+    await expect(component.copiarHash('hash-da-versao-2')).resolves.toBeUndefined();
+    expect(component.hashCopiado()).toBe(false);
+  });
 });
 
 function contratoFixture(
