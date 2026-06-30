@@ -1,0 +1,101 @@
+.sep-contrato-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sep-space-12);
+
+  &-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sep-space-8);
+  }
+
+  &-subtitle {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  &-badge {
+    padding: 2px var(--sep-space-8);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: hsl(var(--primary-foreground));
+    background: hsl(var(--primary));
+    border-radius: var(--sep-radius-sm);
+
+    &--historica {
+      color: hsl(var(--muted-foreground));
+      background: hsl(var(--muted));
+    }
+  }
+
+  &-data {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: hsl(var(--muted-foreground));
+  }
+
+  &-hash {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+
+    &-label {
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    &-valor {
+      font-family: var(--ion-font-family-mono, monospace);
+      font-size: 0.8125rem;
+      color: hsl(var(--foreground));
+      word-break: break-all;
+    }
+
+    &-copiar {
+      align-self: flex-start;
+      min-height: var(--sep-touch-target);
+      padding: 0 var(--sep-space-16);
+      font-weight: 600;
+      color: hsl(var(--foreground));
+      background: hsl(var(--muted));
+      border: none;
+      border-radius: var(--sep-radius-md);
+    }
+  }
+
+  &-texto {
+    margin: 0;
+    color: hsl(var(--foreground));
+    line-height: 1.6;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  &-clausulas {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-12);
+    margin: 0;
+    padding-left: var(--sep-space-16);
+  }
+
+  &-clausula {
+    &-titulo {
+      margin: 0 0 var(--sep-space-4);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+    }
+
+    &-texto {
+      margin: 0;
+      color: hsl(var(--foreground));
+      line-height: 1.6;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+  }
+}

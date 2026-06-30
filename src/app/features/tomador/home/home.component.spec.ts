@@ -50,7 +50,7 @@ describe('TomadorHomeComponent', () => {
     expect(el.querySelector('[data-testid="sep-tomador-card-parcelas"]')).not.toBeNull();
   });
 
-  it('renderiza 3 atalhos navegaveis (nenhum com badge Em breve)', () => {
+  it('renderiza 4 atalhos navegaveis (nenhum com badge Em breve)', () => {
     const fixture = setup(cliente);
     const el: HTMLElement = fixture.nativeElement;
     const onboarding = el.querySelector(
@@ -62,13 +62,30 @@ describe('TomadorHomeComponent', () => {
     const acompanhar = el.querySelector(
       '[data-testid="sep-tomador-shortcut-acompanhar"]',
     ) as HTMLButtonElement;
+    const formalizacao = el.querySelector(
+      '[data-testid="sep-tomador-shortcut-formalizacao"]',
+    ) as HTMLButtonElement;
     expect(onboarding).not.toBeNull();
     expect(solicitar).not.toBeNull();
     expect(acompanhar).not.toBeNull();
-    // Os 3 atalhos navegam (onboarding, propostas/nova, propostas): nenhum exibe "Em breve".
+    expect(formalizacao).not.toBeNull();
+    // Os 4 atalhos navegam (onboarding, propostas/nova, propostas, formalizacao): sem "Em breve".
     expect(onboarding.querySelector('.sep-tomador-card-badge')).toBeNull();
     expect(solicitar.querySelector('.sep-tomador-card-badge')).toBeNull();
     expect(acompanhar.querySelector('.sep-tomador-card-badge')).toBeNull();
+    expect(formalizacao.querySelector('.sep-tomador-card-badge')).toBeNull();
+  });
+
+  it('clique em Formalizacao navega para /app/formalizacao', () => {
+    const fixture = setup(cliente);
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    const el: HTMLElement = fixture.nativeElement;
+    const btn = el.querySelector(
+      '[data-testid="sep-tomador-shortcut-formalizacao"]',
+    ) as HTMLButtonElement;
+    btn.click();
+    expect(navSpy).toHaveBeenCalledWith('/app/formalizacao');
   });
 
   it('clique em Onboarding navega para /app/onboarding', () => {

@@ -72,6 +72,12 @@ export class PropostaDetailComponent implements OnInit {
     void this.router.navigate(['/app/propostas', this.id, 'open-finance']);
   }
 
+  // CTA exibido apenas para proposta APROVADA. A existencia do contrato nao e inferida pelo status:
+  // a rota por proposta consulta o backend, que confirma (ou retorna 404 quando ainda nao gerado).
+  abrirFormalizacao(): void {
+    void this.router.navigate(['/app/formalizacao/proposta', this.id]);
+  }
+
   protected rotuloTipo(tipo: TipoOperacao): string {
     return ROTULOS_TIPO[tipo];
   }

@@ -70,6 +70,33 @@ export const AUTHENTICATED_ROUTES: Routes = [
         data: { roles: ['CLIENTE'], tab: 'propostas', title: 'Open Finance', retorno: true },
       },
       {
+        path: 'formalizacao',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('../tomador/formalizacao/formalizacao-list.component').then(
+            (m) => m.FormalizacaoListComponent,
+          ),
+        data: { roles: ['CLIENTE'], tab: 'propostas', title: 'Formalizacao' },
+      },
+      {
+        path: 'formalizacao/proposta/:propostaId',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('../tomador/formalizacao/contrato-detail.component').then(
+            (m) => m.ContratoDetailComponent,
+          ),
+        data: { roles: ['CLIENTE'], tab: 'propostas', title: 'Contrato' },
+      },
+      {
+        path: 'formalizacao/contratos/:contratoId',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('../tomador/formalizacao/contrato-detail.component').then(
+            (m) => m.ContratoDetailComponent,
+          ),
+        data: { roles: ['CLIENTE'], tab: 'propostas', title: 'Contrato' },
+      },
+      {
         path: 'parcelas',
         loadComponent: () =>
           import('./placeholder/placeholder.component').then((m) => m.PlaceholderComponent),

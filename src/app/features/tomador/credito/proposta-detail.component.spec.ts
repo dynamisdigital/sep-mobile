@@ -149,4 +149,17 @@ describe('PropostaDetailComponent', () => {
     component.abrirOpenFinance();
     expect(navSpy).toHaveBeenCalledWith(['/app/propostas', PROPOSTA_ID, 'open-finance']);
   });
+
+  // A visibilidade do CTA (apenas status APROVADA) e validada no smoke Playwright (M-8.5); aqui
+  // cobrimos a navegacao para a entrada por proposta.
+  it('CTA formalizacao navega para a rota por proposta', async () => {
+    const { component } = setup({
+      consultarProposta: vi.fn().mockResolvedValue(propostaFixture({ status: 'APROVADA' })),
+    });
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    await component.ngOnInit();
+    component.abrirFormalizacao();
+    expect(navSpy).toHaveBeenCalledWith(['/app/formalizacao/proposta', PROPOSTA_ID]);
+  });
 });

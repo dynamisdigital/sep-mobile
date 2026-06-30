@@ -15,14 +15,14 @@
       <form
         class="sep-step-up-form"
         novalidate
-        (ngSubmit)="submit()"
+        (submit)="$event.preventDefault(); submit()"
         data-testid="sep-step-up-form"
       >
         <label class="sep-step-up-field">
           <span class="sep-step-up-label">Codigo</span>
           <input
             type="text"
-            inputmode="numeric"
+            inputmode="text"
             autocomplete="one-time-code"
             [formControl]="codigo"
             data-testid="sep-step-up-codigo"
@@ -44,8 +44,9 @@
         }
 
         <button
-          type="submit"
+          type="button"
           class="sep-step-up-submit"
+          (click)="submit()"
           [disabled]="submitting()"
           data-testid="sep-step-up-submit"
         >
