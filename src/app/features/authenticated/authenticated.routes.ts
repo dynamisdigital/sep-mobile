@@ -38,6 +38,15 @@ export const AUTHENTICATED_ROUTES: Routes = [
         data: { roles: ['CLIENTE'], tab: 'propostas', title: 'Propostas' },
       },
       {
+        path: 'propostas/nova',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('../tomador/credito/proposta-create.component').then(
+            (m) => m.PropostaCreateComponent,
+          ),
+        data: { roles: ['CLIENTE'], tab: 'propostas', title: 'Solicitar credito' },
+      },
+      {
         path: 'parcelas',
         loadComponent: () =>
           import('./placeholder/placeholder.component').then((m) => m.PlaceholderComponent),

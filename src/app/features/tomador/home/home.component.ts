@@ -71,6 +71,7 @@ const SHORTCUTS: readonly PlaceholderShortcut[] = [
     testid: 'sep-tomador-shortcut-solicitar',
     icon: 'add-circle-outline',
     tone: 'var(--secondary)',
+    route: '/app/propostas/nova',
   },
   {
     label: 'Acompanhar proposta',

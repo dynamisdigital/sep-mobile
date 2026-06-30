@@ -31,4 +31,14 @@ describe('AUTHENTICATED_ROUTES', () => {
     expect(propostas?.canActivate).toContain(roleGuard);
     expect(propostas?.data?.['roles']).toEqual(['CLIENTE']);
   });
+
+  it('registra a rota de criacao propostas/nova restrita a CLIENTE com lazy load', async () => {
+    const nova = children.find((route) => route.path === 'propostas/nova');
+    expect(nova).toBeDefined();
+    expect(nova?.canActivate).toContain(roleGuard);
+    expect(nova?.data?.['roles']).toEqual(['CLIENTE']);
+    expect(nova?.data?.['tab']).toBe('propostas');
+    const loaded = (await nova?.loadComponent?.()) as { name: string };
+    expect(loaded.name).toContain('PropostaCreateComponent');
+  });
 });

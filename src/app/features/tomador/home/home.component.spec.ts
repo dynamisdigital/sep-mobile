@@ -50,7 +50,7 @@ describe('TomadorHomeComponent', () => {
     expect(el.querySelector('[data-testid="sep-tomador-card-parcelas"]')).not.toBeNull();
   });
 
-  it('renderiza 3 atalhos; onboarding ja ativo (sem badge Em breve)', () => {
+  it('renderiza 3 atalhos navegaveis (nenhum com badge Em breve)', () => {
     const fixture = setup(cliente);
     const el: HTMLElement = fixture.nativeElement;
     const onboarding = el.querySelector(
@@ -59,12 +59,16 @@ describe('TomadorHomeComponent', () => {
     const solicitar = el.querySelector(
       '[data-testid="sep-tomador-shortcut-solicitar"]',
     ) as HTMLButtonElement;
+    const acompanhar = el.querySelector(
+      '[data-testid="sep-tomador-shortcut-acompanhar"]',
+    ) as HTMLButtonElement;
     expect(onboarding).not.toBeNull();
     expect(solicitar).not.toBeNull();
-    expect(el.querySelector('[data-testid="sep-tomador-shortcut-acompanhar"]')).not.toBeNull();
-    // Onboarding navega: nao exibe badge "Em breve"; atalhos sem rota continuam exibindo.
+    expect(acompanhar).not.toBeNull();
+    // Os 3 atalhos navegam (onboarding, propostas/nova, propostas): nenhum exibe "Em breve".
     expect(onboarding.querySelector('.sep-tomador-card-badge')).toBeNull();
-    expect(solicitar.querySelector('.sep-tomador-card-badge')?.textContent).toContain('Em breve');
+    expect(solicitar.querySelector('.sep-tomador-card-badge')).toBeNull();
+    expect(acompanhar.querySelector('.sep-tomador-card-badge')).toBeNull();
   });
 
   it('clique em Onboarding navega para /app/onboarding', () => {
@@ -91,15 +95,28 @@ describe('TomadorHomeComponent', () => {
     expect(navSpy).toHaveBeenCalledWith('/app/propostas');
   });
 
-  it('clique em atalho sem rota exibe feedback Em breve', async () => {
-    vi.useFakeTimers();
+  it('clique em Solicitar emprestimo navega para /app/propostas/nova', () => {
     const fixture = setup(cliente);
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
     const el: HTMLElement = fixture.nativeElement;
     const btn = el.querySelector(
       '[data-testid="sep-tomador-shortcut-solicitar"]',
     ) as HTMLButtonElement;
     btn.click();
-    fixture.detectChanges();
-    expect(fixture.componentInstance.soonMessage()).toContain('em breve');
+    expect(navSpy).toHaveBeenCalledWith('/app/propostas/nova');
+  });
+
+  it('atalho sem rota exibe feedback Em breve', () => {
+    const fixture = setup(cliente);
+    const component = fixture.componentInstance;
+    component.onShortcut({
+      label: 'Futuro',
+      description: '',
+      testid: 'sep-tomador-shortcut-futuro',
+      icon: 'add-circle-outline',
+      tone: 'var(--primary)',
+    });
+    expect(component.soonMessage()).toContain('em breve');
   });
 });

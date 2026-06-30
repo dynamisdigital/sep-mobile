@@ -1,0 +1,123 @@
+<sep-header-mobile />
+<ion-content class="sep-proposta-create">
+  <section class="sep-proposta-create-section">
+    <h1 class="sep-proposta-create-title">Solicitar credito</h1>
+
+    @if (carregandoJornada()) {
+      <div class="sep-proposta-create-estado" data-testid="sep-proposta-create-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+    } @else if (!onboardingId()) {
+      <div class="sep-proposta-create-estado" data-testid="sep-proposta-create-sem-onboarding">
+        <p>Conclua seu cadastro (onboarding) antes de solicitar credito.</p>
+        <ion-button
+          expand="block"
+          (click)="irParaOnboarding()"
+          data-testid="sep-proposta-create-ir-onboarding"
+        >
+          Ir para o onboarding
+        </ion-button>
+      </div>
+    } @else {
+      <form class="sep-proposta-create-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="sep-proposta-create-field">
+          <ion-select
+            label="Tipo de operacao"
+            labelPlacement="stacked"
+            fill="outline"
+            interface="popover"
+            formControlName="tipoOperacao"
+            data-testid="sep-proposta-create-tipo"
+          >
+            @for (t of tiposOperacao; track t.value) {
+              <ion-select-option [value]="t.value">{{ t.label }}</ion-select-option>
+            }
+          </ion-select>
+        </div>
+
+        <div class="sep-proposta-create-field">
+          <ion-input
+            label="Valor solicitado (R$)"
+            labelPlacement="stacked"
+            fill="outline"
+            type="number"
+            inputmode="decimal"
+            min="0"
+            formControlName="valorSolicitado"
+            placeholder="0,00"
+            data-testid="sep-proposta-create-valor"
+          ></ion-input>
+          @if (form.controls.valorSolicitado.touched && form.controls.valorSolicitado.invalid) {
+            <ion-note color="danger" class="sep-proposta-create-error">
+              @if (form.controls.valorSolicitado.hasError('required')) {
+                <span>Valor obrigatorio</span>
+              } @else {
+                <span>Informe um valor maior que zero</span>
+              }
+            </ion-note>
+          }
+        </div>
+
+        <div class="sep-proposta-create-field">
+          <ion-input
+            label="Prazo (meses)"
+            labelPlacement="stacked"
+            fill="outline"
+            type="number"
+            inputmode="numeric"
+            min="1"
+            step="1"
+            formControlName="prazoMeses"
+            placeholder="12"
+            data-testid="sep-proposta-create-prazo"
+          ></ion-input>
+          @if (form.controls.prazoMeses.touched && form.controls.prazoMeses.invalid) {
+            <ion-note color="danger" class="sep-proposta-create-error">
+              @if (form.controls.prazoMeses.hasError('required')) {
+                <span>Prazo obrigatorio</span>
+              } @else {
+                <span>Informe um numero inteiro de meses (>= 1)</span>
+              }
+            </ion-note>
+          }
+        </div>
+
+        @if (erro(); as msg) {
+          <ion-note
+            color="danger"
+            class="sep-proposta-create-error"
+            role="status"
+            data-testid="sep-proposta-create-erro"
+          >
+            {{ msg }}
+          </ion-note>
+        }
+
+        @if (revisarOnboarding()) {
+          <ion-button
+            fill="outline"
+            expand="block"
+            (click)="irParaOnboarding()"
+            data-testid="sep-proposta-create-revisar-onboarding"
+          >
+            Revisar onboarding
+          </ion-button>
+        }
+
+        <ion-button
+          class="sep-proposta-create-submit"
+          type="submit"
+          expand="block"
+          [disabled]="submitting()"
+          data-testid="sep-proposta-create-submit"
+        >
+          @if (submitting()) {
+            <ion-spinner name="dots"></ion-spinner>
+          } @else {
+            <span>Solicitar</span>
+          }
+        </ion-button>
+      </form>
+    }
+  </section>
+</ion-content>
