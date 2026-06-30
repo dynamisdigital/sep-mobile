@@ -85,6 +85,46 @@
     color: hsl(var(--muted-foreground));
   }
 
+  &-aceite {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+
+    &-erro {
+      margin: 0;
+      font-size: 0.875rem;
+      color: hsl(var(--destructive));
+    }
+  }
+
+  &-confirmacao {
+    @include comp.sep-mobile-surface-card;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+    padding: var(--sep-space-16);
+
+    &-titulo {
+      margin: 0;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+    }
+
+    &-hash {
+      @extend %sep-muted-sm;
+
+      margin: 0;
+      word-break: break-all;
+    }
+
+    &-texto {
+      margin: 0;
+      color: hsl(var(--foreground));
+      line-height: 1.5;
+    }
+  }
+
   &-historico {
     display: flex;
     flex-direction: column;

@@ -1,14 +1,17 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { EnvironmentInjector, runInInjectionContext } from '@angular/core';
+import { EnvironmentInjector, runInInjectionContext, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   ContratoResponse,
   StatusFormalizacao,
+  UsuarioResponse,
   VersaoContratoResponse,
 } from '../../../core/api/api.models';
+import { AuthService } from '../../../core/auth/auth.service';
+import { StepUpTokenStore } from '../../../core/auth/step-up-token.store';
 import { ContratosMobileService } from '../../../core/contratos/contratos-mobile.service';
 import { ContratoDetailComponent } from './contrato-detail.component';
 
@@ -21,6 +24,7 @@ const VERSAO_2_ID = '9f1d4920-3f55-6f48-9b3e-000000000002';
 function setup(
   params: { propostaId?: string; contratoId?: string },
   svc: Partial<Record<keyof ContratosMobileService, ReturnType<typeof vi.fn>>> = {},
+  opts: { user?: UsuarioResponse | null; hasToken?: boolean } = {},
 ) {
   const contratos = {
     consultarPorProposta:
@@ -29,22 +33,31 @@ function setup(
       svc.consultarPorId ?? vi.fn().mockResolvedValue(contratoFixture('AGUARDANDO_ACEITE')),
     listarVersoes:
       svc.listarVersoes ?? vi.fn().mockResolvedValue([versaoFixture(1), versaoFixture(2)]),
+    registrarAceite: svc.registrarAceite ?? vi.fn().mockResolvedValue(contratoFixture('ACEITO')),
+    consultarStatusAssinatura:
+      svc.consultarStatusAssinatura ?? vi.fn().mockResolvedValue(statusAssinaturaFixture()),
   };
   const activatedRoute = {
     snapshot: {
       paramMap: { get: (k: string) => (params as Record<string, string | undefined>)[k] ?? null },
     },
   };
+  const user = opts.user === undefined ? usuarioFixture() : opts.user;
+  const clear = vi.fn();
+  const stepUpStore = { hasToken: () => !!opts.hasToken, clear, set: vi.fn(), consume: vi.fn() };
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
     providers: [
+      provideRouter([]),
       { provide: ContratosMobileService, useValue: contratos },
       { provide: ActivatedRoute, useValue: activatedRoute },
+      { provide: AuthService, useValue: { currentUser: signal(user) } },
+      { provide: StepUpTokenStore, useValue: stepUpStore },
     ],
   });
   const injector = TestBed.inject(EnvironmentInjector);
   const component = runInInjectionContext(injector, () => new ContratoDetailComponent());
-  return { component, contratos };
+  return { component, contratos, stepUpStore, clear };
 }
 
 describe('ContratoDetailComponent', () => {
@@ -206,6 +219,195 @@ describe('ContratoDetailComponent', () => {
     await expect(component.copiarHash('hash-da-versao-2')).resolves.toBeUndefined();
     expect(component.hashCopiado()).toBe(false);
   });
+
+  // ---- M-8.4: aceite com step-up ----
+
+  it('podeAceitar so para versao vigente em AGUARDANDO_ACEITE e usuario CLIENTE', async () => {
+    const { component } = setup({ contratoId: CONTRATO_ID });
+    await component.ngOnInit();
+    expect(component.podeAceitar()).toBe(true);
+    await component.abrirHistorico();
+    component.selecionarVersao(VERSAO_1_ID);
+    // Versao historica nunca habilita aceite.
+    expect(component.podeAceitar()).toBe(false);
+  });
+
+  it('podeAceitar e falso fora de AGUARDANDO_ACEITE', async () => {
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      { consultarPorId: vi.fn().mockResolvedValue(contratoFixture('ACEITO')) },
+    );
+    await component.ngOnInit();
+    expect(component.podeAceitar()).toBe(false);
+  });
+
+  it('ngOnInit nunca dispara aceite automaticamente', async () => {
+    const { component, contratos } = setup({ contratoId: CONTRATO_ID });
+    await component.ngOnInit();
+    expect(contratos.registrarAceite).not.toHaveBeenCalled();
+  });
+
+  it('cancelar a confirmacao nao chama a API', async () => {
+    const { component, contratos } = setup({ contratoId: CONTRATO_ID });
+    await component.ngOnInit();
+    component.abrirConfirmacao();
+    expect(component.confirmacaoAberta()).toBe(true);
+    component.cancelarConfirmacao();
+    expect(component.confirmacaoAberta()).toBe(false);
+    expect(contratos.registrarAceite).not.toHaveBeenCalled();
+  });
+
+  it('sem MFA, bloqueia o aceite com orientacao e nao chama a API', async () => {
+    const { component, contratos } = setup(
+      { contratoId: CONTRATO_ID },
+      {},
+      {
+        user: usuarioFixture({ mfaHabilitado: false }),
+      },
+    );
+    await component.ngOnInit();
+    component.abrirConfirmacao();
+    await component.confirmarAceite();
+    expect(contratos.registrarAceite).not.toHaveBeenCalled();
+    expect(component.erroAceite()).toContain('MFA');
+  });
+
+  it('com MFA e sem token, navega ao step-up com next relativo e nao chama a API', async () => {
+    const { component, contratos } = setup({ contratoId: CONTRATO_ID }, {}, { hasToken: false });
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    await component.ngOnInit();
+    component.abrirConfirmacao();
+    await component.confirmarAceite();
+    expect(contratos.registrarAceite).not.toHaveBeenCalled();
+    expect(navSpy).toHaveBeenCalledWith(
+      `/app/step-up?next=/app/formalizacao/contratos/${CONTRATO_ID}`,
+    );
+  });
+
+  it('com token, confirma chama PATCH uma vez, usa a resposta e consulta status', async () => {
+    const registrarAceite = vi.fn().mockResolvedValue(contratoFixture('ACEITO'));
+    const consultarStatusAssinatura = vi.fn().mockResolvedValue(statusAssinaturaFixture());
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      { registrarAceite, consultarStatusAssinatura },
+      { hasToken: true },
+    );
+    await component.ngOnInit();
+    component.abrirConfirmacao();
+    await component.confirmarAceite();
+    expect(registrarAceite).toHaveBeenCalledTimes(1);
+    expect(registrarAceite).toHaveBeenCalledWith(CONTRATO_ID);
+    expect(component.contrato()?.status).toBe('ACEITO');
+    expect(consultarStatusAssinatura).toHaveBeenCalledWith(CONTRATO_ID);
+    expect(component.statusAssinatura()).not.toBeNull();
+    expect(component.confirmacaoAberta()).toBe(false);
+  });
+
+  it('duplo toque nao dispara dois PATCH', async () => {
+    let resolver: (c: ContratoResponse) => void = () => undefined;
+    const registrarAceite = vi.fn().mockReturnValue(
+      new Promise<ContratoResponse>((resolve) => {
+        resolver = resolve;
+      }),
+    );
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      { registrarAceite },
+      { hasToken: true },
+    );
+    await component.ngOnInit();
+    component.abrirConfirmacao();
+    const primeira = component.confirmarAceite();
+    const segunda = component.confirmarAceite();
+    resolver(contratoFixture('ACEITO'));
+    await Promise.all([primeira, segunda]);
+    expect(registrarAceite).toHaveBeenCalledTimes(1);
+  });
+
+  it('403 de step-up limpa o token e leva a nova verificacao', async () => {
+    const registrarAceite = vi
+      .fn()
+      .mockRejectedValue(
+        new HttpErrorResponse({ status: 403, error: { message: 'step-up obrigatorio' } }),
+      );
+    const { component, clear } = setup(
+      { contratoId: CONTRATO_ID },
+      { registrarAceite },
+      { hasToken: true },
+    );
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    await component.ngOnInit();
+    component.abrirConfirmacao();
+    await component.confirmarAceite();
+    expect(clear).toHaveBeenCalled();
+    expect(navSpy).toHaveBeenCalledWith(
+      `/app/step-up?next=/app/formalizacao/contratos/${CONTRATO_ID}`,
+    );
+  });
+
+  it('403 de ownership nao entra em loop de step-up', async () => {
+    const registrarAceite = vi
+      .fn()
+      .mockRejectedValue(
+        new HttpErrorResponse({ status: 403, error: { message: 'contrato de outro tomador' } }),
+      );
+    const { component, clear } = setup(
+      { contratoId: CONTRATO_ID },
+      { registrarAceite },
+      { hasToken: true },
+    );
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+    await component.ngOnInit();
+    component.abrirConfirmacao();
+    await component.confirmarAceite();
+    expect(navSpy).not.toHaveBeenCalled();
+    expect(clear).not.toHaveBeenCalled();
+    expect(component.erroAceite()).toContain('permissao');
+  });
+
+  it('409 recarrega o contrato e exige nova leitura', async () => {
+    const consultarPorId = vi
+      .fn()
+      .mockResolvedValueOnce(contratoFixture('AGUARDANDO_ACEITE'))
+      .mockResolvedValueOnce(contratoFixture('AGUARDANDO_ACEITE'));
+    const registrarAceite = vi
+      .fn()
+      .mockRejectedValue(
+        new HttpErrorResponse({ status: 409, error: { message: 'versao mudou' } }),
+      );
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      { consultarPorId, registrarAceite },
+      { hasToken: true },
+    );
+    await component.ngOnInit();
+    component.abrirConfirmacao();
+    await component.confirmarAceite();
+    expect(consultarPorId).toHaveBeenCalledTimes(2);
+    expect(component.confirmacaoAberta()).toBe(false);
+    expect(component.erroAceite()).toContain('mudou');
+  });
+
+  it('erro de rede nao assume aceite e recarrega antes de nova tentativa', async () => {
+    const consultarPorId = vi
+      .fn()
+      .mockResolvedValueOnce(contratoFixture('AGUARDANDO_ACEITE'))
+      .mockResolvedValueOnce(contratoFixture('AGUARDANDO_ACEITE'));
+    const registrarAceite = vi.fn().mockRejectedValue(new Error('rede'));
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      { consultarPorId, registrarAceite },
+      { hasToken: true },
+    );
+    await component.ngOnInit();
+    component.abrirConfirmacao();
+    await component.confirmarAceite();
+    expect(consultarPorId).toHaveBeenCalledTimes(2);
+    expect(component.erroAceite()).toContain('Tente novamente');
+  });
 });
 
 function contratoFixture(
@@ -242,5 +444,29 @@ function versaoFixture(
       { id: `c-${numero}-2`, ordem: 2, titulo: 'PRAZO', texto: 'Texto da clausula 2.' },
     ],
     ...over,
+  };
+}
+
+function usuarioFixture(over: Partial<UsuarioResponse> = {}): UsuarioResponse {
+  return {
+    id: '4f1d4920-3f55-6f48-9b3e-dd1234567890',
+    username: 'tomador@sep.test',
+    role: 'CLIENTE',
+    dataCriacao: '2026-06-30T09:00:00-03:00',
+    dataModificacao: '2026-06-30T09:00:00-03:00',
+    criadoPor: 'system',
+    modificadoPor: 'system',
+    precisaRedefinirSenha: false,
+    mfaHabilitado: true,
+    ...over,
+  };
+}
+
+function statusAssinaturaFixture() {
+  return {
+    statusContrato: 'ACEITO',
+    statusEnvelope: null,
+    idEnvelopeExterno: null,
+    dataAtualizacaoProvider: null,
   };
 }

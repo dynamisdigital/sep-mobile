@@ -49,6 +49,32 @@ describe('stepUpInterceptor', () => {
     await promise;
   });
 
+  it('anexa X-Step-Up-Token em PATCH /contratos/:id/aceite e consome o store', async () => {
+    store.set('step-up-aceite');
+    const url = 'http://localhost:8080/api/v1/contratos/1f1/aceite';
+    const promise = new Promise<void>((resolve) => {
+      http.patch(url, {}).subscribe(() => resolve());
+    });
+    const req = httpMock.expectOne(url);
+    expect(req.request.headers.get('X-Step-Up-Token')).toBe('step-up-aceite');
+    expect(store.hasToken()).toBe(false);
+    req.flush({});
+    await promise;
+  });
+
+  it('nao anexa em GET de contrato mesmo com token presente', async () => {
+    store.set('step-up-aceite');
+    const url = 'http://localhost:8080/api/v1/contratos/1f1';
+    const promise = new Promise<void>((resolve) => {
+      http.get(url).subscribe(() => resolve());
+    });
+    const req = httpMock.expectOne(url);
+    expect(req.request.headers.has('X-Step-Up-Token')).toBe(false);
+    expect(store.hasToken()).toBe(true);
+    req.flush({});
+    await promise;
+  });
+
   it('sem token no store, passa adiante sem header', async () => {
     const url = 'http://localhost:8080/api/v1/usuarios/1f0/senha';
     const promise = new Promise<void>((resolve) => {

@@ -45,6 +45,61 @@
         </p>
       }
 
+      @if (podeAceitar()) {
+        <section class="sep-contrato-detail-aceite">
+          @if (!confirmacaoAberta()) {
+            <ion-button
+              expand="block"
+              (click)="abrirConfirmacao()"
+              data-testid="sep-contrato-detail-aceitar"
+            >
+              Aceitar contrato
+            </ion-button>
+          } @else if (versaoExibida(); as versao) {
+            <div
+              class="sep-contrato-detail-confirmacao"
+              data-testid="sep-contrato-detail-confirmacao"
+            >
+              <p class="sep-contrato-detail-confirmacao-titulo">
+                Confirmar aceite da versao {{ versao.numero }}
+              </p>
+              <p class="sep-contrato-detail-confirmacao-hash">Hash: {{ versao.hashSha256 }}</p>
+              <p class="sep-contrato-detail-confirmacao-texto">
+                Ao confirmar, voce declara que leu e concorda com esta versao do contrato. A acao
+                exige verificacao adicional (step-up).
+              </p>
+              <ion-button
+                expand="block"
+                (click)="confirmarAceite()"
+                [disabled]="aceitando()"
+                data-testid="sep-contrato-detail-confirmar"
+              >
+                {{ aceitando() ? 'Registrando...' : 'Confirmar aceite' }}
+              </ion-button>
+              <ion-button
+                expand="block"
+                fill="clear"
+                (click)="cancelarConfirmacao()"
+                [disabled]="aceitando()"
+                data-testid="sep-contrato-detail-cancelar"
+              >
+                Cancelar
+              </ion-button>
+            </div>
+          }
+        </section>
+      }
+
+      @if (erroAceite(); as msg) {
+        <p
+          class="sep-contrato-detail-aceite-erro"
+          role="alert"
+          data-testid="sep-contrato-detail-aceite-erro"
+        >
+          {{ msg }}
+        </p>
+      }
+
       @if (contrato()?.versaoVigente) {
         <section class="sep-contrato-detail-historico">
           @if (!historicoAberto()) {
