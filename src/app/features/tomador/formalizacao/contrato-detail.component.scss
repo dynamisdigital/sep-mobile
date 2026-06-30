@@ -5,14 +5,6 @@
   color: hsl(var(--muted-foreground));
 }
 
-%sep-reading {
-  margin: 0;
-  color: hsl(var(--foreground));
-  line-height: 1.6;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
 .sep-contrato-detail {
   --background: var(--ion-background-color);
   --padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
@@ -91,92 +83,6 @@
   &-vazio {
     margin: 0;
     color: hsl(var(--muted-foreground));
-  }
-
-  &-versao {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sep-space-12);
-
-    &-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: var(--sep-space-8);
-    }
-
-    &-data {
-      @extend %sep-muted-sm;
-
-      margin: 0;
-    }
-  }
-
-  &-badge {
-    padding: 2px var(--sep-space-8);
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: hsl(var(--primary-foreground));
-    background: hsl(var(--primary));
-    border-radius: var(--sep-radius-sm);
-
-    &--historica {
-      color: hsl(var(--muted-foreground));
-      background: hsl(var(--muted));
-    }
-  }
-
-  &-hash {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sep-space-8);
-
-    dt {
-      @extend %sep-muted-sm;
-    }
-
-    &-valor {
-      font-family: var(--ion-font-family-mono, monospace);
-      font-size: 0.8125rem;
-      color: hsl(var(--foreground));
-      word-break: break-all;
-    }
-
-    &-copiar {
-      align-self: flex-start;
-      min-height: var(--sep-touch-target);
-      padding: 0 var(--sep-space-16);
-      font-weight: 600;
-      color: hsl(var(--foreground));
-      background: hsl(var(--muted));
-      border: none;
-      border-radius: var(--sep-radius-md);
-    }
-  }
-
-  &-conteudo {
-    @extend %sep-reading;
-  }
-
-  &-clausulas {
-    display: flex;
-    flex-direction: column;
-    gap: var(--sep-space-12);
-    margin: 0;
-    padding-left: var(--sep-space-16);
-  }
-
-  &-clausula {
-    &-titulo {
-      margin: 0 0 var(--sep-space-4);
-      font-size: 0.9375rem;
-      font-weight: 600;
-      color: hsl(var(--foreground));
-    }
-
-    &-texto {
-      @extend %sep-reading;
-    }
   }
 
   &-historico {

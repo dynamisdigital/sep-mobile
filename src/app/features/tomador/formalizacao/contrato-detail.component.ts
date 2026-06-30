@@ -18,6 +18,7 @@ import {
 } from '../../../core/api/api.models';
 import { ContratosMobileService } from '../../../core/contratos/contratos-mobile.service';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
+import { ContratoContentComponent } from './contrato-content.component';
 
 const ROTULOS_TIPO: Record<TipoContrato, string> = {
   MUTUO: 'Contrato de mutuo',
@@ -45,7 +46,7 @@ const ROTULOS_STATUS: Record<StatusFormalizacao, string> = {
 @Component({
   selector: 'sep-contrato-detail',
   standalone: true,
-  imports: [IonContent, IonButton, IonSpinner, HeaderMobileComponent],
+  imports: [IonContent, IonButton, IonSpinner, HeaderMobileComponent, ContratoContentComponent],
   templateUrl: './contrato-detail.component.html',
   styleUrl: './contrato-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

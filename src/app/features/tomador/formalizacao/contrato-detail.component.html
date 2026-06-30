@@ -32,68 +32,13 @@
       </dl>
 
       @if (versaoExibida(); as versao) {
-        <article class="sep-contrato-detail-versao" data-testid="sep-contrato-detail-versao">
-          <header class="sep-contrato-detail-versao-head">
-            <h2 class="sep-contrato-detail-subtitle">Versao {{ versao.numero }}</h2>
-            @if (exibindoVigente()) {
-              <span
-                class="sep-contrato-detail-badge"
-                data-testid="sep-contrato-detail-badge-vigente"
-              >
-                Vigente
-              </span>
-            } @else {
-              <span class="sep-contrato-detail-badge sep-contrato-detail-badge--historica">
-                Historica
-              </span>
-            }
-          </header>
-
-          <p class="sep-contrato-detail-versao-data">
-            Gerada em {{ dataFormatada(versao.dataGeracao) }}
-          </p>
-
-          <div class="sep-contrato-detail-hash">
-            <dt>Hash SHA-256</dt>
-            <code class="sep-contrato-detail-hash-valor" data-testid="sep-contrato-detail-hash">
-              {{ versao.hashSha256 }}
-            </code>
-            <button
-              type="button"
-              class="sep-contrato-detail-hash-copiar"
-              (click)="copiarHash(versao.hashSha256)"
-              data-testid="sep-contrato-detail-hash-copiar"
-            >
-              {{ hashCopiado() ? 'Copiado' : 'Copiar' }}
-            </button>
-          </div>
-
-          <p class="sep-contrato-detail-conteudo" data-testid="sep-contrato-detail-conteudo">
-            {{ versao.conteudoTexto }}
-          </p>
-
-          @if (versao.clausulas.length > 0) {
-            <ol class="sep-contrato-detail-clausulas" data-testid="sep-contrato-detail-clausulas">
-              @for (clausula of versao.clausulas; track clausula.id) {
-                <li class="sep-contrato-detail-clausula">
-                  <h3 class="sep-contrato-detail-clausula-titulo">{{ clausula.titulo }}</h3>
-                  <p class="sep-contrato-detail-clausula-texto">{{ clausula.texto }}</p>
-                </li>
-              }
-            </ol>
-          }
-
-          @if (!exibindoVigente()) {
-            <ion-button
-              expand="block"
-              fill="outline"
-              (click)="voltarParaVigente()"
-              data-testid="sep-contrato-detail-voltar-vigente"
-            >
-              Voltar para a versao vigente
-            </ion-button>
-          }
-        </article>
+        <sep-contrato-content
+          [versao]="versao"
+          [vigente]="exibindoVigente()"
+          [hashCopiado]="hashCopiado()"
+          (copiar)="copiarHash($event)"
+          (voltarVigente)="voltarParaVigente()"
+        />
       } @else {
         <p class="sep-contrato-detail-vazio" data-testid="sep-contrato-detail-sem-versao">
           A versao do contrato ainda nao esta disponivel.
