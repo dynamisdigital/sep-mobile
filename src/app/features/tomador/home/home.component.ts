@@ -7,6 +7,7 @@ import {
   calendarOutline,
   cloudUploadOutline,
   documentTextOutline,
+  readerOutline,
   searchOutline,
   shieldCheckmarkOutline,
 } from 'ionicons/icons';
@@ -81,6 +82,14 @@ const SHORTCUTS: readonly PlaceholderShortcut[] = [
     tone: 'var(--warning)',
     route: '/app/propostas',
   },
+  {
+    label: 'Formalizacao',
+    description: 'Leia e aceite seus contratos.',
+    testid: 'sep-tomador-shortcut-formalizacao',
+    icon: 'reader-outline',
+    tone: 'var(--primary)',
+    route: '/app/formalizacao',
+  },
 ];
 
 @Component({
@@ -108,6 +117,7 @@ export class TomadorHomeComponent {
       cloudUploadOutline,
       addCircleOutline,
       searchOutline,
+      readerOutline,
     });
   }
 
