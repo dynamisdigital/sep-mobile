@@ -56,6 +56,20 @@ export const AUTHENTICATED_ROUTES: Routes = [
         data: { roles: ['CLIENTE'], tab: 'propostas', title: 'Proposta' },
       },
       {
+        path: 'propostas/:id/open-finance',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('../tomador/credito/open-finance.component').then((m) => m.OpenFinanceComponent),
+        data: { roles: ['CLIENTE'], tab: 'propostas', title: 'Open Finance' },
+      },
+      {
+        path: 'propostas/:id/open-finance/retorno',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('../tomador/credito/open-finance.component').then((m) => m.OpenFinanceComponent),
+        data: { roles: ['CLIENTE'], tab: 'propostas', title: 'Open Finance', retorno: true },
+      },
+      {
         path: 'parcelas',
         loadComponent: () =>
           import('./placeholder/placeholder.component').then((m) => m.PlaceholderComponent),

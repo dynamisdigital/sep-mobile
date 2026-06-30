@@ -56,4 +56,14 @@ describe('AUTHENTICATED_ROUTES', () => {
     const paths = children.map((route) => route.path);
     expect(paths.indexOf('propostas/nova')).toBeLessThan(paths.indexOf('propostas/:id'));
   });
+
+  it('registra as rotas Open Finance (consentimento e retorno) restritas a CLIENTE', async () => {
+    const consent = children.find((route) => route.path === 'propostas/:id/open-finance');
+    const retorno = children.find((route) => route.path === 'propostas/:id/open-finance/retorno');
+    expect(consent?.canActivate).toContain(roleGuard);
+    expect(consent?.data?.['roles']).toEqual(['CLIENTE']);
+    expect(retorno?.data?.['retorno']).toBe(true);
+    const loaded = (await consent?.loadComponent?.()) as { name: string };
+    expect(loaded.name).toContain('OpenFinanceComponent');
+  });
 });
