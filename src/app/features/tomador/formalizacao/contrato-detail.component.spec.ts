@@ -524,6 +524,26 @@ describe('ContratoDetailComponent', () => {
     expect(component.erroDocumento()).toContain('disponivel');
     expect(createObjectURL).not.toHaveBeenCalled();
   });
+
+  it('baixarDocumento expoe erro quando o service rejeita corpo vazio (sem URL de objeto)', async () => {
+    const createObjectURL = vi.fn(() => 'blob:fake-url');
+    Object.defineProperty(URL, 'createObjectURL', { value: createObjectURL, configurable: true });
+    // O service lanca para corpo 200 vazio (documento legal nunca vira download vazio "ok").
+    const baixarDocumentoAssinado = vi
+      .fn()
+      .mockRejectedValue(new Error('Documento assinado indisponivel.'));
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      {
+        consultarPorId: vi.fn().mockResolvedValue(contratoFixture('ASSINADO')),
+        baixarDocumentoAssinado,
+      },
+    );
+    await component.ngOnInit();
+    await component.baixarDocumento();
+    expect(component.erroDocumento()).toContain('Tente novamente');
+    expect(createObjectURL).not.toHaveBeenCalled();
+  });
 });
 
 function contratoFixture(
