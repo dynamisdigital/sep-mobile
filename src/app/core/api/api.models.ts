@@ -363,3 +363,58 @@ export interface StatusAssinaturaResponse {
   idEnvelopeExterno: string | null;
   dataAtualizacaoProvider: string | null;
 }
+
+// DTOs de borda espelhando os contratos reais de `sep-api` (cobranca Sprints 12-13).
+// Ownership, calculo de saldo/juros/mora/multa, dias de atraso, status e transicoes pertencem
+// ao backend: o mobile apenas apresenta os snapshots recebidos, nunca recalcula valor monetario,
+// deriva status por data/valor nem persiste a resposta. Valores monetarios chegam como `number`
+// apenas como representacao de borda; nenhuma aritmetica monetaria ocorre no app.
+
+export type StatusParcela =
+  | 'PENDENTE'
+  | 'PARCIALMENTE_PAGA'
+  | 'PAGA'
+  | 'ATRASADA'
+  | 'INADIMPLENTE'
+  | 'EM_NEGOCIACAO'
+  | 'RENEGOCIADA';
+
+// Parcela estatica da agenda. `total` e o valor da parcela no momento da geracao; valores
+// atualizados (mora/multa/saldo) vem de ValorAtualizadoParcelaResponse no detalhe.
+export interface ParcelaResponse {
+  id: string;
+  numero: number;
+  principal: number;
+  juros: number;
+  multa: number;
+  encargos: number;
+  total: number;
+  dataVencimento: string; // yyyy-MM-dd
+  status: StatusParcela;
+}
+
+// Agenda gerada apos contrato assinado. Composicao e ordenacao vem prontas do backend.
+export interface AgendaPagamentoResponse {
+  id: string;
+  contratoId: string;
+  numeroParcelas: number;
+  valorTotal: number;
+  dataGeracao: string; // ISO-8601 com offset
+  parcelas: ParcelaResponse[];
+}
+
+// Snapshot do valor atualizado de uma parcela calculado no backend contra 'agora'. O mobile
+// nao soma campos para validar total nem substitui ausentes por calculo local.
+export interface ValorAtualizadoParcelaResponse {
+  parcelaId: string;
+  numero: number;
+  status: StatusParcela;
+  dataVencimento: string; // yyyy-MM-dd
+  principalOriginal: number;
+  jurosOriginal: number;
+  jurosMora: number;
+  multa: number;
+  valorDevidoAtualizado: number;
+  totalRecebido: number;
+  valorEmAberto: number;
+}
