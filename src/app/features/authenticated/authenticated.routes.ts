@@ -98,9 +98,30 @@ export const AUTHENTICATED_ROUTES: Routes = [
       },
       {
         path: 'parcelas',
+        canActivate: [roleGuard],
         loadComponent: () =>
-          import('./placeholder/placeholder.component').then((m) => m.PlaceholderComponent),
-        data: { tab: 'parcelas', title: 'Parcelas' },
+          import('../tomador/cobranca/parcelas-entry.component').then(
+            (m) => m.ParcelasEntryComponent,
+          ),
+        data: { roles: ['CLIENTE'], tab: 'parcelas', title: 'Parcelas' },
+      },
+      {
+        path: 'parcelas/proposta/:propostaId',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('../tomador/cobranca/agenda-detail.component').then(
+            (m) => m.AgendaDetailComponent,
+          ),
+        data: { roles: ['CLIENTE'], tab: 'parcelas', title: 'Parcelas' },
+      },
+      {
+        path: 'parcelas/contratos/:contratoId',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('../tomador/cobranca/agenda-detail.component').then(
+            (m) => m.AgendaDetailComponent,
+          ),
+        data: { roles: ['CLIENTE'], tab: 'parcelas', title: 'Parcelas' },
       },
       {
         path: 'perfil',

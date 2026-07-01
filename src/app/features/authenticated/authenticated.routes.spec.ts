@@ -99,4 +99,34 @@ describe('AUTHENTICATED_ROUTES', () => {
     const loaded = (await porContrato?.loadComponent?.()) as { name: string };
     expect(loaded.name).toContain('ContratoDetailComponent');
   });
+
+  it('rota parcelas aponta para a entrada (substitui o placeholder), restrita a CLIENTE', async () => {
+    const parcelas = children.find((route) => route.path === 'parcelas');
+    expect(parcelas).toBeDefined();
+    expect(parcelas?.canActivate).toContain(roleGuard);
+    expect(parcelas?.data?.['roles']).toEqual(['CLIENTE']);
+    expect(parcelas?.data?.['tab']).toBe('parcelas');
+    const loaded = (await parcelas?.loadComponent?.()) as { name: string };
+    expect(loaded.name).toContain('ParcelasEntryComponent');
+  });
+
+  it('registra a agenda por proposta restrita a CLIENTE com lazy load', async () => {
+    const porProposta = children.find((route) => route.path === 'parcelas/proposta/:propostaId');
+    expect(porProposta).toBeDefined();
+    expect(porProposta?.canActivate).toContain(roleGuard);
+    expect(porProposta?.data?.['roles']).toEqual(['CLIENTE']);
+    expect(porProposta?.data?.['tab']).toBe('parcelas');
+    const loaded = (await porProposta?.loadComponent?.()) as { name: string };
+    expect(loaded.name).toContain('AgendaDetailComponent');
+  });
+
+  it('registra a agenda por contrato restrita a CLIENTE com lazy load', async () => {
+    const porContrato = children.find((route) => route.path === 'parcelas/contratos/:contratoId');
+    expect(porContrato).toBeDefined();
+    expect(porContrato?.canActivate).toContain(roleGuard);
+    expect(porContrato?.data?.['roles']).toEqual(['CLIENTE']);
+    expect(porContrato?.data?.['tab']).toBe('parcelas');
+    const loaded = (await porContrato?.loadComponent?.()) as { name: string };
+    expect(loaded.name).toContain('AgendaDetailComponent');
+  });
 });
