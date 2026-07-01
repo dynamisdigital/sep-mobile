@@ -129,4 +129,16 @@ describe('AUTHENTICATED_ROUTES', () => {
     const loaded = (await porContrato?.loadComponent?.()) as { name: string };
     expect(loaded.name).toContain('AgendaDetailComponent');
   });
+
+  it('registra o detalhe da parcela restrito a CLIENTE com lazy load', async () => {
+    const detalhe = children.find(
+      (route) => route.path === 'parcelas/contratos/:contratoId/parcelas/:parcelaId',
+    );
+    expect(detalhe).toBeDefined();
+    expect(detalhe?.canActivate).toContain(roleGuard);
+    expect(detalhe?.data?.['roles']).toEqual(['CLIENTE']);
+    expect(detalhe?.data?.['tab']).toBe('parcelas');
+    const loaded = (await detalhe?.loadComponent?.()) as { name: string };
+    expect(loaded.name).toContain('ParcelaDetailComponent');
+  });
 });

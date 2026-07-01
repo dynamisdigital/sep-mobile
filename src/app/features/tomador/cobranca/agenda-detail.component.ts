@@ -3,22 +3,11 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonContent, IonSpinner } from '@ionic/angular/standalone';
 
-import { AgendaPagamentoResponse, StatusParcela } from '../../../core/api/api.models';
+import { AgendaPagamentoResponse } from '../../../core/api/api.models';
 import { CobrancaMobileService } from '../../../core/cobranca/cobranca-mobile.service';
 import { ContratosMobileService } from '../../../core/contratos/contratos-mobile.service';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
-
-// Rotulos textuais dos estados de parcela. Em M-9.3 estes viram um componente de status acessivel
-// (texto + tom), reutilizado na lista e no detalhe.
-const ROTULOS_STATUS_PARCELA: Record<StatusParcela, string> = {
-  PENDENTE: 'Pendente',
-  PARCIALMENTE_PAGA: 'Parcialmente paga',
-  PAGA: 'Paga',
-  ATRASADA: 'Atrasada',
-  INADIMPLENTE: 'Inadimplente',
-  EM_NEGOCIACAO: 'Em negociacao',
-  RENEGOCIADA: 'Renegociada',
-};
+import { ParcelaStatusComponent } from './parcela-status.component';
 
 // Agenda e lista de parcelas do tomador. Entra por proposta (`consultarPorProposta`) ou direto por
 // contrato (`consultarPorId`); apos a primeira resposta usa `contrato.id` como identidade da
@@ -30,7 +19,7 @@ const ROTULOS_STATUS_PARCELA: Record<StatusParcela, string> = {
 @Component({
   selector: 'sep-agenda-detail',
   standalone: true,
-  imports: [IonContent, IonSpinner, HeaderMobileComponent],
+  imports: [IonContent, IonSpinner, HeaderMobileComponent, ParcelaStatusComponent],
   templateUrl: './agenda-detail.component.html',
   styleUrl: './agenda-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -86,10 +75,6 @@ export class AgendaDetailComponent implements OnInit {
 
   abrirParcela(parcelaId: string): void {
     void this.router.navigate(['/app/parcelas/contratos', this.contratoId, 'parcelas', parcelaId]);
-  }
-
-  protected rotuloStatus(status: StatusParcela): string {
-    return ROTULOS_STATUS_PARCELA[status];
   }
 
   protected valorFormatado(valor: number): string {

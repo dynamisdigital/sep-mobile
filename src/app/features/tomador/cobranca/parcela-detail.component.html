@@ -1,0 +1,113 @@
+<sep-header-mobile />
+<ion-content class="sep-parcela">
+  <section class="sep-parcela-section">
+    @if (carregando() && !parcela()) {
+      <div class="sep-parcela-estado" data-testid="sep-parcela-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Carregando parcela...</p>
+      </div>
+    } @else if (erro() && !parcela()) {
+      <div class="sep-parcela-estado" data-testid="sep-parcela-erro">
+        <p>{{ erro() }}</p>
+        <button
+          type="button"
+          class="sep-parcela-cta"
+          (click)="carregar()"
+          data-testid="sep-parcela-retry"
+        >
+          Tentar novamente
+        </button>
+        <button
+          type="button"
+          class="sep-parcela-cta sep-parcela-cta--secondary"
+          (click)="voltarParaAgenda()"
+          data-testid="sep-parcela-voltar"
+        >
+          Voltar para a agenda
+        </button>
+      </div>
+    } @else if (parcela(); as p) {
+      <header class="sep-parcela-header">
+        <h1 class="sep-parcela-title">Parcela {{ p.numero }}</h1>
+        <sep-parcela-status [status]="p.status" />
+      </header>
+
+      @if (desatualizado()) {
+        <p class="sep-parcela-aviso" role="status" data-testid="sep-parcela-desatualizado">
+          {{ erro() ?? 'Dados podem estar desatualizados.' }}
+        </p>
+      }
+
+      <dl class="sep-parcela-grid">
+        <div class="sep-parcela-row">
+          <dt>Vencimento</dt>
+          <dd>{{ dataVencimentoFormatada(p.dataVencimento) }}</dd>
+        </div>
+        <div class="sep-parcela-row">
+          <dt>Principal original</dt>
+          <dd>{{ valorFormatado(p.principalOriginal) }}</dd>
+        </div>
+        <div class="sep-parcela-row">
+          <dt>Juros originais</dt>
+          <dd>{{ valorFormatado(p.jurosOriginal) }}</dd>
+        </div>
+        <div class="sep-parcela-row">
+          <dt>Juros de mora</dt>
+          <dd>{{ valorFormatado(p.jurosMora) }}</dd>
+        </div>
+        <div class="sep-parcela-row">
+          <dt>Multa</dt>
+          <dd>{{ valorFormatado(p.multa) }}</dd>
+        </div>
+        <div class="sep-parcela-row sep-parcela-row--destaque">
+          <dt>Valor devido atualizado</dt>
+          <dd>{{ valorFormatado(p.valorDevidoAtualizado) }}</dd>
+        </div>
+        <div class="sep-parcela-row">
+          <dt>Total recebido</dt>
+          <dd>{{ valorFormatado(p.totalRecebido) }}</dd>
+        </div>
+        <div class="sep-parcela-row sep-parcela-row--destaque">
+          <dt>Valor em aberto</dt>
+          <dd>{{ valorFormatado(p.valorEmAberto) }}</dd>
+        </div>
+      </dl>
+
+      @if (emNegociacao()) {
+        <p class="sep-parcela-nota" data-testid="sep-parcela-negociacao">
+          Ha uma proposta de renegociacao em andamento para esta parcela.
+        </p>
+      }
+
+      @if (foiRenegociada()) {
+        <div class="sep-parcela-nota" data-testid="sep-parcela-renegociada">
+          <p>Esta parcela foi renegociada e substituida por uma nova agenda.</p>
+          <button
+            type="button"
+            class="sep-parcela-cta sep-parcela-cta--secondary"
+            (click)="voltarParaAgenda()"
+            data-testid="sep-parcela-renegociada-voltar"
+          >
+            Voltar para a agenda ativa
+          </button>
+        </div>
+      }
+
+      @if (consultadoEm(); as hora) {
+        <p class="sep-parcela-meta" data-testid="sep-parcela-consultado-em">
+          Consultado as {{ hora }}
+        </p>
+      }
+
+      <button
+        type="button"
+        class="sep-parcela-cta"
+        (click)="carregar()"
+        [disabled]="carregando()"
+        data-testid="sep-parcela-atualizar"
+      >
+        {{ carregando() ? 'Atualizando...' : 'Atualizar' }}
+      </button>
+    }
+  </section>
+</ion-content>

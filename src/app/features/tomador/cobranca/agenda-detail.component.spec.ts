@@ -149,7 +149,7 @@ describe('AgendaDetailComponent', () => {
     expect(component.indisponivel()).toBeNull();
   });
 
-  it('lista todos os status recebidos sem inferir prioridade, com rotulo para cada um', async () => {
+  it('preserva ordem e todos os status recebidos, sem inferir prioridade', async () => {
     const parcelas = TODOS_STATUS.map((status, i) => parcelaFixture(status, i + 1));
     const { component } = setup(
       { contratoId: CONTRATO_ID },
@@ -157,11 +157,9 @@ describe('AgendaDetailComponent', () => {
       { consultarAgenda: vi.fn().mockResolvedValue(agendaFixture(parcelas)) },
     );
     await component.ngOnInit();
-    // Ordem recebida do backend e preservada.
+    // Ordem e composicao recebidas do backend sao preservadas; rotulo/tom ficam no
+    // ParcelaStatusComponent (coberto por parcela-status.component.spec.ts).
     expect(component.agenda()?.parcelas.map((p) => p.status)).toEqual(TODOS_STATUS);
-    for (const status of TODOS_STATUS) {
-      expect(component.rotuloStatus(status)).toBeTruthy();
-    }
   });
 
   it('abrirParcela navega ao detalhe preservando contratoId e parcelaId', async () => {

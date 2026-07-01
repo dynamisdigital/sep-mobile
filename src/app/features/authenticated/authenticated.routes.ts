@@ -124,6 +124,15 @@ export const AUTHENTICATED_ROUTES: Routes = [
         data: { roles: ['CLIENTE'], tab: 'parcelas', title: 'Parcelas' },
       },
       {
+        path: 'parcelas/contratos/:contratoId/parcelas/:parcelaId',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('../tomador/cobranca/parcela-detail.component').then(
+            (m) => m.ParcelaDetailComponent,
+          ),
+        data: { roles: ['CLIENTE'], tab: 'parcelas', title: 'Parcela' },
+      },
+      {
         path: 'perfil',
         loadComponent: () => import('./profile/profile.component').then((m) => m.ProfileComponent),
         data: { tab: 'perfil' },

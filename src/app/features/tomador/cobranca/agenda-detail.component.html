@@ -58,9 +58,7 @@
                 <span class="sep-agenda-item-meta">
                   Vence em {{ dataVencimentoFormatada(parcela.dataVencimento) }}
                 </span>
-                <span class="sep-agenda-item-status" data-testid="sep-agenda-item-status">
-                  {{ rotuloStatus(parcela.status) }}
-                </span>
+                <sep-parcela-status [status]="parcela.status" />
               </button>
             </li>
           }
