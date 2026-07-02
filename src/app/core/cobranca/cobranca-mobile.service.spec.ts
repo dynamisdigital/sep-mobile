@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   AgendaPagamentoResponse,
   RecebimentoTomadorResponse,
+  RenegociacaoTomadorResponse,
   ValorAtualizadoParcelaResponse,
 } from '../api/api.models';
 import { CobrancaMobileService } from './cobranca-mobile.service';
@@ -14,6 +15,7 @@ const API = 'http://localhost:8080/api/v1';
 const COBRANCA = `${API}/cobranca`;
 const CONTRATO_ID = '1f155daf-c0e8-6f15-be21-5f51a516a416';
 const PARCELA_ID = '2f155daf-c0e8-6f15-be21-5f51a516a417';
+const RENEGOCIACAO_ID = '6f155daf-c0e8-6f15-be21-5f51a516a41b';
 
 describe('CobrancaMobileService', () => {
   let service: CobrancaMobileService;
@@ -104,6 +106,38 @@ describe('CobrancaMobileService', () => {
     req.flush({ message: 'Acesso negado' }, { status: 403, statusText: 'Forbidden' });
     await expect(promise).rejects.toBeDefined();
   });
+
+  it('consultarRenegociacaoAtiva GET /cobranca/parcelas/{id}/renegociacao-ativa (B2)', async () => {
+    const promise = service.consultarRenegociacaoAtiva(PARCELA_ID);
+    const req = httpMock.expectOne(`${COBRANCA}/parcelas/${PARCELA_ID}/renegociacao-ativa`);
+    expect(req.request.method).toBe('GET');
+    req.flush(renegociacaoFixture());
+    // Fidelidade de borda: valorTotalRenegociado chega pronto do backend, sem derivar localmente.
+    await expect(promise).resolves.toEqual(renegociacaoFixture());
+  });
+
+  it('consultarRenegociacaoAtiva propaga 404 (sem proposta ativa) sem converter em sucesso', async () => {
+    const promise = service.consultarRenegociacaoAtiva(PARCELA_ID);
+    const req = httpMock.expectOne(`${COBRANCA}/parcelas/${PARCELA_ID}/renegociacao-ativa`);
+    req.flush({ message: 'Nenhuma renegociacao ativa' }, { status: 404, statusText: 'Not Found' });
+    await expect(promise).rejects.toBeDefined();
+  });
+
+  it('aceitarRenegociacao PATCH /cobranca/renegociacoes/{id}/aceite', async () => {
+    const promise = service.aceitarRenegociacao(RENEGOCIACAO_ID);
+    const req = httpMock.expectOne(`${COBRANCA}/renegociacoes/${RENEGOCIACAO_ID}/aceite`);
+    expect(req.request.method).toBe('PATCH');
+    req.flush(null);
+    await expect(promise).resolves.toBeNull();
+  });
+
+  it('recusarRenegociacao PATCH /cobranca/renegociacoes/{id}/recusa', async () => {
+    const promise = service.recusarRenegociacao(RENEGOCIACAO_ID);
+    const req = httpMock.expectOne(`${COBRANCA}/renegociacoes/${RENEGOCIACAO_ID}/recusa`);
+    expect(req.request.method).toBe('PATCH');
+    req.flush(null);
+    await expect(promise).resolves.toBeNull();
+  });
 });
 
 function agendaFixture(): AgendaPagamentoResponse {
@@ -137,6 +171,21 @@ function agendaFixture(): AgendaPagamentoResponse {
         status: 'ATRASADA',
       },
     ],
+  };
+}
+
+function renegociacaoFixture(): RenegociacaoTomadorResponse {
+  return {
+    renegociacaoId: RENEGOCIACAO_ID,
+    parcelaId: PARCELA_ID,
+    status: 'PROPOSTA',
+    novoValorParcela: 110,
+    numeroParcelas: 3,
+    valorTotalRenegociado: 330,
+    novoVencimento: '2026-08-01',
+    desconto: 0,
+    dataProposta: '2026-07-01T10:00:00-03:00',
+    dataExpiracao: '2026-07-08T10:00:00-03:00',
   };
 }
 

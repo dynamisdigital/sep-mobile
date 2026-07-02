@@ -141,14 +141,24 @@ describe('ParcelaDetailComponent', () => {
     expect(component.parcela()?.status).toBe('PAGA');
   });
 
-  it('EM_NEGOCIACAO sinaliza a negociacao (sem CTA de termos — gate B2)', async () => {
+  it('EM_NEGOCIACAO sinaliza a negociacao e o CTA navega para os termos (M-9.5)', async () => {
     const { component } = setup(
       { contratoId: CONTRATO_ID, parcelaId: PARCELA_ID },
       { consultarParcela: vi.fn().mockResolvedValue(parcelaFixture('EM_NEGOCIACAO')) },
     );
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
     await component.ngOnInit();
     expect(component.emNegociacao()).toBe(true);
     expect(component.foiRenegociada()).toBe(false);
+    component.verRenegociacao();
+    expect(navSpy).toHaveBeenCalledWith([
+      '/app/parcelas/contratos',
+      CONTRATO_ID,
+      'parcelas',
+      PARCELA_ID,
+      'renegociacao',
+    ]);
   });
 
   it('RENEGOCIADA oferece retorno para a agenda ativa', async () => {

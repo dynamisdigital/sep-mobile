@@ -133,6 +133,15 @@ export const AUTHENTICATED_ROUTES: Routes = [
         data: { roles: ['CLIENTE'], tab: 'parcelas', title: 'Parcela' },
       },
       {
+        path: 'parcelas/contratos/:contratoId/parcelas/:parcelaId/renegociacao',
+        canActivate: [roleGuard],
+        loadComponent: () =>
+          import('../tomador/cobranca/renegociacao-detail.component').then(
+            (m) => m.RenegociacaoDetailComponent,
+          ),
+        data: { roles: ['CLIENTE'], tab: 'parcelas', title: 'Renegociacao' },
+      },
+      {
         path: 'perfil',
         loadComponent: () => import('./profile/profile.component').then((m) => m.ProfileComponent),
         data: { tab: 'perfil' },

@@ -137,9 +137,17 @@
       </section>
 
       @if (emNegociacao()) {
-        <p class="sep-parcela-nota" data-testid="sep-parcela-negociacao">
-          Ha uma proposta de renegociacao em andamento para esta parcela.
-        </p>
+        <div class="sep-parcela-nota" data-testid="sep-parcela-negociacao">
+          <p>Ha uma proposta de renegociacao em andamento para esta parcela.</p>
+          <button
+            type="button"
+            class="sep-parcela-cta sep-parcela-cta--secondary"
+            (click)="verRenegociacao()"
+            data-testid="sep-parcela-ver-renegociacao"
+          >
+            Ver termos da renegociacao
+          </button>
+        </div>
       }
 
       @if (foiRenegociada()) {

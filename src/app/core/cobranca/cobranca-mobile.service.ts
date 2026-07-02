@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import {
   AgendaPagamentoResponse,
   RecebimentoTomadorResponse,
+  RenegociacaoTomadorResponse,
   ValorAtualizadoParcelaResponse,
 } from '../api/api.models';
 
@@ -43,6 +44,31 @@ export class CobrancaMobileService {
       this.http.get<RecebimentoTomadorResponse[]>(
         `${COBRANCA_URL}/parcelas/${parcelaId}/recebimentos`,
       ),
+    );
+  }
+
+  // Termos da renegociacao ativa owner-scoped (Sprint 24 backend — B2). 404 = sem proposta
+  // ativa (ou expirada pelo Clock); 403 = parcela alheia/inexistente. Read-only, sem step-up.
+  consultarRenegociacaoAtiva(parcelaId: string): Promise<RenegociacaoTomadorResponse> {
+    return firstValueFrom(
+      this.http.get<RenegociacaoTomadorResponse>(
+        `${COBRANCA_URL}/parcelas/${parcelaId}/renegociacao-ativa`,
+      ),
+    );
+  }
+
+  // Decisao do tomador (Sprint 13 backend). Aceite exige X-Step-Up-Token (anexado pelo
+  // stepUpInterceptor); recusa nao. O corpo da resposta (DTO interno) e descartado: o app
+  // usa o status HTTP e reconsulta agenda/parcela apos a decisao.
+  aceitarRenegociacao(renegociacaoId: string): Promise<void> {
+    return firstValueFrom(
+      this.http.patch<void>(`${COBRANCA_URL}/renegociacoes/${renegociacaoId}/aceite`, {}),
+    );
+  }
+
+  recusarRenegociacao(renegociacaoId: string): Promise<void> {
+    return firstValueFrom(
+      this.http.patch<void>(`${COBRANCA_URL}/renegociacoes/${renegociacaoId}/recusa`, {}),
     );
   }
 }

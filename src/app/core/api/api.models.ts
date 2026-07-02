@@ -429,3 +429,25 @@ export interface RecebimentoTomadorResponse {
   dataRecebimento: string; // ISO-8601 com offset
   meioPagamento: string;
 }
+
+// Somente PROPOSTA chega ao tomador pela consulta ativa; os demais estados resultam em 404.
+export type StatusRenegociacao = 'PROPOSTA' | 'ACEITA' | 'RECUSADA' | 'EXPIRADA';
+
+// Termos da renegociacao ativa visiveis ao tomador (Sprint 24 backend — B2 da M-9). Espelha o
+// RenegociacaoTomadorResponse owner-scoped: 10 campos publicos. `valorTotalRenegociado` vem
+// calculado do backend — o mobile NUNCA deriva `valor x quantidade`. Nao modela tomadorId,
+// propostaPor, IDs de agenda, statusParcelaAnterior ou justificativa (o contrato B2 nao os
+// retorna). As respostas dos PATCHes de aceite/recusa (DTO interno) nao sao modeladas: o app
+// usa apenas o status HTTP e reconsulta agenda/parcela.
+export interface RenegociacaoTomadorResponse {
+  renegociacaoId: string;
+  parcelaId: string;
+  status: StatusRenegociacao;
+  novoValorParcela: number;
+  numeroParcelas: number;
+  valorTotalRenegociado: number;
+  novoVencimento: string; // yyyy-MM-dd
+  desconto: number;
+  dataProposta: string; // ISO-8601 com offset
+  dataExpiracao: string; // ISO-8601 com offset
+}

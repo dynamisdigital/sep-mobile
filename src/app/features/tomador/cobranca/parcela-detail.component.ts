@@ -55,8 +55,7 @@ export class ParcelaDetailComponent implements OnInit {
 
   // Parcela substituida por nova agenda: oferece retorno para a agenda ativa.
   readonly foiRenegociada = computed(() => this.parcela()?.status === 'RENEGOCIADA');
-  // Proposta de renegociacao em andamento. O CTA para os termos entra na M-9.5 (gate B2); aqui
-  // apenas sinaliza o estado.
+  // Proposta de renegociacao em andamento: habilita o CTA para os termos (M-9.5, backend B2).
   readonly emNegociacao = computed(() => this.parcela()?.status === 'EM_NEGOCIACAO');
 
   // Historico de recebimentos (M-9.4): null = nunca carregado (lazy); [] = carregado e vazio.
@@ -101,6 +100,17 @@ export class ParcelaDetailComponent implements OnInit {
 
   voltarParaAgenda(): void {
     void this.router.navigate(['/app/parcelas/contratos', this.contratoId]);
+  }
+
+  // Termos da renegociacao ativa (M-9.5). A leitura e a decisao ficam na rota dedicada.
+  verRenegociacao(): void {
+    void this.router.navigate([
+      '/app/parcelas/contratos',
+      this.contratoId,
+      'parcelas',
+      this.parcelaId,
+      'renegociacao',
+    ]);
   }
 
   // Abre/recolhe a secao. Carrega apenas na primeira abertura; reabrir nao refaz a consulta

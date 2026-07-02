@@ -10,15 +10,19 @@ import { StepUpTokenStore } from '../auth/step-up-token.store';
  * Rotas cobertas:
  * - `PATCH /usuarios/{id}/senha`: alterar senha
  * - `PATCH /contratos/{id}/aceite`: aceite contratual (M-Sprint 8)
+ * - `PATCH /cobranca/renegociacoes/{id}/aceite`: aceite de renegociacao (M-Sprint 9)
  *
  * O matching e por metodo + path exatos: o `GET` de contrato/versoes/documento
- * nunca recebe o token. O store {@link StepUpTokenStore} mantem o token em
- * memoria com uso unico: apos a chamada o token e descartado, exigindo novo
- * step-up para outra operacao sensivel.
+ * e o de renegociacao ativa nunca recebem o token, e a recusa de renegociacao
+ * (`PATCH .../recusa`) nao exige nem consome step-up. O store
+ * {@link StepUpTokenStore} mantem o token em memoria com uso unico: apos a
+ * chamada o token e descartado, exigindo novo step-up para outra operacao
+ * sensivel.
  */
 const STEP_UP_ENDPOINTS: { method: string; pattern: RegExp }[] = [
   { method: 'PATCH', pattern: /\/api\/v1\/usuarios\/[^/]+\/senha$/ },
   { method: 'PATCH', pattern: /\/api\/v1\/contratos\/[^/]+\/aceite$/ },
+  { method: 'PATCH', pattern: /\/api\/v1\/cobranca\/renegociacoes\/[^/]+\/aceite$/ },
 ];
 
 export const stepUpInterceptor: HttpInterceptorFn = (req, next) => {
