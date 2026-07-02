@@ -286,6 +286,15 @@ describe('RenegociacaoDetailComponent', () => {
     expect(cobranca.consultarRenegociacaoAtiva).toHaveBeenCalledTimes(3);
   });
 
+  it('reentrada via stack (ionViewWillEnter) reconsulta os termos; antes do init nao', async () => {
+    const { component, cobranca } = setup({}, { hasToken: true });
+    component.ionViewWillEnter();
+    expect(cobranca.consultarRenegociacaoAtiva).not.toHaveBeenCalled();
+    await component.ngOnInit();
+    component.ionViewWillEnter();
+    await vi.waitFor(() => expect(cobranca.consultarRenegociacaoAtiva).toHaveBeenCalledTimes(2));
+  });
+
   it('cancelar confirmacao nao chama nenhuma API de decisao', async () => {
     const { component, cobranca } = setup({}, { hasToken: true });
     await component.ngOnInit();

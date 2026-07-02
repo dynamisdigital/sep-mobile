@@ -260,6 +260,16 @@ describe('ParcelaDetailComponent', () => {
     expect(component.recebimentos()).toHaveLength(2);
   });
 
+  it('reentrada via stack (ionViewWillEnter) reconsulta a parcela; antes do init nao', async () => {
+    const { component, cobranca } = setup({ contratoId: CONTRATO_ID, parcelaId: PARCELA_ID });
+    // Antes do ngOnInit (sem parcelaId) o hook nao dispara consulta.
+    component.ionViewWillEnter();
+    expect(cobranca.consultarParcela).not.toHaveBeenCalled();
+    await component.ngOnInit();
+    component.ionViewWillEnter();
+    await vi.waitFor(() => expect(cobranca.consultarParcela).toHaveBeenCalledTimes(2));
+  });
+
   it('atualizar historico reconsulta sob demanda', async () => {
     const { component, cobranca } = setup({ contratoId: CONTRATO_ID, parcelaId: PARCELA_ID });
     await component.ngOnInit();

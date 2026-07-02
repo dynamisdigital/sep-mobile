@@ -737,10 +737,299 @@ const formalizacaoHandlers = [
   }),
 ];
 
+// --- Cobranca / parcelas do tomador (Sprints 12-13 + 23/24; M-Sprint 9) --------------
+// Estado minimo em localStorage (`mock.cobranca`) para sobreviver ao reload do step-up no
+// e2e; reseedavel por teste (chave ausente = renegociacao PROPOSTA). Responde apenas para o
+// contrato da formalizacao (`contrato-mock-1`, semeado ASSINADO pelo smoke de cobranca);
+// demais ids -> 404/403 coerentes. A agenda original traz os 7 status de parcela; o aceite
+// da renegociacao (exige X-Step-Up-Token, como no backend) substitui a agenda ativa de forma
+// observavel e a recusa devolve a parcela ao status anterior. Valores sao fixos e ficticios
+// (nenhum recalculo local); sem dados bancarios, operador, escrow ou justificativa.
+
+const COBRANCA_KEY = 'mock.cobranca';
+const AGENDA_ORIGINAL_ID = 'agenda-cobranca-1';
+const AGENDA_SUBSTITUTA_ID = 'agenda-cobranca-2';
+const RENEGOCIACAO_MOCK_ID = 'reneg-mock-1';
+const PARCELA_EM_NEGOCIACAO_ID = 'parcela-cobranca-5';
+
+type RenegociacaoEstado = 'PROPOSTA' | 'ACEITA' | 'RECUSADA';
+
+interface CobrancaState {
+  renegociacao: RenegociacaoEstado;
+}
+
+function lerCobranca(): CobrancaState {
+  return lerEstado<CobrancaState>(COBRANCA_KEY, { renegociacao: 'PROPOSTA' });
+}
+
+function parcelaAgendaMock(numero: number, status: string, total: number) {
+  return {
+    id: `parcela-cobranca-${numero}`,
+    numero,
+    principal: total,
+    juros: 0,
+    multa: 0,
+    encargos: 0,
+    total,
+    dataVencimento: `2026-0${Math.min(numero, 9)}-15`,
+    status,
+  };
+}
+
+// Agenda original: cobre os 7 status de parcela exigidos pelo smoke. A parcela 5 e a unica
+// EM_NEGOCIACAO (renegociacao ativa); recusa devolve ATRASADA (statusParcelaAnterior).
+function agendaOriginalMock(estado: CobrancaState) {
+  const statusParcela5 =
+    estado.renegociacao === 'PROPOSTA'
+      ? 'EM_NEGOCIACAO'
+      : estado.renegociacao === 'ACEITA'
+        ? 'RENEGOCIADA'
+        : 'ATRASADA';
+  return {
+    id: AGENDA_ORIGINAL_ID,
+    contratoId: CONTRATO_FORMALIZACAO_ID,
+    numeroParcelas: 7,
+    valorTotal: 7000,
+    dataGeracao: '2026-06-22T10:00:00-03:00',
+    parcelas: [
+      parcelaAgendaMock(1, 'PAGA', 1000),
+      parcelaAgendaMock(2, 'PARCIALMENTE_PAGA', 1000),
+      parcelaAgendaMock(3, 'PENDENTE', 1000),
+      parcelaAgendaMock(4, 'ATRASADA', 1000),
+      parcelaAgendaMock(5, statusParcela5, 1000),
+      parcelaAgendaMock(6, 'INADIMPLENTE', 1000),
+      parcelaAgendaMock(7, 'RENEGOCIADA', 1000),
+    ],
+  };
+}
+
+// Agenda substituta pos-aceite: 3 novas parcelas PENDENTE de 110 (termos da renegociacao).
+function agendaSubstitutaMock() {
+  return {
+    id: AGENDA_SUBSTITUTA_ID,
+    contratoId: CONTRATO_FORMALIZACAO_ID,
+    numeroParcelas: 3,
+    valorTotal: 330,
+    dataGeracao: '2026-07-02T10:00:00-03:00',
+    parcelas: [
+      {
+        id: 'parcela-substituta-1',
+        numero: 1,
+        principal: 110,
+        juros: 0,
+        multa: 0,
+        encargos: 0,
+        total: 110,
+        dataVencimento: '2026-08-01',
+        status: 'PENDENTE',
+      },
+      {
+        id: 'parcela-substituta-2',
+        numero: 2,
+        principal: 110,
+        juros: 0,
+        multa: 0,
+        encargos: 0,
+        total: 110,
+        dataVencimento: '2026-09-01',
+        status: 'PENDENTE',
+      },
+      {
+        id: 'parcela-substituta-3',
+        numero: 3,
+        principal: 110,
+        juros: 0,
+        multa: 0,
+        encargos: 0,
+        total: 110,
+        dataVencimento: '2026-10-01',
+        status: 'PENDENTE',
+      },
+    ],
+  };
+}
+
+// Valor atualizado ficticio por parcela: mora/multa apenas nas vencidas; totalRecebido coerente
+// com o historico (parcela 5 tem 1 recebimento parcial de 300 antes da negociacao).
+function valorAtualizadoMock(parcelaId: string, estado: CobrancaState) {
+  const base = {
+    parcelaId,
+    dataVencimento: '2026-05-15',
+    principalOriginal: 1000,
+    jurosOriginal: 0,
+    jurosMora: 25,
+    multa: 20,
+    valorDevidoAtualizado: 1045,
+    totalRecebido: 0,
+    valorEmAberto: 1045,
+  };
+  switch (parcelaId) {
+    case 'parcela-cobranca-4':
+      return { ...base, numero: 4, status: 'ATRASADA' };
+    case PARCELA_EM_NEGOCIACAO_ID: {
+      const status =
+        estado.renegociacao === 'PROPOSTA'
+          ? 'EM_NEGOCIACAO'
+          : estado.renegociacao === 'ACEITA'
+            ? 'RENEGOCIADA'
+            : 'ATRASADA';
+      return {
+        ...base,
+        numero: 5,
+        status,
+        totalRecebido: 300,
+        valorEmAberto: 745,
+      };
+    }
+    case 'parcela-cobranca-6':
+      return { ...base, numero: 6, status: 'INADIMPLENTE', jurosMora: 80, multa: 20 };
+    default:
+      return null;
+  }
+}
+
+const cobrancaHandlers = [
+  http.get(`${baseUrl}/cobranca/contratos/:contratoId/agenda`, ({ params }) => {
+    const path = '/api/v1/cobranca/contratos/agenda';
+    if (String(params['contratoId']) !== CONTRATO_FORMALIZACAO_ID) {
+      return HttpResponse.json(errorResponse(404, 'Not Found', 'Agenda nao encontrada', path), {
+        status: 404,
+      });
+    }
+    const estado = lerCobranca();
+    return HttpResponse.json(
+      estado.renegociacao === 'ACEITA' ? agendaSubstitutaMock() : agendaOriginalMock(estado),
+      { status: 200 },
+    );
+  }),
+
+  http.get(`${baseUrl}/cobranca/parcelas/:id/recebimentos`, ({ params }) => {
+    const parcelaId = String(params['id']);
+    // Ownership 403 uniforme (sem UUID) para parcela desconhecida, como no backend B1.
+    if (!valorAtualizadoMock(parcelaId, lerCobranca())) {
+      return HttpResponse.json(
+        errorResponse(
+          403,
+          'Forbidden',
+          'Recurso de cobranca indisponivel',
+          '/api/v1/cobranca/parcelas/recebimentos',
+        ),
+        { status: 403 },
+      );
+    }
+    if (parcelaId !== PARCELA_EM_NEGOCIACAO_ID) {
+      return HttpResponse.json([], { status: 200 });
+    }
+    return HttpResponse.json(
+      [
+        {
+          recebimentoId: 'receb-mock-1',
+          valorRecebido: 300,
+          dataRecebimento: '2026-06-10T14:30:00-03:00',
+          meioPagamento: 'PIX',
+        },
+      ],
+      { status: 200 },
+    );
+  }),
+
+  http.get(`${baseUrl}/cobranca/parcelas/:id/renegociacao-ativa`, ({ params }) => {
+    const parcelaId = String(params['id']);
+    const path = '/api/v1/cobranca/parcelas/renegociacao-ativa';
+    if (!valorAtualizadoMock(parcelaId, lerCobranca())) {
+      return HttpResponse.json(
+        errorResponse(403, 'Forbidden', 'Recurso de cobranca indisponivel', path),
+        { status: 403 },
+      );
+    }
+    const estado = lerCobranca();
+    if (parcelaId !== PARCELA_EM_NEGOCIACAO_ID || estado.renegociacao !== 'PROPOSTA') {
+      return HttpResponse.json(
+        errorResponse(
+          404,
+          'Not Found',
+          'Nenhuma renegociacao ativa para a parcela informada',
+          path,
+        ),
+        { status: 404 },
+      );
+    }
+    return HttpResponse.json(
+      {
+        renegociacaoId: RENEGOCIACAO_MOCK_ID,
+        parcelaId,
+        status: 'PROPOSTA',
+        novoValorParcela: 110,
+        numeroParcelas: 3,
+        valorTotalRenegociado: 330,
+        novoVencimento: '2026-08-01',
+        desconto: 50,
+        dataProposta: '2026-07-01T10:00:00-03:00',
+        dataExpiracao: '2026-07-08T10:00:00-03:00',
+      },
+      { status: 200 },
+    );
+  }),
+
+  http.patch(`${baseUrl}/cobranca/renegociacoes/:id/aceite`, ({ params, request }) => {
+    const path = '/api/v1/cobranca/renegociacoes/aceite';
+    if (
+      String(params['id']) !== RENEGOCIACAO_MOCK_ID ||
+      lerCobranca().renegociacao !== 'PROPOSTA'
+    ) {
+      return HttpResponse.json(
+        errorResponse(404, 'Not Found', 'Renegociacao nao encontrada', path),
+        { status: 404 },
+      );
+    }
+    if (!request.headers.get('X-Step-Up-Token')) {
+      return HttpResponse.json(errorResponse(403, 'Forbidden', 'step-up obrigatorio', path), {
+        status: 403,
+      });
+    }
+    salvarEstado(COBRANCA_KEY, { renegociacao: 'ACEITA' } satisfies CobrancaState);
+    return HttpResponse.json({ id: RENEGOCIACAO_MOCK_ID, status: 'ACEITA' }, { status: 200 });
+  }),
+
+  http.patch(`${baseUrl}/cobranca/renegociacoes/:id/recusa`, ({ params }) => {
+    const path = '/api/v1/cobranca/renegociacoes/recusa';
+    if (
+      String(params['id']) !== RENEGOCIACAO_MOCK_ID ||
+      lerCobranca().renegociacao !== 'PROPOSTA'
+    ) {
+      return HttpResponse.json(
+        errorResponse(404, 'Not Found', 'Renegociacao nao encontrada', path),
+        { status: 404 },
+      );
+    }
+    salvarEstado(COBRANCA_KEY, { renegociacao: 'RECUSADA' } satisfies CobrancaState);
+    return HttpResponse.json({ id: RENEGOCIACAO_MOCK_ID, status: 'RECUSADA' }, { status: 200 });
+  }),
+
+  // Registrado por ultimo no grupo: o path com sufixo (recebimentos/renegociacao-ativa) casa
+  // primeiro nos handlers acima; este cobre apenas o detalhe da parcela.
+  http.get(`${baseUrl}/cobranca/parcelas/:id`, ({ params }) => {
+    const detalhe = valorAtualizadoMock(String(params['id']), lerCobranca());
+    if (!detalhe) {
+      return HttpResponse.json(
+        errorResponse(
+          403,
+          'Forbidden',
+          'Recurso de cobranca indisponivel',
+          '/api/v1/cobranca/parcelas',
+        ),
+        { status: 403 },
+      );
+    }
+    return HttpResponse.json(detalhe, { status: 200 });
+  }),
+];
+
 export const handlers = [
   ...baseHandlers,
   ...onboardingHandlers,
   ...creditoHandlers,
   ...stepUpHandlers,
   ...formalizacaoHandlers,
+  ...cobrancaHandlers,
 ];

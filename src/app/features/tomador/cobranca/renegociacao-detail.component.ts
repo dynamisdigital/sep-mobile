@@ -1,6 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { ViewWillEnter } from '@ionic/angular';
 import { IonContent, IonSpinner } from '@ionic/angular/standalone';
 
 import { ApiErrorResponse, RenegociacaoTomadorResponse } from '../../../core/api/api.models';
@@ -26,7 +27,7 @@ import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobi
   styleUrl: './renegociacao-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RenegociacaoDetailComponent implements OnInit {
+export class RenegociacaoDetailComponent implements OnInit, ViewWillEnter {
   private readonly cobranca = inject(CobrancaMobileService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -51,6 +52,15 @@ export class RenegociacaoDetailComponent implements OnInit {
     this.contratoId = this.route.snapshot.paramMap.get('contratoId') ?? '';
     this.parcelaId = this.route.snapshot.paramMap.get('parcelaId') ?? '';
     await this.carregar();
+  }
+
+  // Reentrada via stack do ion-router-outlet (ex.: retorno do step-up): o componente e
+  // reutilizado sem novo ngOnInit. Reconsulta os termos para nunca exibir snapshot obsoleto;
+  // o guard evita duplicar a carga inicial (ionViewWillEnter tambem dispara na primeira entrada).
+  ionViewWillEnter(): void {
+    if (this.parcelaId && !this.carregando()) {
+      void this.carregar();
+    }
   }
 
   async carregar(): Promise<void> {
