@@ -169,6 +169,17 @@
         </section>
       }
 
+      @if (mostrarVerParcelas()) {
+        <ion-button
+          expand="block"
+          fill="outline"
+          (click)="verParcelas()"
+          data-testid="sep-contrato-detail-ver-parcelas"
+        >
+          Ver parcelas
+        </ion-button>
+      }
+
       @if (contrato()?.versaoVigente) {
         <section class="sep-contrato-detail-historico">
           @if (!historicoAberto()) {

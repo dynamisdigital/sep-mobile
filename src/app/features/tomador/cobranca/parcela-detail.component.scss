@@ -1,0 +1,176 @@
+@use "../../../../styles/sep-mobile-ds-components" as comp;
+
+.sep-parcela {
+  --background: var(--ion-background-color);
+  --padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
+
+  &-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-16);
+    padding: var(--sep-space-24) var(--sep-space-16) var(--sep-space-48);
+  }
+
+  &-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+    align-items: flex-start;
+  }
+
+  &-title {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: hsl(var(--foreground));
+  }
+
+  &-estado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sep-space-12);
+    padding: var(--sep-space-32) var(--sep-space-16);
+    text-align: center;
+    color: hsl(var(--muted-foreground));
+  }
+
+  &-grid {
+    @include comp.sep-mobile-surface-card;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+    margin: 0;
+    padding: var(--sep-space-16);
+  }
+
+  &-row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--sep-space-12);
+
+    dt {
+      color: hsl(var(--muted-foreground));
+    }
+
+    dd {
+      margin: 0;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+    }
+
+    &--destaque dd {
+      font-size: 1.0625rem;
+      font-weight: 700;
+    }
+  }
+
+  &-historico {
+    @include comp.sep-mobile-surface-card;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-12);
+    padding: var(--sep-space-16);
+
+    &-toggle {
+      @include comp.sep-mobile-touch-state;
+
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: var(--sep-touch-target);
+      padding: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+      background: transparent;
+      border: none;
+    }
+
+    &-lista {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sep-space-8);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    &-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: var(--sep-space-4) var(--sep-space-12);
+      padding-bottom: var(--sep-space-8);
+      border-bottom: 1px solid hsl(var(--border));
+
+      &:last-child {
+        padding-bottom: 0;
+        border-bottom: none;
+      }
+    }
+
+    &-data {
+      color: hsl(var(--muted-foreground));
+      font-size: 0.875rem;
+    }
+
+    &-meio {
+      grid-row: 2;
+      font-size: 0.75rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    &-valor {
+      grid-row: 1 / span 2;
+      grid-column: 2;
+      align-self: center;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+    }
+  }
+
+  &-nota {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+  }
+
+  &-aviso {
+    margin: 0;
+    font-size: 0.875rem;
+    color: hsl(var(--warning));
+  }
+
+  &-meta {
+    margin: 0;
+    font-size: 0.75rem;
+    color: hsl(var(--muted-foreground));
+  }
+
+  &-cta {
+    @include comp.sep-mobile-touch-state;
+
+    min-height: var(--sep-touch-target);
+    padding: 0 var(--sep-space-16);
+    font-weight: 600;
+    color: hsl(var(--primary-foreground));
+    background: hsl(var(--primary));
+    border: none;
+    border-radius: var(--sep-radius-md);
+
+    &:disabled {
+      opacity: 0.6;
+    }
+
+    &--secondary {
+      color: hsl(var(--foreground));
+      background: transparent;
+      border: 1px solid hsl(var(--border));
+    }
+  }
+}
