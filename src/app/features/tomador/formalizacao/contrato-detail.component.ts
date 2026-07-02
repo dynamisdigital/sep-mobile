@@ -135,6 +135,12 @@ export class ContratoDetailComponent implements OnInit {
     () => this.statusContratoEfetivo() === 'ASSINADO',
   );
 
+  // "Ver parcelas" so apos ASSINADO: o backend so gera a agenda pos-assinatura. Antes disso a
+  // jornada de parcelas apenas informaria indisponibilidade.
+  readonly mostrarVerParcelas = computed<boolean>(
+    () => this.statusContratoEfetivo() === 'ASSINADO',
+  );
+
   // Versao mostrada na leitura: a selecionada no historico ou, por padrao, a vigente embutida no
   // contrato. Se a selecao nao estiver no historico carregado, cai para a vigente.
   readonly versaoExibida = computed<VersaoContratoResponse | null>(() => {
@@ -324,6 +330,10 @@ export class ContratoDetailComponent implements OnInit {
       }
       this.baixandoDocumento.set(false);
     }
+  }
+
+  verParcelas(): void {
+    void this.router.navigate(['/app/parcelas/contratos', this.contratoId]);
   }
 
   protected rotuloEnvelope(status: StatusEnvelope): string {

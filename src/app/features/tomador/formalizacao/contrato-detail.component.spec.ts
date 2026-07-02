@@ -488,6 +488,31 @@ describe('ContratoDetailComponent', () => {
     expect(component.documentoDisponivel()).toBe(true);
   });
 
+  it('CTA "Ver parcelas" so aparece quando o contrato esta ASSINADO', async () => {
+    const aguardando = setup({ contratoId: CONTRATO_ID });
+    await aguardando.component.ngOnInit();
+    expect(aguardando.component.mostrarVerParcelas()).toBe(false);
+
+    const assinado = setup(
+      { contratoId: CONTRATO_ID },
+      { consultarPorId: vi.fn().mockResolvedValue(contratoFixture('ASSINADO')) },
+    );
+    await assinado.component.ngOnInit();
+    expect(assinado.component.mostrarVerParcelas()).toBe(true);
+  });
+
+  it('verParcelas navega para a agenda por contrato', async () => {
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      { consultarPorId: vi.fn().mockResolvedValue(contratoFixture('ASSINADO')) },
+    );
+    const router = TestBed.inject(Router);
+    const navSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    await component.ngOnInit();
+    component.verParcelas();
+    expect(navSpy).toHaveBeenCalledWith(['/app/parcelas/contratos', CONTRATO_ID]);
+  });
+
   it('baixarDocumento cria a URL de objeto, baixa e revoga (sem persistir)', async () => {
     const createObjectURL = vi.fn(() => 'blob:fake-url');
     const revokeObjectURL = vi.fn();

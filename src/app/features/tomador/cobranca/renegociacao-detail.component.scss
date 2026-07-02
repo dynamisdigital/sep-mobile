@@ -1,0 +1,127 @@
+@use "../../../../styles/sep-mobile-ds-components" as comp;
+
+.sep-reneg {
+  --background: var(--ion-background-color);
+  --padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
+
+  &-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-16);
+    padding: var(--sep-space-24) var(--sep-space-16) var(--sep-space-48);
+  }
+
+  &-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+  }
+
+  &-title {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: hsl(var(--foreground));
+  }
+
+  &-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+  }
+
+  &-estado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sep-space-12);
+    padding: var(--sep-space-32) var(--sep-space-16);
+    text-align: center;
+    color: hsl(var(--muted-foreground));
+  }
+
+  &-grid {
+    @include comp.sep-mobile-surface-card;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+    margin: 0;
+    padding: var(--sep-space-16);
+  }
+
+  &-row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--sep-space-12);
+
+    dt {
+      color: hsl(var(--muted-foreground));
+    }
+
+    dd {
+      margin: 0;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+    }
+
+    &--destaque dd {
+      font-size: 1.0625rem;
+      font-weight: 700;
+    }
+  }
+
+  &-aviso {
+    margin: 0;
+    font-size: 0.875rem;
+    color: hsl(var(--warning));
+  }
+
+  &-confirmacao {
+    @include comp.sep-mobile-surface-card;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-12);
+    padding: var(--sep-space-16);
+
+    p {
+      margin: 0;
+      color: hsl(var(--foreground));
+    }
+  }
+
+  &-acoes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-12);
+  }
+
+  &-cta {
+    @include comp.sep-mobile-touch-state;
+
+    min-height: var(--sep-touch-target);
+    padding: 0 var(--sep-space-16);
+    font-weight: 600;
+    color: hsl(var(--primary-foreground));
+    background: hsl(var(--primary));
+    border: none;
+    border-radius: var(--sep-radius-md);
+
+    &:disabled {
+      opacity: 0.6;
+    }
+
+    &--secondary {
+      color: hsl(var(--foreground));
+      background: transparent;
+      border: 1px solid hsl(var(--border));
+    }
+
+    &--ghost {
+      color: hsl(var(--muted-foreground));
+      background: transparent;
+      border: none;
+    }
+  }
+}

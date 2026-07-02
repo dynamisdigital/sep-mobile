@@ -1,0 +1,174 @@
+<sep-header-mobile />
+<ion-content class="sep-reneg">
+  <section class="sep-reneg-section">
+    @if (carregando() && !renegociacao()) {
+      <div class="sep-reneg-estado" data-testid="sep-reneg-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Carregando renegociacao...</p>
+      </div>
+    } @else if (indisponivel()) {
+      <div class="sep-reneg-estado" data-testid="sep-reneg-indisponivel">
+        <p>
+          Nao ha renegociacao ativa para esta parcela. A proposta pode ter expirado ou ja foi
+          decidida.
+        </p>
+        <button
+          type="button"
+          class="sep-reneg-cta sep-reneg-cta--secondary"
+          (click)="voltarParaParcela()"
+          data-testid="sep-reneg-voltar"
+        >
+          Voltar para a parcela
+        </button>
+      </div>
+    } @else if (erro() && !renegociacao()) {
+      <div class="sep-reneg-estado" data-testid="sep-reneg-erro">
+        <p>{{ erro() }}</p>
+        <button
+          type="button"
+          class="sep-reneg-cta"
+          (click)="carregar()"
+          data-testid="sep-reneg-retry"
+        >
+          Tentar novamente
+        </button>
+        <button
+          type="button"
+          class="sep-reneg-cta sep-reneg-cta--secondary"
+          (click)="voltarParaParcela()"
+          data-testid="sep-reneg-erro-voltar"
+        >
+          Voltar para a parcela
+        </button>
+      </div>
+    } @else if (renegociacao(); as r) {
+      <header class="sep-reneg-header">
+        <h1 class="sep-reneg-title">Proposta de renegociacao</h1>
+        <p class="sep-reneg-subtitle">
+          Leia os termos com atencao antes de decidir. A decisao e definitiva.
+        </p>
+      </header>
+
+      <dl class="sep-reneg-grid" data-testid="sep-reneg-termos">
+        <div class="sep-reneg-row">
+          <dt>Valor de cada nova parcela</dt>
+          <dd>{{ valorFormatado(r.novoValorParcela) }}</dd>
+        </div>
+        <div class="sep-reneg-row">
+          <dt>Quantidade de parcelas</dt>
+          <dd>{{ r.numeroParcelas }}</dd>
+        </div>
+        <div class="sep-reneg-row sep-reneg-row--destaque">
+          <dt>Valor total renegociado</dt>
+          <dd>{{ valorFormatado(r.valorTotalRenegociado) }}</dd>
+        </div>
+        <div class="sep-reneg-row">
+          <dt>Primeiro vencimento</dt>
+          <dd>{{ dataFormatada(r.novoVencimento) }}</dd>
+        </div>
+        <div class="sep-reneg-row">
+          <dt>Desconto</dt>
+          <dd>{{ valorFormatado(r.desconto) }}</dd>
+        </div>
+        <div class="sep-reneg-row">
+          <dt>Proposta em</dt>
+          <dd>{{ dataHoraFormatada(r.dataProposta) }}</dd>
+        </div>
+        <div class="sep-reneg-row">
+          <dt>Valida ate</dt>
+          <dd>{{ dataHoraFormatada(r.dataExpiracao) }}</dd>
+        </div>
+      </dl>
+
+      @if (erroDecisao(); as mensagem) {
+        <p class="sep-reneg-aviso" role="alert" data-testid="sep-reneg-erro-decisao">
+          {{ mensagem }}
+        </p>
+      }
+
+      @if (confirmacaoAceiteAberta()) {
+        <div class="sep-reneg-confirmacao" data-testid="sep-reneg-confirmacao-aceite">
+          <p>
+            Confirmar o aceite de {{ r.numeroParcelas }}x de
+            {{ valorFormatado(r.novoValorParcela) }} (total
+            {{ valorFormatado(r.valorTotalRenegociado) }}), com primeiro vencimento em
+            {{ dataFormatada(r.novoVencimento) }}? Proposta valida ate
+            {{ dataHoraFormatada(r.dataExpiracao) }}.
+          </p>
+          <button
+            type="button"
+            class="sep-reneg-cta"
+            (click)="confirmarAceite()"
+            [disabled]="decidindo()"
+            data-testid="sep-reneg-aceitar-confirmar"
+          >
+            {{ decidindo() ? 'Enviando...' : 'Confirmar aceite' }}
+          </button>
+          <button
+            type="button"
+            class="sep-reneg-cta sep-reneg-cta--secondary"
+            (click)="cancelarConfirmacao()"
+            [disabled]="decidindo()"
+            data-testid="sep-reneg-aceitar-cancelar"
+          >
+            Cancelar
+          </button>
+        </div>
+      } @else if (confirmacaoRecusaAberta()) {
+        <div class="sep-reneg-confirmacao" data-testid="sep-reneg-confirmacao-recusa">
+          <p>
+            Recusar esta proposta? A parcela original volta ao estado anterior e a proposta deixa de
+            valer.
+          </p>
+          <button
+            type="button"
+            class="sep-reneg-cta"
+            (click)="confirmarRecusa()"
+            [disabled]="decidindo()"
+            data-testid="sep-reneg-recusar-confirmar"
+          >
+            {{ decidindo() ? 'Enviando...' : 'Confirmar recusa' }}
+          </button>
+          <button
+            type="button"
+            class="sep-reneg-cta sep-reneg-cta--secondary"
+            (click)="cancelarConfirmacao()"
+            [disabled]="decidindo()"
+            data-testid="sep-reneg-recusar-cancelar"
+          >
+            Cancelar
+          </button>
+        </div>
+      } @else {
+        <div class="sep-reneg-acoes">
+          <button
+            type="button"
+            class="sep-reneg-cta"
+            (click)="abrirConfirmacaoAceite()"
+            [disabled]="decidindo() || carregando()"
+            data-testid="sep-reneg-aceitar"
+          >
+            Aceitar proposta
+          </button>
+          <button
+            type="button"
+            class="sep-reneg-cta sep-reneg-cta--secondary"
+            (click)="abrirConfirmacaoRecusa()"
+            [disabled]="decidindo() || carregando()"
+            data-testid="sep-reneg-recusar"
+          >
+            Recusar proposta
+          </button>
+          <button
+            type="button"
+            class="sep-reneg-cta sep-reneg-cta--ghost"
+            (click)="voltarParaParcela()"
+            data-testid="sep-reneg-parcela"
+          >
+            Voltar para a parcela
+          </button>
+        </div>
+      }
+    }
+  </section>
+</ion-content>

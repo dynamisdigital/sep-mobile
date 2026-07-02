@@ -1,0 +1,83 @@
+<sep-header-mobile />
+<ion-content class="sep-parcelas-entry">
+  <ion-refresher slot="fixed" (ionRefresh)="recarregar($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <section class="sep-parcelas-entry-section">
+    <header class="sep-parcelas-entry-header">
+      <h1 class="sep-parcelas-entry-title">Parcelas</h1>
+      <p class="sep-parcelas-entry-subtitle">
+        As parcelas aparecem apos a assinatura do contrato e a geracao da agenda. Escolha uma
+        proposta aprovada para ver a agenda.
+      </p>
+    </header>
+
+    @if (carregando()) {
+      <div class="sep-parcelas-entry-estado" data-testid="sep-parcelas-entry-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Carregando propostas...</p>
+      </div>
+    } @else if (erro() && propostas().length === 0) {
+      <div class="sep-parcelas-entry-estado" data-testid="sep-parcelas-entry-erro">
+        <p>{{ erro() }}</p>
+        <button
+          type="button"
+          class="sep-parcelas-entry-cta"
+          (click)="carregar()"
+          data-testid="sep-parcelas-entry-retry"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    } @else if (propostas().length === 0) {
+      <div class="sep-parcelas-entry-estado" data-testid="sep-parcelas-entry-vazio">
+        <p>
+          Nenhuma proposta aprovada por aqui. Isso nao significa divida quitada: apenas nao ha
+          proposta elegivel para exibir a agenda.
+        </p>
+      </div>
+    } @else {
+      <ul class="sep-parcelas-entry-lista">
+        @for (p of propostas(); track p.id) {
+          <li>
+            <button
+              type="button"
+              class="sep-parcelas-entry-item"
+              data-testid="sep-parcelas-entry-item"
+              (click)="abrirAgenda(p.id)"
+            >
+              <span class="sep-parcelas-entry-item-tipo">{{ rotuloTipo(p.tipoOperacao) }}</span>
+              <span class="sep-parcelas-entry-item-valor">{{ valorFormatado(p) }}</span>
+              <span class="sep-parcelas-entry-item-meta">
+                {{ p.prazoMeses }} meses &middot; {{ dataFormatada(p.dataCriacao) }}
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+
+      @if (erro()) {
+        <p
+          class="sep-parcelas-entry-erro-inline"
+          role="status"
+          data-testid="sep-parcelas-entry-erro-inline"
+        >
+          {{ erro() }}
+        </p>
+      }
+
+      @if (!ultimaPagina()) {
+        <button
+          type="button"
+          class="sep-parcelas-entry-cta"
+          (click)="carregarMais()"
+          [disabled]="carregandoMais()"
+          data-testid="sep-parcelas-entry-mais"
+        >
+          {{ carregandoMais() ? 'Carregando...' : 'Carregar mais' }}
+        </button>
+      }
+    }
+  </section>
+</ion-content>

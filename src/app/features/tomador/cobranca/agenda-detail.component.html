@@ -1,0 +1,69 @@
+<sep-header-mobile />
+<ion-content class="sep-agenda">
+  <section class="sep-agenda-section">
+    @if (carregando()) {
+      <div class="sep-agenda-estado" data-testid="sep-agenda-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+        <p>Carregando parcelas...</p>
+      </div>
+    } @else if (erro(); as msg) {
+      <div class="sep-agenda-estado" data-testid="sep-agenda-erro">
+        <p>{{ msg }}</p>
+        <button
+          type="button"
+          class="sep-agenda-cta"
+          (click)="carregar()"
+          data-testid="sep-agenda-retry"
+        >
+          Tentar novamente
+        </button>
+      </div>
+    } @else if (indisponivel(); as msg) {
+      <div class="sep-agenda-estado" data-testid="sep-agenda-indisponivel">
+        <p>{{ msg }}</p>
+        <button
+          type="button"
+          class="sep-agenda-cta"
+          (click)="carregar()"
+          data-testid="sep-agenda-indisponivel-retry"
+        >
+          Atualizar
+        </button>
+      </div>
+    } @else if (agenda(); as a) {
+      <header class="sep-agenda-header">
+        <h1 class="sep-agenda-title">Parcelas</h1>
+        <p class="sep-agenda-subtitle">
+          {{ a.numeroParcelas }} parcelas &middot; {{ valorFormatado(a.valorTotal) }}
+        </p>
+        <p class="sep-agenda-meta">Agenda gerada em {{ dataGeracaoFormatada(a.dataGeracao) }}</p>
+      </header>
+
+      @if (a.parcelas.length === 0) {
+        <div class="sep-agenda-estado" data-testid="sep-agenda-vazia">
+          <p>Nenhuma parcela na agenda.</p>
+        </div>
+      } @else {
+        <ul class="sep-agenda-lista">
+          @for (parcela of a.parcelas; track parcela.id) {
+            <li>
+              <button
+                type="button"
+                class="sep-agenda-item"
+                data-testid="sep-agenda-item"
+                (click)="abrirParcela(parcela.id)"
+              >
+                <span class="sep-agenda-item-numero">Parcela {{ parcela.numero }}</span>
+                <span class="sep-agenda-item-valor">{{ valorFormatado(parcela.total) }}</span>
+                <span class="sep-agenda-item-meta">
+                  Vence em {{ dataVencimentoFormatada(parcela.dataVencimento) }}
+                </span>
+                <sep-parcela-status [status]="parcela.status" />
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    }
+  </section>
+</ion-content>
