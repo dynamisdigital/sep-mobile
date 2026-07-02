@@ -3,7 +3,11 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { AgendaPagamentoResponse, ValorAtualizadoParcelaResponse } from '../api/api.models';
+import {
+  AgendaPagamentoResponse,
+  RecebimentoTomadorResponse,
+  ValorAtualizadoParcelaResponse,
+} from '../api/api.models';
 import { CobrancaMobileService } from './cobranca-mobile.service';
 
 const API = 'http://localhost:8080/api/v1';
@@ -66,6 +70,40 @@ describe('CobrancaMobileService', () => {
     req.flush({ message: 'Nao encontrada' }, { status: 404, statusText: 'Not Found' });
     await expect(promise).rejects.toBeDefined();
   });
+
+  it('consultarRecebimentos GET /cobranca/parcelas/{id}/recebimentos usa o endpoint owner-scoped (B1)', async () => {
+    const promise = service.consultarRecebimentos(PARCELA_ID);
+    const req = httpMock.expectOne(`${COBRANCA}/parcelas/${PARCELA_ID}/recebimentos`);
+    expect(req.request.method).toBe('GET');
+    req.flush(recebimentosFixture());
+    await expect(promise).resolves.toEqual(recebimentosFixture());
+  });
+
+  it('consultarRecebimentos preserva a ordenacao do backend sem reordenar no cliente', async () => {
+    const promise = service.consultarRecebimentos(PARCELA_ID);
+    const req = httpMock.expectOne(`${COBRANCA}/parcelas/${PARCELA_ID}/recebimentos`);
+    req.flush(recebimentosFixture());
+    const resposta = await promise;
+    // Backend devolve dataRecebimento DESC; o mobile nao reordena.
+    expect(resposta.map((r) => r.dataRecebimento)).toEqual([
+      '2026-06-20T10:00:00-03:00',
+      '2026-06-10T10:00:00-03:00',
+    ]);
+  });
+
+  it('consultarRecebimentos com lista vazia resolve [] sem tratar como erro', async () => {
+    const promise = service.consultarRecebimentos(PARCELA_ID);
+    const req = httpMock.expectOne(`${COBRANCA}/parcelas/${PARCELA_ID}/recebimentos`);
+    req.flush([]);
+    await expect(promise).resolves.toEqual([]);
+  });
+
+  it('consultarRecebimentos propaga 403 de ownership para tratamento na UI', async () => {
+    const promise = service.consultarRecebimentos(PARCELA_ID);
+    const req = httpMock.expectOne(`${COBRANCA}/parcelas/${PARCELA_ID}/recebimentos`);
+    req.flush({ message: 'Acesso negado' }, { status: 403, statusText: 'Forbidden' });
+    await expect(promise).rejects.toBeDefined();
+  });
 });
 
 function agendaFixture(): AgendaPagamentoResponse {
@@ -100,6 +138,23 @@ function agendaFixture(): AgendaPagamentoResponse {
       },
     ],
   };
+}
+
+function recebimentosFixture(): RecebimentoTomadorResponse[] {
+  return [
+    {
+      recebimentoId: '4f155daf-c0e8-6f15-be21-5f51a516a419',
+      valorRecebido: 200,
+      dataRecebimento: '2026-06-20T10:00:00-03:00',
+      meioPagamento: 'PIX',
+    },
+    {
+      recebimentoId: '5f155daf-c0e8-6f15-be21-5f51a516a41a',
+      valorRecebido: 100,
+      dataRecebimento: '2026-06-10T10:00:00-03:00',
+      meioPagamento: 'TRANSFERENCIA',
+    },
+  ];
 }
 
 function valorAtualizadoFixture(): ValorAtualizadoParcelaResponse {

@@ -418,3 +418,14 @@ export interface ValorAtualizadoParcelaResponse {
   totalRecebido: number;
   valorEmAberto: number;
 }
+
+// Recebimento visivel ao tomador (Sprint 23 backend — B1 da M-9). Espelha o
+// RecebimentoTomadorResponse owner-scoped: apenas 4 campos publicos. Nao modela escrow,
+// operador, idempotency key, identificador externo, observacao ou flag tecnica — o contrato
+// B1 nao os retorna e o mobile nao os exibe. Ordenacao (dataRecebimento DESC) vem do backend.
+export interface RecebimentoTomadorResponse {
+  recebimentoId: string;
+  valorRecebido: number;
+  dataRecebimento: string; // ISO-8601 com offset
+  meioPagamento: string;
+}

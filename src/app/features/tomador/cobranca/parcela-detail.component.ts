@@ -10,7 +10,10 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonContent, IonSpinner } from '@ionic/angular/standalone';
 
-import { ValorAtualizadoParcelaResponse } from '../../../core/api/api.models';
+import {
+  RecebimentoTomadorResponse,
+  ValorAtualizadoParcelaResponse,
+} from '../../../core/api/api.models';
 import { CobrancaMobileService } from '../../../core/cobranca/cobranca-mobile.service';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
 import { ParcelaStatusComponent } from './parcela-status.component';
@@ -23,6 +26,12 @@ import { ParcelaStatusComponent } from './parcela-status.component';
 // para que uma consulta anterior nao sobrescreva a atual. 403 mostra mensagem neutra (nao diferencia
 // parcela alheia de inexistente); 404 informa indisponibilidade com retorno a agenda; rede/5xx
 // mantem o ultimo snapshot marcado como desatualizado. Nada e persistido localmente.
+//
+// Historico de recebimentos (M-9.4, backend B1/Sprint 23): secao recolhida por padrao, carregada
+// sob demanda pelo endpoint owner-scoped do tomador (nunca o GET /recebimentos interno). A ordem
+// (DESC) vem do backend; o app nao reordena, nao soma o historico para "conferir" o totalRecebido
+// (que segue autoritativo no detalhe) e nao classifica recebimento como parcial/excedente. Falha do
+// historico e isolada: mostra erro proprio com retry e nao bloqueia nem apaga o detalhe da parcela.
 @Component({
   selector: 'sep-parcela-detail',
   standalone: true,
@@ -49,6 +58,12 @@ export class ParcelaDetailComponent implements OnInit {
   // Proposta de renegociacao em andamento. O CTA para os termos entra na M-9.5 (gate B2); aqui
   // apenas sinaliza o estado.
   readonly emNegociacao = computed(() => this.parcela()?.status === 'EM_NEGOCIACAO');
+
+  // Historico de recebimentos (M-9.4): null = nunca carregado (lazy); [] = carregado e vazio.
+  readonly historicoAberto = signal(false);
+  readonly recebimentos = signal<RecebimentoTomadorResponse[] | null>(null);
+  readonly historicoCarregando = signal(false);
+  readonly historicoErro = signal<string | null>(null);
 
   private contratoId = '';
   private parcelaId = '';
@@ -88,6 +103,33 @@ export class ParcelaDetailComponent implements OnInit {
     void this.router.navigate(['/app/parcelas/contratos', this.contratoId]);
   }
 
+  // Abre/recolhe a secao. Carrega apenas na primeira abertura; reabrir nao refaz a consulta
+  // (o refresh explicito fica no botao "Atualizar historico").
+  alternarHistorico(): void {
+    const abrir = !this.historicoAberto();
+    this.historicoAberto.set(abrir);
+    if (abrir && this.recebimentos() === null && !this.historicoCarregando()) {
+      void this.carregarHistorico();
+    }
+  }
+
+  async carregarHistorico(): Promise<void> {
+    if (this.historicoCarregando()) {
+      return;
+    }
+    this.historicoCarregando.set(true);
+    this.historicoErro.set(null);
+    try {
+      // Ordem DESC vem do backend; o app nao reordena nem agrega.
+      this.recebimentos.set(await this.cobranca.consultarRecebimentos(this.parcelaId));
+    } catch {
+      // Falha isolada: o detalhe da parcela permanece intacto e utilizavel.
+      this.historicoErro.set('Nao foi possivel carregar o historico. Tente novamente.');
+    } finally {
+      this.historicoCarregando.set(false);
+    }
+  }
+
   protected valorFormatado(valor: number): string {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
   }
@@ -100,6 +142,17 @@ export class ParcelaDetailComponent implements OnInit {
       month: '2-digit',
       year: 'numeric',
     }).format(new Date(`${data}T12:00:00`));
+  }
+
+  // dataRecebimento e ISO-8601 com offset; exibe data e hora locais, sem aritmetica.
+  protected dataRecebimentoFormatada(data: string): string {
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(data));
   }
 
   private horaAtual(): string {

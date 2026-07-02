@@ -4,7 +4,11 @@ import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { StatusParcela, ValorAtualizadoParcelaResponse } from '../../../core/api/api.models';
+import {
+  RecebimentoTomadorResponse,
+  StatusParcela,
+  ValorAtualizadoParcelaResponse,
+} from '../../../core/api/api.models';
 import { CobrancaMobileService } from '../../../core/cobranca/cobranca-mobile.service';
 import { ParcelaDetailComponent } from './parcela-detail.component';
 
@@ -18,6 +22,8 @@ function setup(
 ) {
   const cobranca = {
     consultarParcela: svc.consultarParcela ?? vi.fn().mockResolvedValue(parcelaFixture()),
+    consultarRecebimentos:
+      svc.consultarRecebimentos ?? vi.fn().mockResolvedValue(recebimentosFixture()),
   };
   const activatedRoute = {
     snapshot: {
@@ -157,7 +163,119 @@ describe('ParcelaDetailComponent', () => {
     component.voltarParaAgenda();
     expect(navSpy).toHaveBeenCalledWith(['/app/parcelas/contratos', CONTRATO_ID]);
   });
+
+  // --- Historico de recebimentos (M-9.4 — backend B1/Sprint 23) ---
+
+  it('historico e lazy: fechado por padrao e sem consulta no init', async () => {
+    const { component, cobranca } = setup({ contratoId: CONTRATO_ID, parcelaId: PARCELA_ID });
+    await component.ngOnInit();
+    expect(component.historicoAberto()).toBe(false);
+    expect(component.recebimentos()).toBeNull();
+    expect(cobranca.consultarRecebimentos).not.toHaveBeenCalled();
+  });
+
+  it('primeira abertura consulta o endpoint owner-scoped; reabrir nao reconsulta', async () => {
+    const { component, cobranca } = setup({ contratoId: CONTRATO_ID, parcelaId: PARCELA_ID });
+    await component.ngOnInit();
+    component.alternarHistorico();
+    await vi.waitFor(() => expect(component.historicoCarregando()).toBe(false));
+    expect(cobranca.consultarRecebimentos).toHaveBeenCalledWith(PARCELA_ID);
+    expect(cobranca.consultarRecebimentos).toHaveBeenCalledTimes(1);
+    component.alternarHistorico(); // fecha
+    component.alternarHistorico(); // reabre — dados ja carregados, sem nova consulta
+    expect(cobranca.consultarRecebimentos).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserva a ordenacao do backend sem reordenar e sem somar totais', async () => {
+    const { component } = setup({ contratoId: CONTRATO_ID, parcelaId: PARCELA_ID });
+    await component.ngOnInit();
+    component.alternarHistorico();
+    await vi.waitFor(() => expect(component.recebimentos()).not.toBeNull());
+    // Ordem DESC do backend intacta; totalRecebido do detalhe segue autoritativo (0 na fixture),
+    // mesmo com 300 no historico — o app nao "corrige" o total.
+    expect(component.recebimentos()?.map((r) => r.dataRecebimento)).toEqual([
+      '2026-06-20T10:00:00-03:00',
+      '2026-06-10T10:00:00-03:00',
+    ]);
+    expect(component.parcela()?.totalRecebido).toBe(0);
+  });
+
+  it('expoe apenas os 4 campos publicos do contrato B1 (sem IDs internos)', async () => {
+    const { component } = setup({ contratoId: CONTRATO_ID, parcelaId: PARCELA_ID });
+    await component.ngOnInit();
+    component.alternarHistorico();
+    await vi.waitFor(() => expect(component.recebimentos()).not.toBeNull());
+    const chaves = Object.keys(component.recebimentos()![0]);
+    expect(chaves.sort()).toEqual([
+      'dataRecebimento',
+      'meioPagamento',
+      'recebimentoId',
+      'valorRecebido',
+    ]);
+    expect(chaves).not.toContain('movimentacaoEscrowId');
+    expect(chaves).not.toContain('idempotencyKey');
+    expect(chaves).not.toContain('registradoPor');
+  });
+
+  it('lista vazia vira estado proprio ([]), nao erro', async () => {
+    const { component } = setup(
+      { contratoId: CONTRATO_ID, parcelaId: PARCELA_ID },
+      { consultarRecebimentos: vi.fn().mockResolvedValue([]) },
+    );
+    await component.ngOnInit();
+    component.alternarHistorico();
+    await vi.waitFor(() => expect(component.recebimentos()).not.toBeNull());
+    expect(component.recebimentos()).toEqual([]);
+    expect(component.historicoErro()).toBeNull();
+  });
+
+  it('falha do historico e isolada: detalhe intacto, erro proprio e retry funciona', async () => {
+    const consultarRecebimentos = vi
+      .fn()
+      .mockRejectedValueOnce(new HttpErrorResponse({ status: 403 }))
+      .mockResolvedValueOnce(recebimentosFixture());
+    const { component } = setup(
+      { contratoId: CONTRATO_ID, parcelaId: PARCELA_ID },
+      { consultarRecebimentos },
+    );
+    await component.ngOnInit();
+    component.alternarHistorico();
+    await vi.waitFor(() => expect(component.historicoErro()).not.toBeNull());
+    // Detalhe da parcela permanece visivel e sem erro principal.
+    expect(component.parcela()).not.toBeNull();
+    expect(component.erro()).toBeNull();
+    expect(component.recebimentos()).toBeNull();
+    await component.carregarHistorico();
+    expect(component.historicoErro()).toBeNull();
+    expect(component.recebimentos()).toHaveLength(2);
+  });
+
+  it('atualizar historico reconsulta sob demanda', async () => {
+    const { component, cobranca } = setup({ contratoId: CONTRATO_ID, parcelaId: PARCELA_ID });
+    await component.ngOnInit();
+    component.alternarHistorico();
+    await vi.waitFor(() => expect(component.recebimentos()).not.toBeNull());
+    await component.carregarHistorico();
+    expect(cobranca.consultarRecebimentos).toHaveBeenCalledTimes(2);
+  });
 });
+
+function recebimentosFixture(): RecebimentoTomadorResponse[] {
+  return [
+    {
+      recebimentoId: '4f155daf-c0e8-6f15-be21-5f51a516a419',
+      valorRecebido: 200,
+      dataRecebimento: '2026-06-20T10:00:00-03:00',
+      meioPagamento: 'PIX',
+    },
+    {
+      recebimentoId: '5f155daf-c0e8-6f15-be21-5f51a516a41a',
+      valorRecebido: 100,
+      dataRecebimento: '2026-06-10T10:00:00-03:00',
+      meioPagamento: 'TRANSFERENCIA',
+    },
+  ];
+}
 
 function parcelaFixture(status: StatusParcela = 'ATRASADA'): ValorAtualizadoParcelaResponse {
   return {

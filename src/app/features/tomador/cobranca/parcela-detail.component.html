@@ -73,6 +73,69 @@
         </div>
       </dl>
 
+      <section class="sep-parcela-historico" data-testid="sep-parcela-historico">
+        <button
+          type="button"
+          class="sep-parcela-historico-toggle"
+          (click)="alternarHistorico()"
+          [attr.aria-expanded]="historicoAberto()"
+          data-testid="sep-parcela-historico-toggle"
+        >
+          Historico de recebimentos
+          <span aria-hidden="true">{{ historicoAberto() ? '−' : '+' }}</span>
+        </button>
+
+        @if (historicoAberto()) {
+          @if (historicoCarregando()) {
+            <div class="sep-parcela-estado" data-testid="sep-parcela-historico-loading">
+              <ion-spinner name="crescent"></ion-spinner>
+              <p>Carregando historico...</p>
+            </div>
+          } @else if (historicoErro()) {
+            <div class="sep-parcela-estado" data-testid="sep-parcela-historico-erro">
+              <p>{{ historicoErro() }}</p>
+              <button
+                type="button"
+                class="sep-parcela-cta sep-parcela-cta--secondary"
+                (click)="carregarHistorico()"
+                data-testid="sep-parcela-historico-retry"
+              >
+                Tentar novamente
+              </button>
+            </div>
+          } @else if (recebimentos(); as itens) {
+            @if (itens.length === 0) {
+              <p class="sep-parcela-nota" data-testid="sep-parcela-historico-vazio">
+                Nenhum recebimento registrado para esta parcela.
+              </p>
+            } @else {
+              <ul class="sep-parcela-historico-lista" data-testid="sep-parcela-historico-lista">
+                @for (recebimento of itens; track recebimento.recebimentoId) {
+                  <li class="sep-parcela-historico-item">
+                    <span class="sep-parcela-historico-data">
+                      {{ dataRecebimentoFormatada(recebimento.dataRecebimento) }}
+                    </span>
+                    <span class="sep-parcela-historico-meio">{{ recebimento.meioPagamento }}</span>
+                    <span class="sep-parcela-historico-valor">
+                      {{ valorFormatado(recebimento.valorRecebido) }}
+                    </span>
+                  </li>
+                }
+              </ul>
+              <button
+                type="button"
+                class="sep-parcela-cta sep-parcela-cta--secondary"
+                (click)="carregarHistorico()"
+                [disabled]="historicoCarregando()"
+                data-testid="sep-parcela-historico-atualizar"
+              >
+                Atualizar historico
+              </button>
+            }
+          }
+        }
+      </section>
+
       @if (emNegociacao()) {
         <p class="sep-parcela-nota" data-testid="sep-parcela-negociacao">
           Ha uma proposta de renegociacao em andamento para esta parcela.

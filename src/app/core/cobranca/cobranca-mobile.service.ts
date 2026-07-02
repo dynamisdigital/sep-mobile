@@ -3,7 +3,11 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import { AgendaPagamentoResponse, ValorAtualizadoParcelaResponse } from '../api/api.models';
+import {
+  AgendaPagamentoResponse,
+  RecebimentoTomadorResponse,
+  ValorAtualizadoParcelaResponse,
+} from '../api/api.models';
 
 const API_BASE_URL = environment.apiBaseUrl;
 const COBRANCA_URL = `${API_BASE_URL}/cobranca`;
@@ -29,6 +33,16 @@ export class CobrancaMobileService {
   consultarParcela(parcelaId: string): Promise<ValorAtualizadoParcelaResponse> {
     return firstValueFrom(
       this.http.get<ValorAtualizadoParcelaResponse>(`${COBRANCA_URL}/parcelas/${parcelaId}`),
+    );
+  }
+
+  // Historico owner-scoped do tomador (Sprint 23 backend — B1). NAO usa o GET /recebimentos
+  // interno de FINANCEIRO/ADMIN; a ordenacao (DESC) e a ownership vem do backend.
+  consultarRecebimentos(parcelaId: string): Promise<RecebimentoTomadorResponse[]> {
+    return firstValueFrom(
+      this.http.get<RecebimentoTomadorResponse[]>(
+        `${COBRANCA_URL}/parcelas/${parcelaId}/recebimentos`,
+      ),
     );
   }
 }
