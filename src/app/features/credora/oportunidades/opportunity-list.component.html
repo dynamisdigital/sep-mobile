@@ -1,0 +1,59 @@
+<sep-header-mobile />
+<ion-content class="sep-oportunidades">
+  <ion-refresher slot="fixed" (ionRefresh)="recarregar($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <section class="sep-oportunidades-section">
+    <h1 class="sep-oportunidades-title">Oportunidades</h1>
+
+    @if (carregando()) {
+      <div class="sep-oportunidades-estado" data-testid="sep-oportunidades-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+    } @else if (erro()) {
+      <div class="sep-oportunidades-estado" data-testid="sep-oportunidades-erro">
+        <p>{{ erro() }}</p>
+        <ion-button expand="block" (click)="carregar()" data-testid="sep-oportunidades-retry">
+          Tentar novamente
+        </ion-button>
+      </div>
+    } @else if (oportunidades().length === 0) {
+      <div class="sep-oportunidades-estado" data-testid="sep-oportunidades-vazia">
+        <p>Nenhuma oportunidade disponivel no momento.</p>
+      </div>
+    } @else {
+      <ul class="sep-oportunidades-lista">
+        @for (o of oportunidades(); track o.id) {
+          <li>
+            <button
+              type="button"
+              class="sep-oportunidades-card"
+              (click)="abrirDetalhe(o.id)"
+              [attr.data-testid]="'sep-oportunidade-item-' + o.id"
+            >
+              <div class="sep-oportunidades-card-head">
+                <span class="sep-oportunidades-card-valor">{{ formatarMoeda(o.valor) }}</span>
+                <sep-oportunidade-status [status]="o.status" />
+              </div>
+              <dl class="sep-oportunidades-card-termos">
+                <div>
+                  <dt>Prazo</dt>
+                  <dd>{{ o.prazoMeses }} meses</dd>
+                </div>
+                <div>
+                  <dt>Taxa</dt>
+                  <dd>{{ formatarTaxaMensal(o.taxaJurosMensal) }}</dd>
+                </div>
+                <div>
+                  <dt>Criada em</dt>
+                  <dd>{{ formatarData(o.dataCriacao) }}</dd>
+                </div>
+              </dl>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</ion-content>
