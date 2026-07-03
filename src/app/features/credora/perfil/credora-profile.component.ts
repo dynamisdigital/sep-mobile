@@ -4,6 +4,7 @@ import { IonButton, IonContent, IonSpinner } from '@ionic/angular/standalone';
 import { TipoCredora } from '../../../core/api/api.models';
 import { CredoraContextStore } from '../../../core/credores/credora-context.store';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
+import { formatarData, formatarMoeda } from '../shared/credora-format';
 import { CredoraStatusComponent } from '../shared/credora-status.component';
 
 const ROTULO_TIPO: Record<TipoCredora, string> = {
@@ -36,19 +37,10 @@ export class CredoraProfileComponent implements OnInit {
     await this.store.carregar();
   }
 
+  protected readonly formatarMoeda = formatarMoeda;
+  protected readonly formatarData = formatarData;
+
   protected rotuloTipo(tipo: TipoCredora): string {
     return ROTULO_TIPO[tipo];
-  }
-
-  protected capacidadeFormatada(valor: number): string {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
-  }
-
-  protected dataFormatada(iso: string): string {
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(new Date(iso));
   }
 }

@@ -94,7 +94,7 @@ describe('CredoraHomeComponent', () => {
     const el = await setup();
     expect(
       el.querySelector('[data-testid="sep-credora-oportunidades-count"]')?.textContent,
-    ).toContain('3 disponiveis');
+    ).toContain('3 oportunidades');
     expect(el.querySelector('[data-testid="sep-credora-carteira-count"]')?.textContent).toContain(
       '1 operacoes',
     );
@@ -111,7 +111,7 @@ describe('CredoraHomeComponent', () => {
     // oportunidades ainda conta; carteira cai no texto de fallback
     expect(
       el.querySelector('[data-testid="sep-credora-oportunidades-count"]')?.textContent,
-    ).toContain('3 disponiveis');
+    ).toContain('3 oportunidades');
     expect(el.querySelector('[data-testid="sep-credora-carteira-count"]')?.textContent).toContain(
       'Ver operacoes',
     );

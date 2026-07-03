@@ -37,17 +37,17 @@
           <div class="sep-credora-perfil-row">
             <dt>Capacidade de aporte</dt>
             <dd data-testid="sep-credora-perfil-capacidade">
-              {{ capacidadeFormatada(c.capacidadeAporte) }}
+              {{ formatarMoeda(c.capacidadeAporte) }}
             </dd>
           </div>
         }
         <div class="sep-credora-perfil-row">
           <dt>Cadastrada em</dt>
-          <dd>{{ dataFormatada(c.dataCriacao) }}</dd>
+          <dd>{{ formatarData(c.dataCriacao) }}</dd>
         </div>
         <div class="sep-credora-perfil-row">
           <dt>Atualizada em</dt>
-          <dd>{{ dataFormatada(c.dataModificacao) }}</dd>
+          <dd>{{ formatarData(c.dataModificacao) }}</dd>
         </div>
       </dl>
 
