@@ -451,3 +451,78 @@ export interface RenegociacaoTomadorResponse {
   dataProposta: string; // ISO-8601 com offset
   dataExpiracao: string; // ISO-8601 com offset
 }
+
+// ===== Credora (Epic 10 — jornada da empresa credora; backend Sprints 16-17 + 25) =====
+// Espelham os contratos REST reais de /api/v1/credores (perfil/elegibilidade, oportunidades,
+// interesse e carteira). `number` e representacao de borda: NAO autoriza aritmetica financeira
+// no app — valores/taxas/totais chegam calculados do backend. Sem requests ou DTOs dos endpoints
+// ADMIN (cadastro, sync, associacao de carteira), fora do recorte mobile da M-10.
+
+export type StatusCredora = 'CADASTRADA' | 'ATIVA' | 'SUSPENSA';
+export type StatusElegibilidade = 'PENDENTE' | 'ELEGIVEL' | 'INELEGIVEL';
+export type TipoCredora = 'EMPRESA' | 'INSTITUICAO_FINANCEIRA';
+export type StatusOportunidade = 'DISPONIVEL' | 'ENCERRADA';
+export type StatusInteresseCredora = 'ATIVO' | 'CANCELADO';
+export type StatusOperacaoFinanciada = 'ASSOCIADA' | 'ENCERRADA';
+
+export interface EmpresaCredoraResponse {
+  id: string;
+  usuarioId: string;
+  onboardingId: string;
+  cnpj: string; // formatado pelo backend
+  razaoSocial: string;
+  status: StatusCredora;
+  elegibilidade: StatusElegibilidade;
+  motivoInelegibilidade: string | null;
+  tipoCredora: TipoCredora;
+  capacidadeAporte: number | null;
+  dataCriacao: string; // ISO-8601 com offset
+  dataModificacao: string; // ISO-8601 com offset
+}
+
+export interface ElegibilidadeResponse {
+  status: StatusCredora;
+  elegibilidade: StatusElegibilidade;
+  motivoInelegibilidade: string | null;
+}
+
+export interface OportunidadeResponse {
+  id: string;
+  propostaId: string;
+  contratoId: string | null;
+  valor: number;
+  prazoMeses: number;
+  taxaJurosMensal: number;
+  status: StatusOportunidade;
+  dataCriacao: string; // ISO-8601 com offset
+}
+
+export interface InteresseResponse {
+  id: string;
+  oportunidadeId: string;
+  status: StatusInteresseCredora;
+  dataCriacao: string; // ISO-8601 com offset
+}
+
+export interface CarteiraCobrancaResumo {
+  numeroParcelas: number;
+  valorTotal: number;
+  parcelasPagas: number;
+  parcelasAtrasadas: number;
+  totalRecebido: number;
+  proximoVencimento: string | null; // yyyy-MM-dd
+}
+
+export interface OperacaoCarteiraResponse {
+  id: string;
+  contratoId: string;
+  oportunidadeId: string | null;
+  status: StatusOperacaoFinanciada;
+  justificativa: string;
+  valor: number | null;
+  prazoMeses: number | null;
+  taxaJurosMensal: number | null;
+  contratoStatus: string | null;
+  cobranca: CarteiraCobrancaResumo | null;
+  dataCriacao: string; // ISO-8601 com offset
+}
