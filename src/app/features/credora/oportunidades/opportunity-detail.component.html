@@ -1,0 +1,167 @@
+<sep-header-mobile />
+<ion-content class="sep-oportunidade-detalhe">
+  <section class="sep-oportunidade-detalhe-section">
+    @if (carregando()) {
+      <div class="sep-oportunidade-detalhe-estado" data-testid="sep-oportunidade-detalhe-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+    } @else if (erro()) {
+      <div class="sep-oportunidade-detalhe-estado" data-testid="sep-oportunidade-detalhe-erro">
+        <p>{{ erro() }}</p>
+        <ion-button
+          expand="block"
+          (click)="carregar()"
+          data-testid="sep-oportunidade-detalhe-retry"
+        >
+          Tentar novamente
+        </ion-button>
+        <ion-button
+          expand="block"
+          fill="outline"
+          (click)="voltarParaLista()"
+          data-testid="sep-oportunidade-detalhe-voltar"
+        >
+          Voltar para oportunidades
+        </ion-button>
+      </div>
+    } @else if (oportunidade(); as o) {
+      <header class="sep-oportunidade-detalhe-header">
+        <h1 class="sep-oportunidade-detalhe-valor" data-testid="sep-oportunidade-detalhe-valor">
+          {{ formatarMoeda(o.valor) }}
+        </h1>
+        <sep-oportunidade-status [status]="o.status" />
+      </header>
+
+      <dl class="sep-oportunidade-detalhe-grid">
+        <div class="sep-oportunidade-detalhe-row">
+          <dt>Prazo</dt>
+          <dd>{{ o.prazoMeses }} meses</dd>
+        </div>
+        <div class="sep-oportunidade-detalhe-row">
+          <dt>Taxa de juros mensal</dt>
+          <dd data-testid="sep-oportunidade-detalhe-taxa">
+            {{ formatarTaxaMensal(o.taxaJurosMensal) }}
+          </dd>
+        </div>
+        <div class="sep-oportunidade-detalhe-row">
+          <dt>Criada em</dt>
+          <dd>{{ formatarData(o.dataCriacao) }}</dd>
+        </div>
+      </dl>
+
+      @if (encerrada()) {
+        <p class="sep-oportunidade-detalhe-nota" data-testid="sep-oportunidade-detalhe-encerrada">
+          Esta oportunidade esta encerrada e nao aceita manifestacao de interesse.
+        </p>
+      }
+
+      <section class="sep-oportunidade-detalhe-interesse" data-testid="sep-oportunidade-interesse">
+        @if (interesseEstado() === 'carregando') {
+          <ion-spinner name="crescent" data-testid="sep-interesse-loading"></ion-spinner>
+        } @else if (interesseEstado() === 'erro') {
+          <p>Nao foi possivel verificar seu interesse.</p>
+          <ion-button
+            expand="block"
+            fill="outline"
+            (click)="carregar()"
+            data-testid="sep-interesse-retry"
+          >
+            Tentar novamente
+          </ion-button>
+        } @else if (interesseEstado() === 'ativo') {
+          <p class="sep-oportunidade-detalhe-interesse-ativo" data-testid="sep-interesse-ativo">
+            Interesse manifestado
+          </p>
+          <ion-button
+            expand="block"
+            fill="outline"
+            [disabled]="enviando()"
+            (click)="abrirCancelar()"
+            data-testid="sep-interesse-cancelar"
+          >
+            Cancelar interesse
+          </ion-button>
+        } @else {
+          <ion-button
+            expand="block"
+            [disabled]="enviando() || !podeManifestar()"
+            (click)="abrirManifestar()"
+            data-testid="sep-interesse-manifestar"
+          >
+            Manifestar interesse
+          </ion-button>
+          @if (!podeManifestar()) {
+            <p class="sep-oportunidade-detalhe-nota" data-testid="sep-interesse-indisponivel">
+              @if (encerrada()) {
+                Oportunidade encerrada.
+              } @else {
+                Manifestacao disponivel apenas para credora ativa e elegivel.
+              }
+            </p>
+          }
+        }
+
+        <p class="sep-oportunidade-detalhe-interesse-copy">{{ copyInteresse }}</p>
+
+        @if (interesseMensagem(); as msg) {
+          <p class="sep-oportunidade-detalhe-interesse-msg" data-testid="sep-interesse-msg">
+            {{ msg }}
+          </p>
+        }
+      </section>
+    }
+  </section>
+
+  @if (confirmacaoManifestarAberta()) {
+    <div class="sep-oportunidade-detalhe-confirm" data-testid="sep-interesse-confirm-manifestar">
+      <div class="sep-oportunidade-detalhe-confirm-box">
+        <h2>Manifestar interesse</h2>
+        <p>{{ copyInteresse }}</p>
+        <ion-button
+          expand="block"
+          [disabled]="enviando()"
+          (click)="confirmarManifestar()"
+          data-testid="sep-interesse-confirm-manifestar-ok"
+        >
+          Confirmar
+        </ion-button>
+        <ion-button
+          expand="block"
+          fill="clear"
+          [disabled]="enviando()"
+          (click)="cancelarConfirmacao()"
+          data-testid="sep-interesse-confirm-manifestar-cancel"
+        >
+          Voltar
+        </ion-button>
+      </div>
+    </div>
+  }
+
+  @if (confirmacaoCancelarAberta()) {
+    <div class="sep-oportunidade-detalhe-confirm" data-testid="sep-interesse-confirm-cancelar">
+      <div class="sep-oportunidade-detalhe-confirm-box">
+        <h2>Cancelar interesse</h2>
+        <p>Deseja cancelar sua manifestacao de interesse nesta oportunidade?</p>
+        <ion-button
+          expand="block"
+          color="danger"
+          [disabled]="enviando()"
+          (click)="confirmarCancelar()"
+          data-testid="sep-interesse-confirm-cancelar-ok"
+        >
+          Cancelar interesse
+        </ion-button>
+        <ion-button
+          expand="block"
+          fill="clear"
+          [disabled]="enviando()"
+          (click)="cancelarConfirmacao()"
+          data-testid="sep-interesse-confirm-cancelar-cancel"
+        >
+          Voltar
+        </ion-button>
+      </div>
+    </div>
+  }
+</ion-content>

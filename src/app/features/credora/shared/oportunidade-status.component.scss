@@ -1,0 +1,17 @@
+.sep-oportunidade-status {
+  display: inline-block;
+  padding: var(--sep-space-4) var(--sep-space-8);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--sep-radius-pill, 999px);
+
+  &[data-variante="disponivel"] {
+    color: hsl(var(--success));
+    background: hsl(var(--success) / 12%);
+  }
+
+  &[data-variante="encerrada"] {
+    color: hsl(var(--muted-foreground));
+    background: hsl(var(--muted));
+  }
+}

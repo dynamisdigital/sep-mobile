@@ -1025,6 +1025,209 @@ const cobrancaHandlers = [
   }),
 ];
 
+// ===================== Credora (Epic 10 - M-Sprint 10) =====================
+// Estado semeavel por teste em `mock.credora` (localStorage). Default: usuario SEM credora
+// (`presente: false`) para nao afetar os outros smokes — o smoke credora semeia `presente: true`.
+// Sem CPF/dado bancario/Pix/payload de provider/tomador. Ids fixos e ficticios.
+
+const CREDORA_KEY = 'mock.credora';
+const OPORTUNIDADE_DISPONIVEL_ID = 'op-disponivel-1';
+const OPORTUNIDADE_ENCERRADA_ID = 'op-encerrada-1';
+const OPERACAO_CARTEIRA_ID = 'oper-carteira-1';
+
+interface CredoraMockState {
+  presente: boolean;
+  elegibilidade: 'ELEGIVEL' | 'PENDENTE' | 'INELEGIVEL';
+  interesse: 'ATIVO' | 'AUSENTE';
+  carteiraVazia: boolean;
+}
+
+function lerCredora(): CredoraMockState {
+  return lerEstado<CredoraMockState>(CREDORA_KEY, {
+    presente: false,
+    elegibilidade: 'ELEGIVEL',
+    interesse: 'AUSENTE',
+    carteiraVazia: false,
+  });
+}
+
+function credoraErro(status: number, error: string, mensagem: string) {
+  return HttpResponse.json(errorResponse(status, error, mensagem, '/api/v1/credores'), { status });
+}
+
+function credoraResponseMock(estado: CredoraMockState) {
+  return {
+    id: 'cred-mock-1',
+    usuarioId: TOMADOR_ID,
+    onboardingId: 'onb-credora-1',
+    cnpj: '11.222.333/0001-81',
+    razaoSocial: 'Credora Mock LTDA',
+    status: estado.elegibilidade === 'ELEGIVEL' ? 'ATIVA' : 'CADASTRADA',
+    elegibilidade: estado.elegibilidade,
+    motivoInelegibilidade:
+      estado.elegibilidade === 'INELEGIVEL' ? 'Pendencia documental do cadastro' : null,
+    tipoCredora: 'EMPRESA',
+    capacidadeAporte: 100000,
+    dataCriacao: '2026-06-30T09:00:00-03:00',
+    dataModificacao: '2026-06-30T09:00:00-03:00',
+  };
+}
+
+function oportunidadesMock() {
+  return [
+    {
+      id: OPORTUNIDADE_DISPONIVEL_ID,
+      propostaId: 'prop-cred-1',
+      contratoId: null,
+      valor: 15000,
+      prazoMeses: 12,
+      taxaJurosMensal: 0.0199,
+      status: 'DISPONIVEL',
+      dataCriacao: '2026-06-25T09:00:00-03:00',
+    },
+    {
+      id: OPORTUNIDADE_ENCERRADA_ID,
+      propostaId: 'prop-cred-2',
+      contratoId: 'contr-cred-2',
+      valor: 8000,
+      prazoMeses: 6,
+      taxaJurosMensal: 0.0175,
+      status: 'ENCERRADA',
+      dataCriacao: '2026-05-10T09:00:00-03:00',
+    },
+  ];
+}
+
+function interesseMock() {
+  return {
+    id: 'int-mock-1',
+    oportunidadeId: OPORTUNIDADE_DISPONIVEL_ID,
+    status: 'ATIVO',
+    dataCriacao: '2026-07-02T09:00:00-03:00',
+  };
+}
+
+function operacoesMock() {
+  return [
+    {
+      id: OPERACAO_CARTEIRA_ID,
+      contratoId: 'contr-cred-9',
+      oportunidadeId: OPORTUNIDADE_DISPONIVEL_ID,
+      status: 'ASSOCIADA',
+      justificativa: 'Associacao assistida operacional interna',
+      valor: 15000,
+      prazoMeses: 12,
+      taxaJurosMensal: 0.0199,
+      contratoStatus: 'ASSINADO',
+      cobranca: {
+        numeroParcelas: 12,
+        valorTotal: 16000,
+        parcelasPagas: 2,
+        parcelasAtrasadas: 0,
+        totalRecebido: 2600,
+        proximoVencimento: '2026-08-15',
+      },
+      dataCriacao: '2026-07-01T09:00:00-03:00',
+    },
+  ];
+}
+
+const credoresHandlers = [
+  http.get(`${baseUrl}/credores/me/elegibilidade`, () => {
+    const estado = lerCredora();
+    if (!estado.presente) {
+      return credoraErro(404, 'Not Found', 'Usuario nao possui credora');
+    }
+    const credora = credoraResponseMock(estado);
+    return HttpResponse.json(
+      {
+        status: credora.status,
+        elegibilidade: credora.elegibilidade,
+        motivoInelegibilidade: credora.motivoInelegibilidade,
+      },
+      { status: 200 },
+    );
+  }),
+
+  http.get(`${baseUrl}/credores/me`, () => {
+    const estado = lerCredora();
+    if (!estado.presente) {
+      return credoraErro(404, 'Not Found', 'Usuario nao possui credora');
+    }
+    return HttpResponse.json(credoraResponseMock(estado), { status: 200 });
+  }),
+
+  http.get(`${baseUrl}/credores/oportunidades`, () => {
+    if (!lerCredora().presente) {
+      return credoraErro(404, 'Not Found', 'Usuario nao possui credora');
+    }
+    return HttpResponse.json(oportunidadesMock(), { status: 200 });
+  }),
+
+  http.post(`${baseUrl}/credores/oportunidades/:id/interesses`, ({ params }) => {
+    const estado = lerCredora();
+    const id = String(params['id']);
+    if (!estado.presente || id !== OPORTUNIDADE_DISPONIVEL_ID) {
+      return credoraErro(404, 'Not Found', 'Credora ou oportunidade nao encontrada');
+    }
+    if (estado.elegibilidade !== 'ELEGIVEL') {
+      return credoraErro(422, 'Unprocessable Entity', 'Credora nao elegivel');
+    }
+    if (estado.interesse === 'ATIVO') {
+      return credoraErro(409, 'Conflict', 'Interesse ativo ja existe');
+    }
+    salvarEstado(CREDORA_KEY, { ...estado, interesse: 'ATIVO' } satisfies CredoraMockState);
+    return HttpResponse.json(interesseMock(), { status: 201 });
+  }),
+
+  http.get(`${baseUrl}/credores/oportunidades/:id/interesses/me`, ({ params }) => {
+    const estado = lerCredora();
+    const id = String(params['id']);
+    if (!estado.presente || id !== OPORTUNIDADE_DISPONIVEL_ID || estado.interesse !== 'ATIVO') {
+      return credoraErro(404, 'Not Found', 'Nenhum interesse ativo encontrado');
+    }
+    return HttpResponse.json(interesseMock(), { status: 200 });
+  }),
+
+  http.delete(`${baseUrl}/credores/oportunidades/:id/interesses/me`, ({ params }) => {
+    const estado = lerCredora();
+    const id = String(params['id']);
+    if (!estado.presente || id !== OPORTUNIDADE_DISPONIVEL_ID || estado.interesse !== 'ATIVO') {
+      return credoraErro(404, 'Not Found', 'Nenhum interesse ativo encontrado');
+    }
+    salvarEstado(CREDORA_KEY, { ...estado, interesse: 'AUSENTE' } satisfies CredoraMockState);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.get(`${baseUrl}/credores/oportunidades/:id`, ({ params }) => {
+    if (!lerCredora().presente) {
+      return credoraErro(404, 'Not Found', 'Credora ou oportunidade nao encontrada');
+    }
+    const oportunidade = oportunidadesMock().find((o) => o.id === String(params['id']));
+    return oportunidade
+      ? HttpResponse.json(oportunidade, { status: 200 })
+      : credoraErro(404, 'Not Found', 'Credora ou oportunidade nao encontrada');
+  }),
+
+  http.get(`${baseUrl}/credores/carteira`, () => {
+    const estado = lerCredora();
+    if (!estado.presente) {
+      return credoraErro(404, 'Not Found', 'Usuario nao possui credora');
+    }
+    return HttpResponse.json(estado.carteiraVazia ? [] : operacoesMock(), { status: 200 });
+  }),
+
+  http.get(`${baseUrl}/credores/carteira/:id`, ({ params }) => {
+    if (!lerCredora().presente) {
+      return credoraErro(404, 'Not Found', 'Credora ou operacao nao encontrada');
+    }
+    const operacao = operacoesMock().find((o) => o.id === String(params['id']));
+    return operacao
+      ? HttpResponse.json(operacao, { status: 200 })
+      : credoraErro(404, 'Not Found', 'Credora ou operacao nao encontrada');
+  }),
+];
+
 export const handlers = [
   ...baseHandlers,
   ...onboardingHandlers,
@@ -1032,4 +1235,5 @@ export const handlers = [
   ...stepUpHandlers,
   ...formalizacaoHandlers,
   ...cobrancaHandlers,
+  ...credoresHandlers,
 ];

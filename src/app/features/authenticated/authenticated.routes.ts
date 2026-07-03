@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { authGuard } from '../../core/guards/auth.guard';
+import { credoraPresenceGuard } from '../../core/guards/credora-presence.guard';
 import { roleGuard } from '../../core/guards/role.guard';
 
 export const AUTHENTICATED_ROUTES: Routes = [
@@ -169,9 +170,55 @@ export const AUTHENTICATED_ROUTES: Routes = [
       },
       {
         path: 'credora/inicio',
+        canActivate: [credoraPresenceGuard],
         loadComponent: () =>
           import('../credora/home/home.component').then((m) => m.CredoraHomeComponent),
-        data: { tab: 'credora-inicio' },
+        data: { tab: 'credora' },
+      },
+      {
+        path: 'credora/perfil',
+        canActivate: [credoraPresenceGuard],
+        loadComponent: () =>
+          import('../credora/perfil/credora-profile.component').then(
+            (m) => m.CredoraProfileComponent,
+          ),
+        data: { tab: 'credora', title: 'Perfil da credora' },
+      },
+      {
+        path: 'credora/oportunidades',
+        canActivate: [credoraPresenceGuard],
+        loadComponent: () =>
+          import('../credora/oportunidades/opportunity-list.component').then(
+            (m) => m.OpportunityListComponent,
+          ),
+        data: { tab: 'credora', title: 'Oportunidades' },
+      },
+      {
+        path: 'credora/oportunidades/:oportunidadeId',
+        canActivate: [credoraPresenceGuard],
+        loadComponent: () =>
+          import('../credora/oportunidades/opportunity-detail.component').then(
+            (m) => m.OpportunityDetailComponent,
+          ),
+        data: { tab: 'credora', title: 'Oportunidade' },
+      },
+      {
+        path: 'credora/carteira',
+        canActivate: [credoraPresenceGuard],
+        loadComponent: () =>
+          import('../credora/carteira/portfolio-list.component').then(
+            (m) => m.PortfolioListComponent,
+          ),
+        data: { tab: 'credora', title: 'Carteira' },
+      },
+      {
+        path: 'credora/carteira/:operacaoId',
+        canActivate: [credoraPresenceGuard],
+        loadComponent: () =>
+          import('../credora/carteira/portfolio-detail.component').then(
+            (m) => m.PortfolioDetailComponent,
+          ),
+        data: { tab: 'credora', title: 'Operacao' },
       },
       {
         path: 'admin',

@@ -1,0 +1,113 @@
+<sep-header-mobile />
+<ion-content class="sep-operacao-detalhe">
+  <section class="sep-operacao-detalhe-section">
+    @if (carregando()) {
+      <div class="sep-operacao-detalhe-estado" data-testid="sep-operacao-detalhe-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+    } @else if (erro()) {
+      <div class="sep-operacao-detalhe-estado" data-testid="sep-operacao-detalhe-erro">
+        <p>{{ erro() }}</p>
+        <ion-button expand="block" (click)="carregar()" data-testid="sep-operacao-detalhe-retry">
+          Tentar novamente
+        </ion-button>
+        <ion-button
+          expand="block"
+          fill="outline"
+          (click)="voltarParaLista()"
+          data-testid="sep-operacao-detalhe-voltar"
+        >
+          Voltar para a carteira
+        </ion-button>
+      </div>
+    } @else if (operacao(); as op) {
+      <header class="sep-operacao-detalhe-header">
+        <h1 class="sep-operacao-detalhe-valor" data-testid="sep-operacao-detalhe-valor">
+          @if (op.valor !== null) {
+            {{ formatarMoeda(op.valor) }}
+          } @else {
+            Nao informado
+          }
+        </h1>
+        <sep-operacao-status [status]="op.status" />
+      </header>
+
+      <dl class="sep-operacao-detalhe-grid">
+        <div class="sep-operacao-detalhe-row">
+          <dt>Prazo</dt>
+          <dd>
+            @if (op.prazoMeses !== null) {
+              {{ op.prazoMeses }} meses
+            } @else {
+              Nao informado
+            }
+          </dd>
+        </div>
+        <div class="sep-operacao-detalhe-row">
+          <dt>Taxa de juros mensal</dt>
+          <dd data-testid="sep-operacao-detalhe-taxa">
+            @if (op.taxaJurosMensal !== null) {
+              {{ formatarTaxaMensal(op.taxaJurosMensal) }}
+            } @else {
+              Nao informado
+            }
+          </dd>
+        </div>
+        <div class="sep-operacao-detalhe-row">
+          <dt>Status do contrato</dt>
+          <dd data-testid="sep-operacao-detalhe-contrato-status">
+            {{ op.contratoStatus ?? 'Nao informado' }}
+          </dd>
+        </div>
+        <div class="sep-operacao-detalhe-row">
+          <dt>Associada em</dt>
+          <dd>{{ formatarData(op.dataCriacao) }}</dd>
+        </div>
+      </dl>
+
+      @if (op.cobranca; as cob) {
+        <section class="sep-operacao-detalhe-cobranca" data-testid="sep-operacao-detalhe-cobranca">
+          <h2 class="sep-operacao-detalhe-subtitle">Cobranca</h2>
+          <dl class="sep-operacao-detalhe-grid">
+            <div class="sep-operacao-detalhe-row">
+              <dt>Parcelas</dt>
+              <dd>{{ cob.numeroParcelas }}</dd>
+            </div>
+            <div class="sep-operacao-detalhe-row">
+              <dt>Valor total</dt>
+              <dd>{{ formatarMoeda(cob.valorTotal) }}</dd>
+            </div>
+            <div class="sep-operacao-detalhe-row">
+              <dt>Parcelas pagas</dt>
+              <dd data-testid="sep-operacao-detalhe-pagas">{{ cob.parcelasPagas }}</dd>
+            </div>
+            <div class="sep-operacao-detalhe-row">
+              <dt>Parcelas atrasadas</dt>
+              <dd data-testid="sep-operacao-detalhe-atrasadas">{{ cob.parcelasAtrasadas }}</dd>
+            </div>
+            <div class="sep-operacao-detalhe-row">
+              <dt>Total recebido</dt>
+              <dd data-testid="sep-operacao-detalhe-recebido">
+                {{ formatarMoeda(cob.totalRecebido) }}
+              </dd>
+            </div>
+            <div class="sep-operacao-detalhe-row">
+              <dt>Proximo vencimento</dt>
+              <dd>
+                @if (cob.proximoVencimento) {
+                  {{ formatarDataLocal(cob.proximoVencimento) }}
+                } @else {
+                  Nao informado
+                }
+              </dd>
+            </div>
+          </dl>
+        </section>
+      } @else {
+        <p class="sep-operacao-detalhe-nota" data-testid="sep-operacao-detalhe-sem-cobranca">
+          Sem resumo de cobranca disponivel para esta operacao.
+        </p>
+      }
+    }
+  </section>
+</ion-content>

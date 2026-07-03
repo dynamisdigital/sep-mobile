@@ -1,0 +1,33 @@
+.sep-credora-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sep-space-8);
+
+  &-pill {
+    display: inline-block;
+    padding: var(--sep-space-4) var(--sep-space-8);
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: var(--sep-radius-pill, 999px);
+
+    &[data-variante="positivo"] {
+      color: hsl(var(--success));
+      background: hsl(var(--success) / 12%);
+    }
+
+    &[data-variante="negativo"] {
+      color: hsl(var(--destructive));
+      background: hsl(var(--destructive) / 12%);
+    }
+
+    &[data-variante="pendente"] {
+      color: hsl(var(--warning));
+      background: hsl(var(--warning) / 12%);
+    }
+
+    &[data-variante="neutro"] {
+      color: hsl(var(--muted-foreground));
+      background: hsl(var(--muted));
+    }
+  }
+}

@@ -1,0 +1,80 @@
+<sep-header-mobile />
+<ion-content class="sep-carteira">
+  <ion-refresher slot="fixed" (ionRefresh)="recarregar($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <section class="sep-carteira-section">
+    <h1 class="sep-carteira-title">Carteira</h1>
+
+    @if (carregando()) {
+      <div class="sep-carteira-estado" data-testid="sep-carteira-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+    } @else if (erro()) {
+      <div class="sep-carteira-estado" data-testid="sep-carteira-erro">
+        <p>{{ erro() }}</p>
+        <ion-button expand="block" (click)="carregar()" data-testid="sep-carteira-retry">
+          Tentar novamente
+        </ion-button>
+      </div>
+    } @else if (operacoes().length === 0) {
+      <div class="sep-carteira-estado" data-testid="sep-carteira-vazia">
+        <p>
+          Voce ainda nao possui operacoes na carteira. Manifestar interesse nao gera carteira
+          automaticamente: a associacao e assistida e ocorre fora do app.
+        </p>
+      </div>
+    } @else {
+      <ul class="sep-carteira-lista">
+        @for (op of operacoes(); track op.id) {
+          <li>
+            <button
+              type="button"
+              class="sep-carteira-card"
+              (click)="abrirDetalhe(op.id)"
+              [attr.data-testid]="'sep-operacao-item-' + op.id"
+            >
+              <div class="sep-carteira-card-head">
+                <span class="sep-carteira-card-valor">
+                  @if (op.valor !== null) {
+                    {{ formatarMoeda(op.valor) }}
+                  } @else {
+                    Nao informado
+                  }
+                </span>
+                <sep-operacao-status [status]="op.status" />
+              </div>
+              <dl class="sep-carteira-card-termos">
+                <div>
+                  <dt>Prazo</dt>
+                  <dd>
+                    @if (op.prazoMeses !== null) {
+                      {{ op.prazoMeses }} meses
+                    } @else {
+                      Nao informado
+                    }
+                  </dd>
+                </div>
+                <div>
+                  <dt>Taxa</dt>
+                  <dd>
+                    @if (op.taxaJurosMensal !== null) {
+                      {{ formatarTaxaMensal(op.taxaJurosMensal) }}
+                    } @else {
+                      Nao informado
+                    }
+                  </dd>
+                </div>
+                <div>
+                  <dt>Associada em</dt>
+                  <dd>{{ formatarData(op.dataCriacao) }}</dd>
+                </div>
+              </dl>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</ion-content>
