@@ -75,4 +75,67 @@
     font-size: 0.875rem;
     color: hsl(var(--muted-foreground));
   }
+
+  &-interesse {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-12);
+
+    &-ativo {
+      margin: 0;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: hsl(var(--success));
+    }
+
+    &-copy {
+      margin: 0;
+      font-size: 0.8125rem;
+      line-height: 1.4;
+      color: hsl(var(--muted-foreground));
+    }
+
+    &-msg {
+      margin: 0;
+      font-size: 0.875rem;
+      color: hsl(var(--destructive));
+    }
+  }
+
+  &-confirm {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: var(--sep-space-16);
+    background: hsl(var(--foreground) / 40%);
+
+    &-box {
+      @include comp.sep-mobile-surface-card;
+
+      display: flex;
+      flex-direction: column;
+      gap: var(--sep-space-12);
+      width: 100%;
+      max-width: 480px;
+      padding: var(--sep-space-24) var(--sep-space-16)
+        calc(var(--sep-space-16) + env(safe-area-inset-bottom, 0));
+
+      h2 {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 700;
+        color: hsl(var(--foreground));
+      }
+
+      p {
+        margin: 0;
+        font-size: 0.875rem;
+        line-height: 1.4;
+        color: hsl(var(--muted-foreground));
+      }
+    }
+  }
 }
