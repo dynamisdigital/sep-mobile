@@ -1,0 +1,59 @@
+<sep-header-mobile />
+<ion-content class="sep-oportunidade-detalhe">
+  <section class="sep-oportunidade-detalhe-section">
+    @if (carregando()) {
+      <div class="sep-oportunidade-detalhe-estado" data-testid="sep-oportunidade-detalhe-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+    } @else if (erro()) {
+      <div class="sep-oportunidade-detalhe-estado" data-testid="sep-oportunidade-detalhe-erro">
+        <p>{{ erro() }}</p>
+        <ion-button
+          expand="block"
+          (click)="carregar()"
+          data-testid="sep-oportunidade-detalhe-retry"
+        >
+          Tentar novamente
+        </ion-button>
+        <ion-button
+          expand="block"
+          fill="outline"
+          (click)="voltarParaLista()"
+          data-testid="sep-oportunidade-detalhe-voltar"
+        >
+          Voltar para oportunidades
+        </ion-button>
+      </div>
+    } @else if (oportunidade(); as o) {
+      <header class="sep-oportunidade-detalhe-header">
+        <h1 class="sep-oportunidade-detalhe-valor" data-testid="sep-oportunidade-detalhe-valor">
+          {{ formatarMoeda(o.valor) }}
+        </h1>
+        <sep-oportunidade-status [status]="o.status" />
+      </header>
+
+      <dl class="sep-oportunidade-detalhe-grid">
+        <div class="sep-oportunidade-detalhe-row">
+          <dt>Prazo</dt>
+          <dd>{{ o.prazoMeses }} meses</dd>
+        </div>
+        <div class="sep-oportunidade-detalhe-row">
+          <dt>Taxa de juros mensal</dt>
+          <dd data-testid="sep-oportunidade-detalhe-taxa">
+            {{ formatarTaxaMensal(o.taxaJurosMensal) }}
+          </dd>
+        </div>
+        <div class="sep-oportunidade-detalhe-row">
+          <dt>Criada em</dt>
+          <dd>{{ formatarData(o.dataCriacao) }}</dd>
+        </div>
+      </dl>
+
+      @if (encerrada()) {
+        <p class="sep-oportunidade-detalhe-nota" data-testid="sep-oportunidade-detalhe-encerrada">
+          Esta oportunidade esta encerrada e nao aceita manifestacao de interesse.
+        </p>
+      }
+    }
+  </section>
+</ion-content>
