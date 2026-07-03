@@ -1,0 +1,62 @@
+<sep-header-mobile />
+<ion-content class="sep-credora-perfil">
+  <section class="sep-credora-perfil-section">
+    @if (estado() === 'carregando' || estado() === 'desconhecido') {
+      <div class="sep-credora-perfil-estado" data-testid="sep-credora-perfil-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+    } @else if (estado() === 'erro') {
+      <div class="sep-credora-perfil-estado" data-testid="sep-credora-perfil-erro">
+        <p>Nao foi possivel carregar o perfil da empresa credora. Tente novamente.</p>
+        <ion-button expand="block" (click)="carregar()" data-testid="sep-credora-perfil-retry">
+          Tentar novamente
+        </ion-button>
+      </div>
+    } @else if (estado() === 'ausente') {
+      <div class="sep-credora-perfil-estado" data-testid="sep-credora-perfil-ausente">
+        <p>Nenhuma empresa credora vinculada a este acesso.</p>
+      </div>
+    } @else if (credora(); as c) {
+      <header class="sep-credora-perfil-header">
+        <h1 class="sep-credora-perfil-razao" data-testid="sep-credora-perfil-razao">
+          {{ c.razaoSocial }}
+        </h1>
+        <sep-credora-status [status]="c.status" [elegibilidade]="c.elegibilidade" />
+      </header>
+
+      <dl class="sep-credora-perfil-grid">
+        <div class="sep-credora-perfil-row">
+          <dt>CNPJ</dt>
+          <dd data-testid="sep-credora-perfil-cnpj">{{ c.cnpj }}</dd>
+        </div>
+        <div class="sep-credora-perfil-row">
+          <dt>Tipo</dt>
+          <dd data-testid="sep-credora-perfil-tipo">{{ rotuloTipo(c.tipoCredora) }}</dd>
+        </div>
+        @if (c.capacidadeAporte !== null) {
+          <div class="sep-credora-perfil-row">
+            <dt>Capacidade de aporte</dt>
+            <dd data-testid="sep-credora-perfil-capacidade">
+              {{ capacidadeFormatada(c.capacidadeAporte) }}
+            </dd>
+          </div>
+        }
+        <div class="sep-credora-perfil-row">
+          <dt>Cadastrada em</dt>
+          <dd>{{ dataFormatada(c.dataCriacao) }}</dd>
+        </div>
+        <div class="sep-credora-perfil-row">
+          <dt>Atualizada em</dt>
+          <dd>{{ dataFormatada(c.dataModificacao) }}</dd>
+        </div>
+      </dl>
+
+      @if (c.motivoInelegibilidade) {
+        <section class="sep-credora-perfil-motivo" data-testid="sep-credora-perfil-motivo">
+          <h2 class="sep-credora-perfil-subtitle">Motivo da inelegibilidade</h2>
+          <p>{{ c.motivoInelegibilidade }}</p>
+        </section>
+      }
+    }
+  </section>
+</ion-content>

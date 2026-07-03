@@ -1,0 +1,94 @@
+@use "../../../../styles/sep-mobile-ds-components" as comp;
+
+.sep-credora-perfil {
+  --background: var(--ion-background-color);
+  --padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
+
+  &-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-16);
+    padding: var(--sep-space-24) var(--sep-space-16) var(--sep-space-48);
+  }
+
+  &-estado {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-16);
+    align-items: center;
+    padding: var(--sep-space-48) var(--sep-space-8);
+    text-align: center;
+    color: hsl(var(--muted-foreground));
+  }
+
+  &-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+  }
+
+  &-razao {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: hsl(var(--foreground));
+    letter-spacing: -0.02em;
+    word-break: break-word;
+  }
+
+  &-grid {
+    @include comp.sep-mobile-surface-card;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-4);
+    margin: 0;
+    padding: var(--sep-space-16);
+  }
+
+  &-row {
+    display: flex;
+    gap: var(--sep-space-16);
+    align-items: baseline;
+    justify-content: space-between;
+    padding: var(--sep-space-8) 0;
+
+    & + & {
+      border-top: 1px solid hsl(var(--border));
+    }
+
+    dt {
+      flex-shrink: 0;
+      font-size: 0.875rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    dd {
+      margin: 0;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+      text-align: right;
+      word-break: break-word;
+    }
+  }
+
+  &-motivo {
+    @include comp.sep-mobile-surface-card;
+
+    padding: var(--sep-space-16);
+
+    p {
+      margin: 0;
+      font-size: 0.9375rem;
+      color: hsl(var(--foreground));
+    }
+  }
+
+  &-subtitle {
+    margin: 0 0 var(--sep-space-8);
+    font-size: 1rem;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+}

@@ -1,28 +1,121 @@
 <sep-header-mobile />
 <ion-content class="sep-credora">
   <section class="sep-credora-section">
-    <header class="sep-credora-greeting">
-      <p class="sep-credora-greeting-label">Empresa credora</p>
-      <h1 class="sep-credora-greeting-name" data-testid="sep-credora-email">
-        {{ user()?.username }}
-      </h1>
-    </header>
+    @if (estado() === 'carregando' || estado() === 'desconhecido') {
+      <div class="sep-credora-estado" data-testid="sep-credora-loading">
+        <ion-spinner name="crescent"></ion-spinner>
+      </div>
+    } @else if (estado() === 'erro') {
+      <div class="sep-credora-estado" data-testid="sep-credora-erro">
+        <p>Nao foi possivel carregar os dados da empresa credora. Tente novamente.</p>
+        <ion-button expand="block" (click)="carregar()" data-testid="sep-credora-retry">
+          Tentar novamente
+        </ion-button>
+      </div>
+    } @else if (estado() === 'ausente') {
+      <div class="sep-credora-estado" data-testid="sep-credora-ausente">
+        <p>Nenhuma empresa credora vinculada a este acesso.</p>
+      </div>
+    } @else if (credora(); as c) {
+      <header class="sep-credora-greeting">
+        <p class="sep-credora-greeting-label">Empresa credora</p>
+        <h1 class="sep-credora-greeting-name" data-testid="sep-credora-razao">
+          {{ c.razaoSocial }}
+        </h1>
+        <p class="sep-credora-greeting-tipo" data-testid="sep-credora-tipo">
+          {{ rotuloTipo(c.tipoCredora) }}
+        </p>
+        <sep-credora-status [status]="c.status" [elegibilidade]="c.elegibilidade" />
+      </header>
 
-    <div class="sep-credora-cards">
-      @for (card of cards; track card.testid) {
-        <article class="sep-credora-card" [attr.data-testid]="card.testid">
-          <span class="sep-credora-card-chip" [style.--chip-tone]="card.tone" aria-hidden="true">
-            <ion-icon [name]="card.icon"></ion-icon>
+      <div class="sep-credora-cards">
+        <a
+          class="sep-credora-card"
+          routerLink="/app/credora/perfil"
+          data-testid="sep-credora-atalho-perfil"
+        >
+          <span
+            class="sep-credora-card-chip"
+            style="--chip-tone: var(--primary)"
+            aria-hidden="true"
+          >
+            <ion-icon name="person-circle-outline"></ion-icon>
           </span>
           <div class="sep-credora-card-body">
             <div class="sep-credora-card-head">
-              <h2 class="sep-credora-card-title">{{ card.label }}</h2>
-              <span class="sep-credora-card-badge">Em breve</span>
+              <h2 class="sep-credora-card-title">Perfil e elegibilidade</h2>
+              <ion-icon
+                class="sep-credora-card-chevron"
+                name="chevron-forward-outline"
+                aria-hidden="true"
+              ></ion-icon>
             </div>
-            <p class="sep-credora-card-description">{{ card.description }}</p>
+            <p class="sep-credora-card-description">Dados cadastrais da empresa.</p>
           </div>
-        </article>
-      }
-    </div>
+        </a>
+
+        <a
+          class="sep-credora-card"
+          routerLink="/app/credora/oportunidades"
+          data-testid="sep-credora-atalho-oportunidades"
+        >
+          <span
+            class="sep-credora-card-chip"
+            style="--chip-tone: var(--secondary)"
+            aria-hidden="true"
+          >
+            <ion-icon name="trending-up-outline"></ion-icon>
+          </span>
+          <div class="sep-credora-card-body">
+            <div class="sep-credora-card-head">
+              <h2 class="sep-credora-card-title">Oportunidades</h2>
+              <ion-icon
+                class="sep-credora-card-chevron"
+                name="chevron-forward-outline"
+                aria-hidden="true"
+              ></ion-icon>
+            </div>
+            <p class="sep-credora-card-description" data-testid="sep-credora-oportunidades-count">
+              @if (oportunidadesCount() !== null) {
+                {{ oportunidadesCount() }} disponiveis
+              } @else {
+                Ver oportunidades disponiveis
+              }
+            </p>
+          </div>
+        </a>
+
+        <a
+          class="sep-credora-card"
+          routerLink="/app/credora/carteira"
+          data-testid="sep-credora-atalho-carteira"
+        >
+          <span
+            class="sep-credora-card-chip"
+            style="--chip-tone: var(--warning)"
+            aria-hidden="true"
+          >
+            <ion-icon name="wallet-outline"></ion-icon>
+          </span>
+          <div class="sep-credora-card-body">
+            <div class="sep-credora-card-head">
+              <h2 class="sep-credora-card-title">Carteira</h2>
+              <ion-icon
+                class="sep-credora-card-chevron"
+                name="chevron-forward-outline"
+                aria-hidden="true"
+              ></ion-icon>
+            </div>
+            <p class="sep-credora-card-description" data-testid="sep-credora-carteira-count">
+              @if (carteiraCount() !== null) {
+                {{ carteiraCount() }} operacoes
+              } @else {
+                Ver operacoes financiadas
+              }
+            </p>
+          </div>
+        </a>
+      </div>
+    }
   </section>
 </ion-content>

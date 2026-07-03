@@ -1,0 +1,16 @@
+<div class="sep-credora-status" data-testid="sep-credora-status">
+  <span
+    class="sep-credora-status-pill"
+    [attr.data-variante]="varianteStatus()"
+    data-testid="sep-credora-status-cadastral"
+  >
+    {{ rotuloStatus() }}
+  </span>
+  <span
+    class="sep-credora-status-pill"
+    [attr.data-variante]="varianteElegibilidade()"
+    data-testid="sep-credora-status-elegibilidade"
+  >
+    {{ rotuloElegibilidade() }}
+  </span>
+</div>
