@@ -17,11 +17,21 @@ export function formatarTaxaMensal(taxa: number): string {
   return `${percentual} a.m.`;
 }
 
-// Data do backend (OffsetDateTime/LocalDate ISO) apenas para exibicao; sem aritmetica de data.
+// Data com offset (OffsetDateTime ISO) apenas para exibicao; sem aritmetica de data.
 export function formatarData(iso: string): string {
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   }).format(new Date(iso));
+}
+
+// LocalDate (yyyy-MM-dd, ex.: proximoVencimento) fixa meio-dia local para exibir sem deslocamento
+// de fuso. Apenas apresentacao; nenhuma aritmetica de data.
+export function formatarDataLocal(data: string): string {
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(`${data}T12:00:00`));
 }

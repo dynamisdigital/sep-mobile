@@ -1,0 +1,86 @@
+@use "../../../../styles/sep-mobile-ds-components" as comp;
+
+.sep-carteira {
+  --background: var(--ion-background-color);
+  --padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
+
+  &-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-16);
+    padding: var(--sep-space-24) var(--sep-space-16) var(--sep-space-48);
+  }
+
+  &-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: hsl(var(--foreground));
+    letter-spacing: -0.02em;
+  }
+
+  &-estado {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-16);
+    align-items: center;
+    padding: var(--sep-space-48) var(--sep-space-8);
+    text-align: center;
+    color: hsl(var(--muted-foreground));
+  }
+
+  &-lista {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-12);
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+
+  &-card {
+    @include comp.sep-mobile-surface-card;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-12);
+    width: 100%;
+    padding: var(--sep-space-16);
+    font: inherit;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &-head {
+      display: flex;
+      gap: var(--sep-space-8);
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    &-valor {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+    }
+
+    &-termos {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sep-space-16);
+      margin: 0;
+
+      dt {
+        font-size: 0.75rem;
+        color: hsl(var(--muted-foreground));
+      }
+
+      dd {
+        margin: 0;
+        font-size: 0.9375rem;
+        font-weight: 600;
+        color: hsl(var(--foreground));
+      }
+    }
+  }
+}
