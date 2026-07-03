@@ -114,6 +114,21 @@ describe('CredoraContextStore', () => {
     expect(store.credora()).toMatchObject({ id: 'cred-B' });
   });
 
+  it('descarta resposta do usuario anterior se o usuario muda durante a requisicao', async () => {
+    auth.currentUser.set({ id: 'A' });
+    const promiseA = store.carregar();
+    const reqA = httpMock.expectOne(ME);
+
+    // o usuario muda antes de a requisicao de A responder
+    auth.currentUser.set({ id: 'B' });
+    reqA.flush(credora('A'));
+    await promiseA;
+
+    // a credora de A nao pode vazar para o usuario B
+    expect(store.credora()).toBeNull();
+    expect(store.presente()).toBe(false);
+  });
+
   it('logout (usuario => null) zera a presenca', async () => {
     auth.currentUser.set({ id: 'A' });
     const promise = store.carregar();

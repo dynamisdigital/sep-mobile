@@ -73,13 +73,20 @@ export class CredoraContextStore {
   }
 
   private async buscar(): Promise<CredoraPresenca> {
+    const alvo = this.usuarioAtual();
     this.estadoState.set('carregando');
     try {
       const credora = await this.service.consultarMinhaCredora();
+      if (this.usuarioAtual() !== alvo) {
+        return this.estadoState(); // usuario mudou durante a requisicao: descarta o resultado
+      }
       this.credoraState.set(credora);
       this.estadoState.set('presente');
       return 'presente';
     } catch (erro) {
+      if (this.usuarioAtual() !== alvo) {
+        return this.estadoState();
+      }
       this.credoraState.set(null);
       if (erro instanceof HttpErrorResponse && erro.status === 404) {
         this.estadoState.set('ausente');
