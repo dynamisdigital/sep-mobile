@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   ContratoResponse,
+  PixDesembolsoTomadorResponse,
   StatusFormalizacao,
   UsuarioResponse,
   VersaoContratoResponse,
@@ -13,6 +14,7 @@ import {
 import { AuthService } from '../../../core/auth/auth.service';
 import { StepUpTokenStore } from '../../../core/auth/step-up-token.store';
 import { ContratosMobileService } from '../../../core/contratos/contratos-mobile.service';
+import { PixMobileService } from '../../../core/pix/pix-mobile.service';
 import { ContratoDetailComponent } from './contrato-detail.component';
 
 const CONTRATO_ID = '1f1d4920-3f55-6f48-9b3e-aa1234567890';
@@ -25,6 +27,7 @@ function setup(
   params: { propostaId?: string; contratoId?: string },
   svc: Partial<Record<keyof ContratosMobileService, ReturnType<typeof vi.fn>>> = {},
   opts: { user?: UsuarioResponse | null; hasToken?: boolean } = {},
+  pixSvc: Partial<Record<keyof PixMobileService, ReturnType<typeof vi.fn>>> = {},
 ) {
   const contratos = {
     consultarPorProposta:
@@ -39,6 +42,10 @@ function setup(
     baixarDocumentoAssinado:
       svc.baixarDocumentoAssinado ?? vi.fn().mockResolvedValue(documentoFixture()),
   };
+  const pix = {
+    consultarDesembolsoDoContrato:
+      pixSvc.consultarDesembolsoDoContrato ?? vi.fn().mockResolvedValue(desembolsoFixture()),
+  };
   const activatedRoute = {
     snapshot: {
       paramMap: { get: (k: string) => (params as Record<string, string | undefined>)[k] ?? null },
@@ -52,6 +59,7 @@ function setup(
     providers: [
       provideRouter([]),
       { provide: ContratosMobileService, useValue: contratos },
+      { provide: PixMobileService, useValue: pix },
       { provide: ActivatedRoute, useValue: activatedRoute },
       { provide: AuthService, useValue: { currentUser: signal(user) } },
       { provide: StepUpTokenStore, useValue: stepUpStore },
@@ -59,7 +67,7 @@ function setup(
   });
   const injector = TestBed.inject(EnvironmentInjector);
   const component = runInInjectionContext(injector, () => new ContratoDetailComponent());
-  return { component, contratos, stepUpStore, clear };
+  return { component, contratos, pix, stepUpStore, clear };
 }
 
 describe('ContratoDetailComponent', () => {
@@ -579,6 +587,131 @@ describe('ContratoDetailComponent', () => {
     expect(component.erroDocumento()).toContain('Tente novamente');
     expect(createObjectURL).not.toHaveBeenCalled();
   });
+
+  // ---- M-11.2: card de desembolso Pix (Gate P1) ----
+
+  it('o card de desembolso Pix so aparece quando o contrato esta ASSINADO', async () => {
+    const aguardando = setup({ contratoId: CONTRATO_ID });
+    await aguardando.component.ngOnInit();
+    expect(aguardando.component.mostrarDesembolsoPix()).toBe(false);
+    expect(aguardando.pix.consultarDesembolsoDoContrato).not.toHaveBeenCalled();
+
+    const assinado = setup(
+      { contratoId: CONTRATO_ID },
+      { consultarPorId: vi.fn().mockResolvedValue(contratoFixture('ASSINADO')) },
+    );
+    await assinado.component.ngOnInit();
+    expect(assinado.component.mostrarDesembolsoPix()).toBe(true);
+    expect(assinado.pix.consultarDesembolsoDoContrato).toHaveBeenCalledWith(CONTRATO_ID);
+  });
+
+  it('ASSINADO consulta o desembolso e expoe o status publico', async () => {
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      { consultarPorId: vi.fn().mockResolvedValue(contratoFixture('ASSINADO')) },
+      {},
+      {
+        consultarDesembolsoDoContrato: vi
+          .fn()
+          .mockResolvedValue(desembolsoFixture({ status: 'LIQUIDADO' })),
+      },
+    );
+    await component.ngOnInit();
+    expect(component.desembolsoPix()?.status).toBe('LIQUIDADO');
+    expect(component.pixIndisponivel()).toBe(false);
+    expect(component.erroPix()).toBeNull();
+  });
+
+  it('404 do desembolso vira ausencia neutra (indisponivel), nao erro', async () => {
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      { consultarPorId: vi.fn().mockResolvedValue(contratoFixture('ASSINADO')) },
+      {},
+      {
+        consultarDesembolsoDoContrato: vi
+          .fn()
+          .mockRejectedValue(new HttpErrorResponse({ status: 404 })),
+      },
+    );
+    await component.ngOnInit();
+    expect(component.pixIndisponivel()).toBe(true);
+    expect(component.erroPix()).toBeNull();
+    expect(component.desembolsoPix()).toBeNull();
+  });
+
+  it('rede/5xx do desembolso vira erro isolado, e o retry recarrega', async () => {
+    const consultarDesembolsoDoContrato = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('rede'))
+      .mockResolvedValue(desembolsoFixture({ status: 'EM_PROCESSAMENTO' }));
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      { consultarPorId: vi.fn().mockResolvedValue(contratoFixture('ASSINADO')) },
+      {},
+      { consultarDesembolsoDoContrato },
+    );
+    await component.ngOnInit();
+    expect(component.erroPix()).toContain('Tente novamente');
+    expect(component.pixIndisponivel()).toBe(false);
+    await component.consultarDesembolsoPix();
+    expect(consultarDesembolsoDoContrato).toHaveBeenCalledTimes(2);
+    expect(component.desembolsoPix()?.status).toBe('EM_PROCESSAMENTO');
+    expect(component.erroPix()).toBeNull();
+  });
+
+  it('falha do desembolso nao bloqueia o restante da tela do contrato', async () => {
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      { consultarPorId: vi.fn().mockResolvedValue(contratoFixture('ASSINADO')) },
+      {},
+      { consultarDesembolsoDoContrato: vi.fn().mockRejectedValue(new Error('rede')) },
+    );
+    await component.ngOnInit();
+    expect(component.contrato()?.status).toBe('ASSINADO');
+    expect(component.erro()).toBeNull();
+  });
+
+  it('ionViewWillEnter reconsulta o desembolso quando ASSINADO', async () => {
+    const { component, pix } = setup(
+      { contratoId: CONTRATO_ID },
+      { consultarPorId: vi.fn().mockResolvedValue(contratoFixture('ASSINADO')) },
+    );
+    await component.ngOnInit();
+    expect(pix.consultarDesembolsoDoContrato).toHaveBeenCalledTimes(1);
+    component.ionViewWillEnter();
+    await Promise.resolve();
+    expect(pix.consultarDesembolsoDoContrato).toHaveBeenCalledTimes(2);
+  });
+
+  it('ionViewWillEnter nao consulta o desembolso fora de ASSINADO', async () => {
+    const { component, pix } = setup({ contratoId: CONTRATO_ID });
+    await component.ngOnInit();
+    component.ionViewWillEnter();
+    await Promise.resolve();
+    expect(pix.consultarDesembolsoDoContrato).not.toHaveBeenCalled();
+  });
+
+  it('guard de concorrencia: consultas sobrepostas do desembolso nao duplicam a requisicao', async () => {
+    let resolver: (d: PixDesembolsoTomadorResponse) => void = () => undefined;
+    const consultarDesembolsoDoContrato = vi.fn().mockReturnValue(
+      new Promise<PixDesembolsoTomadorResponse>((resolve) => {
+        resolver = resolve;
+      }),
+    );
+    // Contrato AGUARDANDO por padrao: sem consulta automatica; disparamos manualmente duas vezes.
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      {},
+      {},
+      { consultarDesembolsoDoContrato },
+    );
+    await component.ngOnInit();
+    const primeira = component.consultarDesembolsoPix();
+    const segunda = component.consultarDesembolsoPix();
+    resolver(desembolsoFixture());
+    await Promise.all([primeira, segunda]);
+    expect(consultarDesembolsoDoContrato).toHaveBeenCalledTimes(1);
+  });
 });
 
 function contratoFixture(
@@ -647,5 +780,16 @@ function documentoFixture() {
     blob: new Blob(['%PDF-1.4 ficticio'], { type: 'application/pdf' }),
     nomeArquivo: `contrato-${CONTRATO_ID}-assinado.pdf`,
     hashSha256: 'hash-doc',
+  };
+}
+
+function desembolsoFixture(
+  over: Partial<PixDesembolsoTomadorResponse> = {},
+): PixDesembolsoTomadorResponse {
+  return {
+    status: 'EM_PROCESSAMENTO',
+    valor: 1500,
+    atualizadoEm: '2026-07-06T10:00:00-03:00',
+    ...over,
   };
 }
