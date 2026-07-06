@@ -238,6 +238,9 @@ export class ContratoDetailComponent implements OnInit {
     }
     this.carregandoPix.set(true);
     this.erroPix.set(null);
+    // Limpa a ausencia da leitura anterior: sem isso, um 404 seguido de retry com 5xx manteria
+    // "indisponivel" com prioridade no template e esconderia o erro tecnico.
+    this.pixIndisponivel.set(false);
     try {
       this.desembolsoPix.set(await this.pix.consultarDesembolsoDoContrato(this.contratoId));
       this.pixIndisponivel.set(false);

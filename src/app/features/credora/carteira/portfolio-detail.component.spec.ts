@@ -219,6 +219,19 @@ describe('PortfolioDetailComponent', () => {
     );
   });
 
+  it('retry com 5xx apos um 404 mostra o erro tecnico, nao a ausencia neutra', async () => {
+    await renderOperacao(operacao(), 404);
+    expect(fixture.componentInstance.pixIndisponivel()).toBe(true);
+
+    // Retry falha com 5xx: a ausencia anterior nao pode mais mascarar o erro tecnico.
+    const p = fixture.componentInstance.consultarStatusPix();
+    httpMock.expectOne(PIX_URL).flush({ message: 'x' }, { status: 500, statusText: 'Error' });
+    await p;
+    const el = await render();
+    expect(fixture.componentInstance.pixIndisponivel()).toBe(false);
+    expect(el.querySelector('[data-testid="sep-operacao-detalhe-pix-erro"]')).not.toBeNull();
+  });
+
   it('o card de status Pix nao expoe tomador, contrato, transferencia, provider nem escrow', async () => {
     const el = await renderOperacao(operacao(), pixFixture());
     const card = el.querySelector('[data-testid="sep-operacao-detalhe-pix"]');

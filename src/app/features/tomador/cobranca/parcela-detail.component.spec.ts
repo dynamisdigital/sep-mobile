@@ -355,6 +355,24 @@ describe('ParcelaDetailComponent', () => {
     expect(component.erroPix()).toBeNull();
   });
 
+  it('retry com 5xx apos um 404 mostra o erro tecnico, nao "sem pagamento Pix"', async () => {
+    const consultarStatusPixDaParcela = vi
+      .fn()
+      .mockRejectedValueOnce(new HttpErrorResponse({ status: 404 }))
+      .mockRejectedValueOnce(new Error('rede'));
+    const { component } = setup(
+      { contratoId: CONTRATO_ID, parcelaId: PARCELA_ID },
+      {},
+      { consultarStatusPixDaParcela },
+    );
+    await component.ngOnInit();
+    expect(component.pixIndisponivel()).toBe(true);
+    // Retry falha com 5xx: a ausencia anterior nao pode mais mascarar o erro tecnico.
+    await component.consultarStatusPix();
+    expect(component.pixIndisponivel()).toBe(false);
+    expect(component.erroPix()).not.toBeNull();
+  });
+
   it('falha do status Pix e isolada: o detalhe da parcela permanece intacto', async () => {
     const { component } = setup(
       { contratoId: CONTRATO_ID, parcelaId: PARCELA_ID },

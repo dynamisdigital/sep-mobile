@@ -13,12 +13,20 @@ function paginaAtiva(page: Page): Locator {
   return page.locator('.ion-page:not(.ion-page-hidden)').last();
 }
 
-async function prepararTomador(page: Page): Promise<void> {
+// `pix` semeia `mock.pix` (estado reseedavel): `desembolso` (status P1 ou 'AUSENTE') e `falhar`
+// (proxima leitura Pix retorna 5xx uma vez). Omitido = happy path do handler.
+async function prepararTomador(
+  page: Page,
+  pix?: { desembolso?: string; falhar?: boolean },
+): Promise<void> {
   await page.addInitScript(
-    ({ propostaId }) => {
+    ({ propostaId, pix }) => {
       window.localStorage.setItem('NG_APP_USE_MSW', 'true');
       // Contrato ASSINADO: habilita o card de desembolso Pix.
       window.localStorage.setItem('mock.formalizacao', JSON.stringify({ status: 'ASSINADO' }));
+      if (pix) {
+        window.localStorage.setItem('mock.pix', JSON.stringify(pix));
+      }
       window.localStorage.setItem(
         'mock.credito.propostas',
         JSON.stringify([
@@ -39,7 +47,7 @@ async function prepararTomador(page: Page): Promise<void> {
         ]),
       );
     },
-    { propostaId: PROPOSTA_ID },
+    { propostaId: PROPOSTA_ID, pix: pix ?? null },
   );
 }
 
@@ -85,6 +93,15 @@ async function abrirAgenda(page: Page): Promise<void> {
 
 test.describe('M-Sprint 11 - Pix visivel ao usuario (MSW)', () => {
   test('tomador ve o desembolso Pix do contrato e o status Pix da parcela', async ({ page }) => {
+    // Coleta as URLs Pix/carteira tocadas para provar que nenhuma rota operacional foi chamada.
+    const urlsPix: string[] = [];
+    page.on('request', (req) => {
+      const url = req.url();
+      if (url.includes('/pix/') || url.includes('/carteira/')) {
+        urlsPix.push(url);
+      }
+    });
+
     await prepararTomador(page);
     await loginCliente(page);
 
@@ -114,6 +131,9 @@ test.describe('M-Sprint 11 - Pix visivel ao usuario (MSW)', () => {
       parcela5.getByTestId('sep-parcela-historico-meio').filter({ hasText: 'PIX' }),
     ).toHaveClass(/sep-parcela-historico-meio--pix/);
 
+    // Parcela 5 nao tem estado Pix proprio (P2 404): ausencia neutra, distinta de erro tecnico.
+    await expect(parcela5.getByTestId('sep-parcela-pix-indisponivel')).toBeVisible();
+
     // Assercoes negativas: nada de dado tecnico Pix no DOM nem em storage.
     const corpo = (await page.locator('body').innerText()).toLowerCase();
     expect(corpo).not.toContain('txid');
@@ -125,6 +145,14 @@ test.describe('M-Sprint 11 - Pix visivel ao usuario (MSW)', () => {
     );
     expect(storage.toLowerCase()).not.toContain('desembolso');
     expect(storage.toLowerCase()).not.toContain('txid');
+
+    // Apenas as tres leituras owner-scoped: nenhuma rota operacional Pix (desembolsos/recebimentos/
+    // referencias/webhooks) foi tocada.
+    expect(urlsPix.some((u) => /\/pix\/contratos\/[^/]+\/desembolso/.test(u))).toBe(true);
+    expect(urlsPix.some((u) => /\/pix\/parcelas\/[^/]+\/status/.test(u))).toBe(true);
+    expect(
+      urlsPix.filter((u) => /\/pix\/(desembolsos|recebimentos|referencias|webhooks)/.test(u)),
+    ).toEqual([]);
   });
 
   test('credora ve o status Pix da operacao da carteira', async ({ page }) => {
@@ -149,6 +177,47 @@ test.describe('M-Sprint 11 - Pix visivel ao usuario (MSW)', () => {
     expect(card).not.toContain('tomador');
     expect(card).not.toContain('txid');
     expect(card).not.toContain('escrow');
+  });
+
+  test('desembolso Pix com 5xx exibe erro isolado, e o retry recarrega', async ({ page }) => {
+    // Primeira leitura Pix falha (5xx); o retry seguinte sucede com o status semeado.
+    await prepararTomador(page, { desembolso: 'LIQUIDADO', falhar: true });
+    await loginCliente(page);
+
+    const contrato = await abrirContratoAssinado(page);
+    await expect(contrato.getByTestId('sep-contrato-detail-desembolso-erro')).toBeVisible({
+      timeout: 10_000,
+    });
+    // O contrato continua utilizavel apesar da falha do card Pix (leitura isolada).
+    await expect(contrato.getByTestId('sep-contrato-detail-versao')).toBeVisible();
+
+    await contrato.getByTestId('sep-contrato-detail-desembolso-atualizar').click();
+    await expect(contrato.getByTestId('sep-pix-status-publico')).toContainText('Liquidado', {
+      timeout: 10_000,
+    });
+    await expect(contrato.getByTestId('sep-contrato-detail-desembolso-erro')).toHaveCount(0);
+  });
+
+  test('desembolso Pix ausente (404) mostra indisponivel, nao erro', async ({ page }) => {
+    await prepararTomador(page, { desembolso: 'AUSENTE', falhar: false });
+    await loginCliente(page);
+
+    const contrato = await abrirContratoAssinado(page);
+    await expect(contrato.getByTestId('sep-contrato-detail-desembolso-indisponivel')).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(contrato.getByTestId('sep-contrato-detail-desembolso-erro')).toHaveCount(0);
+  });
+
+  test('tema escuro renderiza o card de desembolso Pix', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await prepararTomador(page);
+    await loginCliente(page);
+    const contrato = await abrirContratoAssinado(page);
+    await expect(contrato.getByTestId('sep-contrato-detail-desembolso')).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(contrato.getByTestId('sep-pix-status-publico')).toBeVisible();
   });
 
   test('jornada Pix do tomador nao estoura overflow em 320px', async ({ page }) => {

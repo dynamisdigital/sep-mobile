@@ -117,6 +117,9 @@ export class PortfolioDetailComponent implements OnInit, ViewWillEnter {
     }
     this.carregandoPix.set(true);
     this.erroPix.set(null);
+    // Limpa a ausencia da leitura anterior: sem isso, um 404 seguido de retry com 5xx manteria
+    // "indisponivel" com prioridade no template e esconderia o erro tecnico.
+    this.pixIndisponivel.set(false);
     try {
       const status = await this.pix.consultarStatusPixDaOperacao(this.id);
       if (geracao !== this.geracao) {

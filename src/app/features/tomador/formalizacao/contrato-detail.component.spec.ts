@@ -659,6 +659,25 @@ describe('ContratoDetailComponent', () => {
     expect(component.erroPix()).toBeNull();
   });
 
+  it('retry com 5xx apos um 404 mostra o erro tecnico, nao "indisponivel"', async () => {
+    const consultarDesembolsoDoContrato = vi
+      .fn()
+      .mockRejectedValueOnce(new HttpErrorResponse({ status: 404 }))
+      .mockRejectedValueOnce(new Error('rede'));
+    const { component } = setup(
+      { contratoId: CONTRATO_ID },
+      { consultarPorId: vi.fn().mockResolvedValue(contratoFixture('ASSINADO')) },
+      {},
+      { consultarDesembolsoDoContrato },
+    );
+    await component.ngOnInit();
+    expect(component.pixIndisponivel()).toBe(true);
+    // Retry falha com 5xx: a ausencia anterior nao pode mais mascarar o erro tecnico.
+    await component.consultarDesembolsoPix();
+    expect(component.pixIndisponivel()).toBe(false);
+    expect(component.erroPix()).not.toBeNull();
+  });
+
   it('falha do desembolso nao bloqueia o restante da tela do contrato', async () => {
     const { component } = setup(
       { contratoId: CONTRATO_ID },
