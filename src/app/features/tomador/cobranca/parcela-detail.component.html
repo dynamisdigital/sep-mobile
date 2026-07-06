@@ -73,6 +73,49 @@
         </div>
       </dl>
 
+      <section class="sep-parcela-pix" data-testid="sep-parcela-pix">
+        <h2 class="sep-parcela-subtitle">Pagamento Pix</h2>
+        @if (carregandoPix()) {
+          <div class="sep-parcela-estado" data-testid="sep-parcela-pix-loading">
+            <ion-spinner name="crescent"></ion-spinner>
+          </div>
+        } @else if (statusPix(); as pagamento) {
+          <sep-pix-status-parcela [status]="pagamento.status" />
+          @if (pagamento.mensagemPublica; as msg) {
+            <p class="sep-parcela-nota" role="status" data-testid="sep-parcela-pix-mensagem">
+              {{ msg }}
+            </p>
+          }
+          <dl class="sep-parcela-grid">
+            <div class="sep-parcela-row">
+              <dt>Valor</dt>
+              <dd data-testid="sep-parcela-pix-valor">{{ valorFormatado(pagamento.valor) }}</dd>
+            </div>
+            <div class="sep-parcela-row">
+              <dt>Atualizado em</dt>
+              <dd>{{ dataRecebimentoFormatada(pagamento.atualizadoEm) }}</dd>
+            </div>
+          </dl>
+        } @else if (pixIndisponivel()) {
+          <p class="sep-parcela-nota" data-testid="sep-parcela-pix-indisponivel">
+            Sem pagamento Pix para esta parcela.
+          </p>
+        } @else if (erroPix(); as msg) {
+          <div class="sep-parcela-estado" role="alert" data-testid="sep-parcela-pix-erro">
+            <p>{{ msg }}</p>
+          </div>
+        }
+        <button
+          type="button"
+          class="sep-parcela-cta sep-parcela-cta--secondary"
+          (click)="consultarStatusPix()"
+          [disabled]="carregandoPix()"
+          data-testid="sep-parcela-pix-atualizar"
+        >
+          {{ carregandoPix() ? 'Atualizando...' : 'Atualizar status Pix' }}
+        </button>
+      </section>
+
       <section class="sep-parcela-historico" data-testid="sep-parcela-historico">
         <button
           type="button"
@@ -115,7 +158,12 @@
                     <span class="sep-parcela-historico-data">
                       {{ dataRecebimentoFormatada(recebimento.dataRecebimento) }}
                     </span>
-                    <span class="sep-parcela-historico-meio">{{ recebimento.meioPagamento }}</span>
+                    <span
+                      class="sep-parcela-historico-meio"
+                      [class.sep-parcela-historico-meio--pix]="recebimento.meioPagamento === 'PIX'"
+                      data-testid="sep-parcela-historico-meio"
+                      >{{ recebimento.meioPagamento }}</span
+                    >
                     <span class="sep-parcela-historico-valor">
                       {{ valorFormatado(recebimento.valorRecebido) }}
                     </span>

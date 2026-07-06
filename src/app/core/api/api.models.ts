@@ -526,3 +526,45 @@ export interface OperacaoCarteiraResponse {
   cobranca: CarteiraCobrancaResumo | null;
   dataCriacao: string; // ISO-8601 com offset
 }
+
+// --- Pix owner-scoped (M-Sprint 11 / backend Sprint 26 Gates P1-P3) ---
+
+// Status Pix publico do desembolso do tomador (P1) e da operacao da credora (P3).
+export type StatusPixPublico = 'EM_PROCESSAMENTO' | 'LIQUIDADO' | 'FALHOU' | 'CANCELADO';
+
+// Status Pix publico da parcela (P2), derivado no backend por precedencia. Estado de tela, nao
+// derivado no cliente.
+export type StatusPixParcelaPublico =
+  | 'AGUARDANDO'
+  | 'EM_PROCESSAMENTO'
+  | 'LIQUIDADO'
+  | 'DIVERGENTE'
+  | 'FALHOU'
+  | 'EXPIRADO'
+  | 'CANCELADO';
+
+// P1 — status do desembolso Pix de um contrato proprio. Recorte publico minimo; nao modela chave
+// Pix, txid, IDs internos, provider ou escrow. `valor` serve apenas para formatacao.
+export interface PixDesembolsoTomadorResponse {
+  status: StatusPixPublico;
+  valor: number;
+  atualizadoEm: string; // ISO-8601 com offset
+}
+
+// P2 — estado Pix de uma parcela propria. `mensagemPublica` so vem em estados de atencao
+// (DIVERGENTE/FALHOU); nunca modela txid, copia-cola, endToEndId ou motivo tecnico. Ausencia de
+// estado Pix e 404 (nao um 200 com valor zero).
+export interface PixPagamentoParcelaResponse {
+  status: StatusPixParcelaPublico;
+  valor: number;
+  atualizadoEm: string; // ISO-8601 com offset
+  mensagemPublica: string | null;
+}
+
+// P3 — status Pix de uma operacao da carteira da propria credora. O backend serializa o status
+// como String (nome do StatusPixPublico); nunca modela tomador, contrato ou IDs internos.
+export interface PixOperacaoCredoraResponse {
+  status: StatusPixPublico;
+  valor: number;
+  atualizadoEm: string; // ISO-8601 com offset
+}

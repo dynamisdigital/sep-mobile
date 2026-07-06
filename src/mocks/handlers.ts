@@ -1228,6 +1228,115 @@ const credoresHandlers = [
   }),
 ];
 
+// Leituras Pix owner-scoped (M-Sprint 11 / backend Sprint 26 Gates P1-P3). Somente GET read-only;
+// 404 neutro para recurso alheio/inexistente/sem Pix. Nenhuma rota operacional (desembolsos,
+// referencias, recebimentos internos) e mockada aqui — o app nunca as consome.
+const PIX_ATUALIZADO_EM = '2026-07-06T10:00:00-03:00';
+
+// Estado Pix reseedavel por teste (`mock.pix`). `desembolso` controla o Gate P1 (um dos quatro
+// status publicos ou `AUSENTE` para 404); `falhar` faz a proxima leitura Pix retornar 5xx uma unica
+// vez (prova o caminho de retry). Default = happy path.
+const PIX_KEY = 'mock.pix';
+
+interface PixMockState {
+  desembolso: string;
+  falhar: boolean;
+}
+
+function lerPix(): PixMockState {
+  return lerEstado<PixMockState>(PIX_KEY, { desembolso: 'EM_PROCESSAMENTO', falhar: false });
+}
+
+// Efeito de teste: se `falhar`, consome a flag (o retry seguinte sucede) e sinaliza 5xx.
+function pixDeveFalhar(): boolean {
+  const estado = lerPix();
+  if (!estado.falhar) {
+    return false;
+  }
+  salvarEstado(PIX_KEY, { ...estado, falhar: false });
+  return true;
+}
+
+function erroPix(status: number, error: string, path: string) {
+  return HttpResponse.json(errorResponse(status, error, 'Leitura Pix indisponivel', path), {
+    status,
+  });
+}
+
+const pixHandlers = [
+  // P1 — status do desembolso Pix de um contrato proprio (reseedavel: status, `AUSENTE` e falha).
+  http.get(`${baseUrl}/pix/contratos/:contratoId/desembolso`, ({ params }) => {
+    const path = '/api/v1/pix/contratos/desembolso';
+    if (pixDeveFalhar()) {
+      return erroPix(500, 'Internal Server Error', path);
+    }
+    if (String(params['contratoId']) !== CONTRATO_FORMALIZACAO_ID) {
+      return erroPix(404, 'Not Found', path);
+    }
+    const desembolso = lerPix().desembolso;
+    if (desembolso === 'AUSENTE') {
+      return erroPix(404, 'Not Found', path);
+    }
+    return HttpResponse.json(
+      { status: desembolso, valor: 7000, atualizadoEm: PIX_ATUALIZADO_EM },
+      { status: 200 },
+    );
+  }),
+
+  // P2 — status Pix de uma parcela propria. Parcela 4 = AGUARDANDO; parcela 6 = DIVERGENTE (com
+  // mensagem publica sanitizada); demais = 404 neutro (sem estado Pix).
+  http.get(`${baseUrl}/pix/parcelas/:parcelaId/status`, ({ params }) => {
+    const path = '/api/v1/pix/parcelas/status';
+    if (pixDeveFalhar()) {
+      return erroPix(500, 'Internal Server Error', path);
+    }
+    const parcelaId = String(params['parcelaId']);
+    if (parcelaId === 'parcela-cobranca-4') {
+      return HttpResponse.json(
+        {
+          status: 'AGUARDANDO',
+          valor: 1000,
+          atualizadoEm: PIX_ATUALIZADO_EM,
+          mensagemPublica: null,
+        },
+        { status: 200 },
+      );
+    }
+    if (parcelaId === 'parcela-cobranca-6') {
+      return HttpResponse.json(
+        {
+          status: 'DIVERGENTE',
+          valor: 1000,
+          atualizadoEm: PIX_ATUALIZADO_EM,
+          mensagemPublica: 'Pagamento Pix em verificacao. Se persistir, procure o suporte.',
+        },
+        { status: 200 },
+      );
+    }
+    return erroPix(404, 'Not Found', path);
+  }),
+
+  // P3 — status Pix de uma operacao da propria carteira da credora. Mesma ownership do detalhe da
+  // carteira: sem credora / operacao alheia / inexistente -> 404 neutro.
+  http.get(`${baseUrl}/credores/carteira/:id/pix`, ({ params }) => {
+    const path = '/api/v1/credores/carteira/pix';
+    if (pixDeveFalhar()) {
+      return erroPix(500, 'Internal Server Error', path);
+    }
+    if (!lerCredora().presente) {
+      return erroPix(404, 'Not Found', path);
+    }
+    const operacao = operacoesMock().find((o) => o.id === String(params['id']));
+    if (!operacao) {
+      return erroPix(404, 'Not Found', path);
+    }
+    return HttpResponse.json(
+      { status: 'LIQUIDADO', valor: 10000, atualizadoEm: PIX_ATUALIZADO_EM },
+      { status: 200 },
+    );
+  }),
+];
+
 export const handlers = [
   ...baseHandlers,
   ...onboardingHandlers,
@@ -1235,5 +1344,6 @@ export const handlers = [
   ...stepUpHandlers,
   ...formalizacaoHandlers,
   ...cobrancaHandlers,
+  ...pixHandlers,
   ...credoresHandlers,
 ];
