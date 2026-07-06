@@ -207,14 +207,16 @@ export class ContratoDetailComponent implements OnInit {
         : await this.contratos.consultarPorProposta(this.propostaId);
       this.contratoId = contrato.id;
       this.contrato.set(contrato);
-      if (this.mostrarDesembolsoPix()) {
-        await this.consultarDesembolsoPix();
-      }
     } catch (err) {
       this.contrato.set(null);
       this.erro.set(this.mensagemErro(err));
     } finally {
       this.carregando.set(false);
+    }
+    // Consulta o desembolso APOS liberar o spinner principal (carregando ja e false aqui): a leitura
+    // Pix e sua lentidao/falha nunca bloqueiam o render do contrato. O card tem loading proprio.
+    if (this.mostrarDesembolsoPix()) {
+      await this.consultarDesembolsoPix();
     }
   }
 
