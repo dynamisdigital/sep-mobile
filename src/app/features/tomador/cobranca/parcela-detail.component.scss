@@ -11,6 +11,24 @@
     padding: var(--sep-space-24) var(--sep-space-16) var(--sep-space-48);
   }
 
+  &-pix {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+  }
+
+  &-subtitle {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: hsl(var(--foreground));
+  }
+
+  &-historico-meio--pix {
+    color: hsl(var(--primary));
+    font-weight: 600;
+  }
+
   &-header {
     display: flex;
     flex-direction: column;

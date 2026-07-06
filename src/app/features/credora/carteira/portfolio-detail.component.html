@@ -108,6 +108,48 @@
           Sem resumo de cobranca disponivel para esta operacao.
         </p>
       }
+
+      <section class="sep-operacao-detalhe-pix" data-testid="sep-operacao-detalhe-pix">
+        <h2 class="sep-operacao-detalhe-subtitle">Status Pix da operacao</h2>
+        @if (carregandoPix()) {
+          <div class="sep-operacao-detalhe-estado" data-testid="sep-operacao-detalhe-pix-loading">
+            <ion-spinner name="crescent"></ion-spinner>
+          </div>
+        } @else if (statusPix(); as pixOp) {
+          <sep-pix-status-publico [status]="pixOp.status" />
+          <dl class="sep-operacao-detalhe-grid">
+            <div class="sep-operacao-detalhe-row">
+              <dt>Valor</dt>
+              <dd data-testid="sep-operacao-detalhe-pix-valor">{{ formatarMoeda(pixOp.valor) }}</dd>
+            </div>
+            <div class="sep-operacao-detalhe-row">
+              <dt>Atualizado em</dt>
+              <dd>{{ formatarData(pixOp.atualizadoEm) }}</dd>
+            </div>
+          </dl>
+        } @else if (pixIndisponivel()) {
+          <p class="sep-operacao-detalhe-nota" data-testid="sep-operacao-detalhe-pix-indisponivel">
+            Sem status Pix para esta operacao.
+          </p>
+        } @else if (erroPix(); as msg) {
+          <div
+            class="sep-operacao-detalhe-estado"
+            role="alert"
+            data-testid="sep-operacao-detalhe-pix-erro"
+          >
+            <p>{{ msg }}</p>
+          </div>
+        }
+        <ion-button
+          expand="block"
+          fill="outline"
+          (click)="consultarStatusPix()"
+          [disabled]="carregandoPix()"
+          data-testid="sep-operacao-detalhe-pix-atualizar"
+        >
+          {{ carregandoPix() ? 'Atualizando...' : 'Atualizar status Pix' }}
+        </ion-button>
+      </section>
     }
   </section>
 </ion-content>

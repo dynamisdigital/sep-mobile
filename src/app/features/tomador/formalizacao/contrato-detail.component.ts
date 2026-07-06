@@ -13,6 +13,7 @@ import { IonButton, IonContent, IonSpinner } from '@ionic/angular/standalone';
 import {
   ApiErrorResponse,
   ContratoResponse,
+  PixDesembolsoTomadorResponse,
   StatusAssinaturaResponse,
   StatusEnvelope,
   StatusFormalizacao,
@@ -22,7 +23,9 @@ import {
 import { AuthService } from '../../../core/auth/auth.service';
 import { StepUpTokenStore } from '../../../core/auth/step-up-token.store';
 import { ContratosMobileService } from '../../../core/contratos/contratos-mobile.service';
+import { PixMobileService } from '../../../core/pix/pix-mobile.service';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
+import { PixStatusPublicoComponent } from '../../pix/pix-status-publico.component';
 import { ContratoContentComponent } from './contrato-content.component';
 
 const ROTULOS_TIPO: Record<TipoContrato, string> = {
@@ -72,7 +75,14 @@ const STATUS_FASE_ASSINATURA: readonly StatusFormalizacao[] = [
 @Component({
   selector: 'sep-contrato-detail',
   standalone: true,
-  imports: [IonContent, IonButton, IonSpinner, HeaderMobileComponent, ContratoContentComponent],
+  imports: [
+    IonContent,
+    IonButton,
+    IonSpinner,
+    HeaderMobileComponent,
+    ContratoContentComponent,
+    PixStatusPublicoComponent,
+  ],
   templateUrl: './contrato-detail.component.html',
   styleUrl: './contrato-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -83,6 +93,7 @@ export class ContratoDetailComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
   private readonly stepUpStore = inject(StepUpTokenStore);
+  private readonly pix = inject(PixMobileService);
 
   readonly contrato = signal<ContratoResponse | null>(null);
   readonly carregando = signal(true);
@@ -104,6 +115,12 @@ export class ContratoDetailComponent implements OnInit {
   readonly erroStatus = signal<string | null>(null);
   readonly baixandoDocumento = signal(false);
   readonly erroDocumento = signal<string | null>(null);
+
+  readonly desembolsoPix = signal<PixDesembolsoTomadorResponse | null>(null);
+  readonly carregandoPix = signal(false);
+  // 404 = ausencia neutra ("ainda nao disponivel"); distinto de erroPix (rede/5xx com retry).
+  readonly pixIndisponivel = signal(false);
+  readonly erroPix = signal<string | null>(null);
 
   // Aceite so e oferecido para a versao vigente em AGUARDANDO_ACEITE e ao titular CLIENTE. Versao
   // historica nunca habilita aceite. Ownership real e validado pelo backend.
@@ -138,6 +155,12 @@ export class ContratoDetailComponent implements OnInit {
   // "Ver parcelas" so apos ASSINADO: o backend so gera a agenda pos-assinatura. Antes disso a
   // jornada de parcelas apenas informaria indisponibilidade.
   readonly mostrarVerParcelas = computed<boolean>(
+    () => this.statusContratoEfetivo() === 'ASSINADO',
+  );
+
+  // O desembolso Pix so existe apos a assinatura (o financeiro desembolsa pos-contrato). Antes de
+  // ASSINADO nao ha desembolso; o card so aparece a partir dai (404 = ainda nao desembolsado).
+  readonly mostrarDesembolsoPix = computed<boolean>(
     () => this.statusContratoEfetivo() === 'ASSINADO',
   );
 
@@ -177,6 +200,7 @@ export class ContratoDetailComponent implements OnInit {
     this.erro.set(null);
     this.resetarHistorico();
     this.resetarAceite();
+    this.resetarDesembolsoPix();
     try {
       const contrato = this.contratoId
         ? await this.contratos.consultarPorId(this.contratoId)
@@ -188,6 +212,47 @@ export class ContratoDetailComponent implements OnInit {
       this.erro.set(this.mensagemErro(err));
     } finally {
       this.carregando.set(false);
+    }
+    // Consulta o desembolso APOS liberar o spinner principal (carregando ja e false aqui): a leitura
+    // Pix e sua lentidao/falha nunca bloqueiam o render do contrato. O card tem loading proprio.
+    if (this.mostrarDesembolsoPix()) {
+      await this.consultarDesembolsoPix();
+    }
+  }
+
+  // Reconsulta o desembolso ao reentrar na pagina (Ionic reusa a instancia da rota). Na primeira
+  // entrada o carregar() do ngOnInit ja consulta; aqui cobrimos o retorno a pagina cacheada.
+  ionViewWillEnter(): void {
+    if (this.contrato() && this.mostrarDesembolsoPix()) {
+      void this.consultarDesembolsoPix();
+    }
+  }
+
+  // Leitura owner-scoped do status do desembolso Pix (backend Sprint 26 — Gate P1). O guard de
+  // carregandoPix evita chamadas concorrentes/reentrantes sobrepostas. 404 = ausencia neutra
+  // ("ainda nao disponivel"); 403/rede/5xx = erro isolado com retry. Falha aqui nao bloqueia o
+  // restante da tela do contrato.
+  async consultarDesembolsoPix(): Promise<void> {
+    if (!this.contratoId || this.carregandoPix()) {
+      return;
+    }
+    this.carregandoPix.set(true);
+    this.erroPix.set(null);
+    // Limpa a ausencia da leitura anterior: sem isso, um 404 seguido de retry com 5xx manteria
+    // "indisponivel" com prioridade no template e esconderia o erro tecnico.
+    this.pixIndisponivel.set(false);
+    try {
+      this.desembolsoPix.set(await this.pix.consultarDesembolsoDoContrato(this.contratoId));
+      this.pixIndisponivel.set(false);
+    } catch (err) {
+      this.desembolsoPix.set(null);
+      if (err instanceof HttpErrorResponse && err.status === 404) {
+        this.pixIndisponivel.set(true);
+      } else {
+        this.erroPix.set('Nao foi possivel carregar o desembolso Pix. Tente novamente.');
+      }
+    } finally {
+      this.carregandoPix.set(false);
     }
   }
 
@@ -374,6 +439,10 @@ export class ContratoDetailComponent implements OnInit {
     }).format(new Date(iso));
   }
 
+  protected valorFormatado(valor: number): string {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
+  }
+
   private irParaStepUp(): void {
     void this.router.navigateByUrl(
       `/app/step-up?next=/app/formalizacao/contratos/${this.contratoId}`,
@@ -452,6 +521,13 @@ export class ContratoDetailComponent implements OnInit {
     this.erroStatus.set(null);
     this.baixandoDocumento.set(false);
     this.erroDocumento.set(null);
+  }
+
+  private resetarDesembolsoPix(): void {
+    this.desembolsoPix.set(null);
+    this.carregandoPix.set(false);
+    this.pixIndisponivel.set(false);
+    this.erroPix.set(null);
   }
 
   private mensagemErro(err: unknown): string {

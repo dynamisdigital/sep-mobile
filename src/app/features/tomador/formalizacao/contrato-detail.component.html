@@ -169,6 +169,63 @@
         </section>
       }
 
+      @if (mostrarDesembolsoPix()) {
+        <section
+          class="sep-contrato-detail-desembolso"
+          data-testid="sep-contrato-detail-desembolso"
+        >
+          <h2 class="sep-contrato-detail-subtitle">Desembolso Pix</h2>
+
+          @if (carregandoPix()) {
+            <div
+              class="sep-contrato-detail-estado"
+              data-testid="sep-contrato-detail-desembolso-loading"
+            >
+              <ion-spinner name="crescent"></ion-spinner>
+            </div>
+          } @else if (desembolsoPix(); as desembolso) {
+            <sep-pix-status-publico [status]="desembolso.status" />
+            <dl class="sep-contrato-detail-grid">
+              <div class="sep-contrato-detail-row">
+                <dt>Valor</dt>
+                <dd data-testid="sep-contrato-detail-desembolso-valor">
+                  {{ valorFormatado(desembolso.valor) }}
+                </dd>
+              </div>
+              <div class="sep-contrato-detail-row">
+                <dt>Atualizado em</dt>
+                <dd>{{ dataFormatada(desembolso.atualizadoEm) }}</dd>
+              </div>
+            </dl>
+          } @else if (pixIndisponivel()) {
+            <p
+              class="sep-contrato-detail-vazio"
+              data-testid="sep-contrato-detail-desembolso-indisponivel"
+            >
+              Desembolso ainda nao disponivel.
+            </p>
+          } @else if (erroPix(); as msg) {
+            <p
+              class="sep-contrato-detail-documento-erro"
+              role="alert"
+              data-testid="sep-contrato-detail-desembolso-erro"
+            >
+              {{ msg }}
+            </p>
+          }
+
+          <button
+            type="button"
+            class="sep-contrato-detail-status-atualizar"
+            (click)="consultarDesembolsoPix()"
+            [disabled]="carregandoPix()"
+            data-testid="sep-contrato-detail-desembolso-atualizar"
+          >
+            {{ carregandoPix() ? 'Atualizando...' : 'Atualizar' }}
+          </button>
+        </section>
+      }
+
       @if (mostrarVerParcelas()) {
         <ion-button
           expand="block"
