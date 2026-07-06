@@ -1228,6 +1228,80 @@ const credoresHandlers = [
   }),
 ];
 
+// Leituras Pix owner-scoped (M-Sprint 11 / backend Sprint 26 Gates P1-P3). Somente GET read-only;
+// 404 neutro para recurso alheio/inexistente/sem Pix. Nenhuma rota operacional (desembolsos,
+// referencias, recebimentos internos) e mockada aqui — o app nunca as consome.
+const PIX_ATUALIZADO_EM = '2026-07-06T10:00:00-03:00';
+
+const pixHandlers = [
+  // P1 — status do desembolso Pix de um contrato proprio.
+  http.get(`${baseUrl}/pix/contratos/:contratoId/desembolso`, ({ params }) => {
+    if (String(params['contratoId']) !== CONTRATO_FORMALIZACAO_ID) {
+      return HttpResponse.json(
+        errorResponse(
+          404,
+          'Not Found',
+          'Recurso Pix nao encontrado',
+          '/api/v1/pix/contratos/desembolso',
+        ),
+        { status: 404 },
+      );
+    }
+    return HttpResponse.json(
+      { status: 'EM_PROCESSAMENTO', valor: 7000, atualizadoEm: PIX_ATUALIZADO_EM },
+      { status: 200 },
+    );
+  }),
+
+  // P2 — status Pix de uma parcela propria. Parcela 4 = AGUARDANDO; parcela 6 = DIVERGENTE (com
+  // mensagem publica sanitizada); demais = 404 neutro (sem estado Pix).
+  http.get(`${baseUrl}/pix/parcelas/:parcelaId/status`, ({ params }) => {
+    const parcelaId = String(params['parcelaId']);
+    if (parcelaId === 'parcela-cobranca-4') {
+      return HttpResponse.json(
+        {
+          status: 'AGUARDANDO',
+          valor: 1000,
+          atualizadoEm: PIX_ATUALIZADO_EM,
+          mensagemPublica: null,
+        },
+        { status: 200 },
+      );
+    }
+    if (parcelaId === 'parcela-cobranca-6') {
+      return HttpResponse.json(
+        {
+          status: 'DIVERGENTE',
+          valor: 1000,
+          atualizadoEm: PIX_ATUALIZADO_EM,
+          mensagemPublica: 'Pagamento Pix em verificacao. Se persistir, procure o suporte.',
+        },
+        { status: 200 },
+      );
+    }
+    return HttpResponse.json(
+      errorResponse(404, 'Not Found', 'Recurso Pix nao encontrado', '/api/v1/pix/parcelas/status'),
+      { status: 404 },
+    );
+  }),
+
+  // P3 — status Pix de uma operacao da propria carteira da credora. Mesma ownership do detalhe da
+  // carteira: sem credora / operacao alheia / inexistente -> 404 neutro.
+  http.get(`${baseUrl}/credores/carteira/:id/pix`, ({ params }) => {
+    if (!lerCredora().presente) {
+      return credoraErro(404, 'Not Found', 'Status Pix da operacao nao encontrado');
+    }
+    const operacao = operacoesMock().find((o) => o.id === String(params['id']));
+    if (!operacao) {
+      return credoraErro(404, 'Not Found', 'Status Pix da operacao nao encontrado');
+    }
+    return HttpResponse.json(
+      { status: 'LIQUIDADO', valor: 10000, atualizadoEm: PIX_ATUALIZADO_EM },
+      { status: 200 },
+    );
+  }),
+];
+
 export const handlers = [
   ...baseHandlers,
   ...onboardingHandlers,
@@ -1235,5 +1309,6 @@ export const handlers = [
   ...stepUpHandlers,
   ...formalizacaoHandlers,
   ...cobrancaHandlers,
+  ...pixHandlers,
   ...credoresHandlers,
 ];
