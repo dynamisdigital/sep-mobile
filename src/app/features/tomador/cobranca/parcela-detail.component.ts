@@ -12,11 +12,14 @@ import { ViewWillEnter } from '@ionic/angular';
 import { IonContent, IonSpinner } from '@ionic/angular/standalone';
 
 import {
+  PixPagamentoParcelaResponse,
   RecebimentoTomadorResponse,
   ValorAtualizadoParcelaResponse,
 } from '../../../core/api/api.models';
 import { CobrancaMobileService } from '../../../core/cobranca/cobranca-mobile.service';
+import { PixMobileService } from '../../../core/pix/pix-mobile.service';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
+import { PixStatusParcelaComponent } from '../../pix/pix-status-parcela.component';
 import { ParcelaStatusComponent } from './parcela-status.component';
 
 // Detalhe de uma parcela com o valor atualizado calculado pelo backend (`consultarParcela`). O app
@@ -36,13 +39,20 @@ import { ParcelaStatusComponent } from './parcela-status.component';
 @Component({
   selector: 'sep-parcela-detail',
   standalone: true,
-  imports: [IonContent, IonSpinner, HeaderMobileComponent, ParcelaStatusComponent],
+  imports: [
+    IonContent,
+    IonSpinner,
+    HeaderMobileComponent,
+    ParcelaStatusComponent,
+    PixStatusParcelaComponent,
+  ],
   templateUrl: './parcela-detail.component.html',
   styleUrl: './parcela-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ParcelaDetailComponent implements OnInit, ViewWillEnter {
   private readonly cobranca = inject(CobrancaMobileService);
+  private readonly pix = inject(PixMobileService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -64,6 +74,14 @@ export class ParcelaDetailComponent implements OnInit, ViewWillEnter {
   readonly recebimentos = signal<RecebimentoTomadorResponse[] | null>(null);
   readonly historicoCarregando = signal(false);
   readonly historicoErro = signal<string | null>(null);
+
+  // Status Pix da parcela (M-11.3, backend Gate P2). Complementa — nao substitui — o status
+  // autoritativo de cobranca exibido no cabecalho.
+  readonly statusPix = signal<PixPagamentoParcelaResponse | null>(null);
+  readonly carregandoPix = signal(false);
+  // 404 = ausencia neutra ("sem pagamento Pix"); distinto de erroPix (rede/5xx com retry).
+  readonly pixIndisponivel = signal(false);
+  readonly erroPix = signal<string | null>(null);
 
   private contratoId = '';
   private parcelaId = '';
@@ -88,6 +106,7 @@ export class ParcelaDetailComponent implements OnInit, ViewWillEnter {
     const geracao = ++this.geracao;
     this.carregando.set(true);
     this.erro.set(null);
+    this.resetarStatusPix();
     try {
       const parcela = await this.cobranca.consultarParcela(this.parcelaId);
       if (geracao !== this.geracao) {
@@ -104,6 +123,44 @@ export class ParcelaDetailComponent implements OnInit, ViewWillEnter {
     } finally {
       if (geracao === this.geracao) {
         this.carregando.set(false);
+      }
+    }
+    // Status Pix APOS liberar o spinner do detalhe (nao bloqueia o render; o card tem loading
+    // proprio). So consulta quando ha parcela carregada; resposta obsoleta e descartada pela geracao.
+    if (this.parcela()) {
+      await this.consultarStatusPix(geracao);
+    }
+  }
+
+  // Leitura owner-scoped do status Pix da parcela (Gate P2). 404 = ausencia neutra ("sem pagamento
+  // Pix"); 403/rede/5xx = erro isolado com retry. Complementa o status de cobranca (nao substitui) e
+  // nao bloqueia o detalhe. Resposta de geracao anterior nao sobrescreve a atual.
+  async consultarStatusPix(geracao = this.geracao): Promise<void> {
+    if (!this.parcelaId) {
+      return;
+    }
+    this.carregandoPix.set(true);
+    this.erroPix.set(null);
+    try {
+      const status = await this.pix.consultarStatusPixDaParcela(this.parcelaId);
+      if (geracao !== this.geracao) {
+        return;
+      }
+      this.statusPix.set(status);
+      this.pixIndisponivel.set(false);
+    } catch (err) {
+      if (geracao !== this.geracao) {
+        return;
+      }
+      this.statusPix.set(null);
+      if (err instanceof HttpErrorResponse && err.status === 404) {
+        this.pixIndisponivel.set(true);
+      } else {
+        this.erroPix.set('Nao foi possivel carregar o status Pix. Tente novamente.');
+      }
+    } finally {
+      if (geracao === this.geracao) {
+        this.carregandoPix.set(false);
       }
     }
   }
@@ -179,6 +236,13 @@ export class ParcelaDetailComponent implements OnInit, ViewWillEnter {
     return new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(
       new Date(),
     );
+  }
+
+  private resetarStatusPix(): void {
+    this.statusPix.set(null);
+    this.carregandoPix.set(false);
+    this.pixIndisponivel.set(false);
+    this.erroPix.set(null);
   }
 
   private tratarErro(err: unknown): void {

@@ -5,11 +5,14 @@ import { ActivatedRoute, provideRouter, Router } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  PixPagamentoParcelaResponse,
   RecebimentoTomadorResponse,
   StatusParcela,
+  StatusPixParcelaPublico,
   ValorAtualizadoParcelaResponse,
 } from '../../../core/api/api.models';
 import { CobrancaMobileService } from '../../../core/cobranca/cobranca-mobile.service';
+import { PixMobileService } from '../../../core/pix/pix-mobile.service';
 import { ParcelaDetailComponent } from './parcela-detail.component';
 
 const CONTRATO_ID = '1f155daf-c0e8-6f15-be21-5f51a516a416';
@@ -19,11 +22,16 @@ const PARCELA_ID = '3f155daf-c0e8-6f15-be21-5f51a516a417';
 function setup(
   params: { contratoId?: string; parcelaId?: string },
   svc: Partial<Record<keyof CobrancaMobileService, ReturnType<typeof vi.fn>>> = {},
+  pixSvc: Partial<Record<keyof PixMobileService, ReturnType<typeof vi.fn>>> = {},
 ) {
   const cobranca = {
     consultarParcela: svc.consultarParcela ?? vi.fn().mockResolvedValue(parcelaFixture()),
     consultarRecebimentos:
       svc.consultarRecebimentos ?? vi.fn().mockResolvedValue(recebimentosFixture()),
+  };
+  const pix = {
+    consultarStatusPixDaParcela:
+      pixSvc.consultarStatusPixDaParcela ?? vi.fn().mockResolvedValue(statusPixFixture()),
   };
   const activatedRoute = {
     snapshot: {
@@ -35,12 +43,13 @@ function setup(
     providers: [
       provideRouter([]),
       { provide: CobrancaMobileService, useValue: cobranca },
+      { provide: PixMobileService, useValue: pix },
       { provide: ActivatedRoute, useValue: activatedRoute },
     ],
   });
   const injector = TestBed.inject(EnvironmentInjector);
   const component = runInInjectionContext(injector, () => new ParcelaDetailComponent());
-  return { component, cobranca };
+  return { component, cobranca, pix };
 }
 
 describe('ParcelaDetailComponent', () => {
@@ -278,6 +287,102 @@ describe('ParcelaDetailComponent', () => {
     await component.carregarHistorico();
     expect(cobranca.consultarRecebimentos).toHaveBeenCalledTimes(2);
   });
+
+  // --- Status Pix da parcela (M-11.3 — backend Gate P2) ---
+
+  it('consulta o status Pix apos carregar a parcela e expoe o estado publico', async () => {
+    const { component, pix } = setup(
+      { contratoId: CONTRATO_ID, parcelaId: PARCELA_ID },
+      {},
+      { consultarStatusPixDaParcela: vi.fn().mockResolvedValue(statusPixFixture('LIQUIDADO')) },
+    );
+    await component.ngOnInit();
+    expect(pix.consultarStatusPixDaParcela).toHaveBeenCalledWith(PARCELA_ID);
+    expect(component.statusPix()?.status).toBe('LIQUIDADO');
+    expect(component.pixIndisponivel()).toBe(false);
+    expect(component.erroPix()).toBeNull();
+  });
+
+  it('FALHOU expoe a mensagem publica e nao substitui o status autoritativo de cobranca', async () => {
+    const { component } = setup(
+      { contratoId: CONTRATO_ID, parcelaId: PARCELA_ID },
+      { consultarParcela: vi.fn().mockResolvedValue(parcelaFixture('ATRASADA')) },
+      {
+        consultarStatusPixDaParcela: vi
+          .fn()
+          .mockResolvedValue(statusPixFixture('FALHOU', 'Pagamento Pix nao concluido.')),
+      },
+    );
+    await component.ngOnInit();
+    expect(component.statusPix()?.status).toBe('FALHOU');
+    expect(component.statusPix()?.mensagemPublica).toBe('Pagamento Pix nao concluido.');
+    // O status Pix (FALHOU) nunca vira pago nem altera o status de cobranca da parcela.
+    expect(component.parcela()?.status).toBe('ATRASADA');
+  });
+
+  it('404 do status Pix vira ausencia neutra (sem pagamento Pix), nao erro', async () => {
+    const { component } = setup(
+      { contratoId: CONTRATO_ID, parcelaId: PARCELA_ID },
+      {},
+      {
+        consultarStatusPixDaParcela: vi
+          .fn()
+          .mockRejectedValue(new HttpErrorResponse({ status: 404 })),
+      },
+    );
+    await component.ngOnInit();
+    expect(component.pixIndisponivel()).toBe(true);
+    expect(component.erroPix()).toBeNull();
+    expect(component.statusPix()).toBeNull();
+  });
+
+  it('rede/5xx do status Pix vira erro isolado, e o retry recarrega', async () => {
+    const consultarStatusPixDaParcela = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('rede'))
+      .mockResolvedValue(statusPixFixture('EM_PROCESSAMENTO'));
+    const { component } = setup(
+      { contratoId: CONTRATO_ID, parcelaId: PARCELA_ID },
+      {},
+      { consultarStatusPixDaParcela },
+    );
+    await component.ngOnInit();
+    expect(component.erroPix()).toContain('Tente novamente');
+    expect(component.pixIndisponivel()).toBe(false);
+    await component.consultarStatusPix();
+    expect(consultarStatusPixDaParcela).toHaveBeenCalledTimes(2);
+    expect(component.statusPix()?.status).toBe('EM_PROCESSAMENTO');
+    expect(component.erroPix()).toBeNull();
+  });
+
+  it('falha do status Pix e isolada: o detalhe da parcela permanece intacto', async () => {
+    const { component } = setup(
+      { contratoId: CONTRATO_ID, parcelaId: PARCELA_ID },
+      {},
+      { consultarStatusPixDaParcela: vi.fn().mockRejectedValue(new Error('rede')) },
+    );
+    await component.ngOnInit();
+    expect(component.parcela()).not.toBeNull();
+    expect(component.erro()).toBeNull();
+    expect(component.erroPix()).not.toBeNull();
+  });
+
+  it('parcela com erro (403) nao consulta o status Pix', async () => {
+    const { component, pix } = setup(
+      { contratoId: CONTRATO_ID, parcelaId: PARCELA_ID },
+      { consultarParcela: vi.fn().mockRejectedValue(new HttpErrorResponse({ status: 403 })) },
+    );
+    await component.ngOnInit();
+    expect(pix.consultarStatusPixDaParcela).not.toHaveBeenCalled();
+  });
+
+  it('reentrada (ionViewWillEnter) reconsulta o status Pix junto com a parcela', async () => {
+    const { component, pix } = setup({ contratoId: CONTRATO_ID, parcelaId: PARCELA_ID });
+    await component.ngOnInit();
+    expect(pix.consultarStatusPixDaParcela).toHaveBeenCalledTimes(1);
+    component.ionViewWillEnter();
+    await vi.waitFor(() => expect(pix.consultarStatusPixDaParcela).toHaveBeenCalledTimes(2));
+  });
 });
 
 function recebimentosFixture(): RecebimentoTomadorResponse[] {
@@ -310,5 +415,17 @@ function parcelaFixture(status: StatusParcela = 'ATRASADA'): ValorAtualizadoParc
     valorDevidoAtualizado: 1180,
     totalRecebido: 0,
     valorEmAberto: 1180,
+  };
+}
+
+function statusPixFixture(
+  status: StatusPixParcelaPublico = 'AGUARDANDO',
+  mensagemPublica: string | null = null,
+): PixPagamentoParcelaResponse {
+  return {
+    status,
+    valor: 350,
+    atualizadoEm: '2026-07-06T10:00:00-03:00',
+    mensagemPublica,
   };
 }
