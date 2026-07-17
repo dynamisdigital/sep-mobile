@@ -1,4 +1,4 @@
-import { Location } from '@angular/common';
+import { DOCUMENT, Location } from '@angular/common';
 import { Injectable, Injector, OnDestroy, effect, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { App } from '@capacitor/app';
@@ -49,6 +49,7 @@ export class NativeRuntimeService implements OnDestroy {
   private readonly ionicPlatform = inject(Platform);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
+  private readonly document = inject(DOCUMENT);
   private readonly injector = inject(Injector);
 
   private initialized = false;
@@ -114,7 +115,14 @@ export class NativeRuntimeService implements OnDestroy {
     // Fora das raizes, volta uma entrada do historico. Se o destino for tela
     // publica com sessao ativa, o redirectAuthenticatedGuard devolve o usuario
     // a home autenticada — a fronteira de autenticacao permanece intacta.
-    this.location.back();
+    // Historico vazio (cold start direto em rota interna): Location.back()
+    // seria no-op e deixaria o usuario preso; volta ao ponto de entrada.
+    const historyLength = this.document.defaultView?.history.length ?? 0;
+    if (historyLength > 1) {
+      this.location.back();
+      return;
+    }
+    await this.router.navigateByUrl('/');
   }
 
   private async registerDeepLinkListener(): Promise<void> {

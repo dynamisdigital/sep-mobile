@@ -1,4 +1,4 @@
-import { Location } from '@angular/common';
+import { DOCUMENT, Location } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { App } from '@capacitor/app';
@@ -31,6 +31,16 @@ describe('NativeRuntimeService', () => {
   const platformServiceMock = { isNative: vi.fn(() => true) };
   const routerMock = { url: '/app/inicio', navigateByUrl: vi.fn(async () => true) };
   const locationMock = { back: vi.fn() };
+  // DOCUMENT falso compartilhado pelo ThemeService (classList/localStorage) e
+  // pelo NativeRuntimeService (history.length).
+  const historyMock = { length: 5 };
+  const documentMock = {
+    documentElement: { classList: { toggle: vi.fn() } },
+    defaultView: {
+      localStorage: { getItem: vi.fn(() => null), setItem: vi.fn(), removeItem: vi.fn() },
+      history: historyMock,
+    },
+  };
   const backButtonUnsubscribe = vi.fn();
   const ionicPlatformMock = {
     backButton: {
@@ -41,7 +51,8 @@ describe('NativeRuntimeService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    window.localStorage.removeItem('SEP_THEME');
+    historyMock.length = 5;
+    documentMock.defaultView.localStorage.getItem.mockReturnValue(null);
     platformServiceMock.isNative.mockReturnValue(true);
     routerMock.url = '/app/inicio';
     vi.mocked(App.addListener).mockResolvedValue(
@@ -54,6 +65,7 @@ describe('NativeRuntimeService', () => {
         { provide: PlatformService, useValue: platformServiceMock },
         { provide: Router, useValue: routerMock },
         { provide: Location, useValue: locationMock },
+        { provide: DOCUMENT, useValue: documentMock },
         { provide: Platform, useValue: ionicPlatformMock },
       ],
     });
@@ -201,6 +213,17 @@ describe('NativeRuntimeService', () => {
 
       expect(App.exitApp).not.toHaveBeenCalled();
       expect(routerMock.navigateByUrl).not.toHaveBeenCalled();
+    });
+
+    it('com historico vazio volta ao ponto de entrada em vez de no-op', async () => {
+      historyMock.length = 1;
+      await service.init();
+      routerMock.url = '/app/perfil';
+
+      capturarBackButtonHandler()();
+      await vi.waitFor(() => expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/'));
+
+      expect(locationMock.back).not.toHaveBeenCalled();
     });
 
     it('no splash (/) o voltar tambem encerra o app', async () => {
