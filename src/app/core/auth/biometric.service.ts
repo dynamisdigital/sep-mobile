@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { Capacitor } from '@capacitor/core';
 
+import { PlatformService } from '../native/platform.service';
 import { TokenStorageService } from './token-storage.service';
 
 /**
@@ -15,6 +15,7 @@ import { TokenStorageService } from './token-storage.service';
 @Injectable({ providedIn: 'root' })
 export class BiometricService {
   private readonly tokenStorage = inject(TokenStorageService);
+  private readonly platformService = inject(PlatformService);
 
   /** Disponibilidade da biometria nativa no dispositivo. */
   private readonly availableState = signal<boolean>(false);
@@ -27,7 +28,7 @@ export class BiometricService {
    * {@code false} para forcar fallback TOTP.
    */
   async checkAvailability(): Promise<boolean> {
-    if (Capacitor.getPlatform() === 'web') {
+    if (!this.platformService.isNative()) {
       this.availableState.set(false);
       return false;
     }
