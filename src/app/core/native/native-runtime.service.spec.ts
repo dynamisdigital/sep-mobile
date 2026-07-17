@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { App } from '@capacitor/app';
@@ -29,6 +30,7 @@ describe('NativeRuntimeService', () => {
 
   const platformServiceMock = { isNative: vi.fn(() => true) };
   const routerMock = { url: '/app/inicio', navigateByUrl: vi.fn(async () => true) };
+  const locationMock = { back: vi.fn() };
   const backButtonUnsubscribe = vi.fn();
   const ionicPlatformMock = {
     backButton: {
@@ -51,6 +53,7 @@ describe('NativeRuntimeService', () => {
       providers: [
         { provide: PlatformService, useValue: platformServiceMock },
         { provide: Router, useValue: routerMock },
+        { provide: Location, useValue: locationMock },
         { provide: Platform, useValue: ionicPlatformMock },
       ],
     });
@@ -189,14 +192,25 @@ describe('NativeRuntimeService', () => {
       expect(routerMock.navigateByUrl).not.toHaveBeenCalled();
     });
 
-    it('fora da raiz volta ao ponto de entrada sem sair do app', async () => {
+    it('fora da raiz volta uma entrada do historico sem sair do app', async () => {
       await service.init();
       routerMock.url = '/app/perfil?aba=dados';
 
       capturarBackButtonHandler()();
-      await vi.waitFor(() => expect(routerMock.navigateByUrl).toHaveBeenCalledWith('/'));
+      await vi.waitFor(() => expect(locationMock.back).toHaveBeenCalledTimes(1));
 
       expect(App.exitApp).not.toHaveBeenCalled();
+      expect(routerMock.navigateByUrl).not.toHaveBeenCalled();
+    });
+
+    it('no splash (/) o voltar tambem encerra o app', async () => {
+      await service.init();
+      routerMock.url = '/';
+
+      capturarBackButtonHandler()();
+      await vi.waitFor(() => expect(App.exitApp).toHaveBeenCalledTimes(1));
+
+      expect(locationMock.back).not.toHaveBeenCalled();
     });
   });
 

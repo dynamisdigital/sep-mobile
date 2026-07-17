@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { Injectable, Injector, OnDestroy, effect, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { App } from '@capacitor/app';
@@ -16,7 +17,7 @@ import { PlatformService } from './platform.service';
 const BACK_BUTTON_FALLBACK_PRIORITY = -1;
 
 /** Rotas onde o botao voltar do Android encerra o app de forma previsivel. */
-const EXIT_ROUTES = new Set(['/welcome', '/login', '/app/inicio', '/app/credora/inicio']);
+const EXIT_ROUTES = new Set(['/', '/welcome', '/login', '/app/inicio', '/app/credora/inicio']);
 
 /** Scheme oficial do deep link Android (AndroidManifest.xml). */
 const DEEP_LINK_SCHEME = 'com.dynamis.sep.mobile:';
@@ -47,6 +48,7 @@ export class NativeRuntimeService implements OnDestroy {
   private readonly themeService = inject(ThemeService);
   private readonly ionicPlatform = inject(Platform);
   private readonly router = inject(Router);
+  private readonly location = inject(Location);
   private readonly injector = inject(Injector);
 
   private initialized = false;
@@ -109,9 +111,10 @@ export class NativeRuntimeService implements OnDestroy {
       }
       return;
     }
-    // Fora das raizes sem historico proprio: volta ao ponto de entrada, que
-    // redireciona conforme a sessao (splash -> welcome ou /app/inicio).
-    await this.router.navigateByUrl('/');
+    // Fora das raizes, volta uma entrada do historico. Se o destino for tela
+    // publica com sessao ativa, o redirectAuthenticatedGuard devolve o usuario
+    // a home autenticada — a fronteira de autenticacao permanece intacta.
+    this.location.back();
   }
 
   private async registerDeepLinkListener(): Promise<void> {
