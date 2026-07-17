@@ -102,3 +102,58 @@ jobs:
           path: www/
           if-no-files-found: error
           retention-days: 14
+
+  android:
+    # Build nativo Android (M-Sprint 13). Node 22 obrigatorio: o Capacitor
+    # CLI 8 aborta com Node < 22 (ADR 0019). Sem assinatura nem keystore —
+    # apenas assembleDebug prova que o projeto android/ compila reproduzivel.
+    name: Build Android (debug)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    needs: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Setup JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle cache
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build web + sync Android
+        run: |
+          npm run build
+          npx cap sync android
+
+      - name: Gradle unit tests + lint
+        run: |
+          cd android
+          ./gradlew test lint --console=plain
+
+      - name: Assemble debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug --console=plain
+          test -f app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v7
+        with:
+          name: mobile-android-apk-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
