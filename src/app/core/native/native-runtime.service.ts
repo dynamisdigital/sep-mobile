@@ -166,6 +166,6 @@ export class NativeRuntimeService implements OnDestroy {
    * normalizacao da URL nao cobre em path opaco) derruba o deep link inteiro.
    */
   private contemDotSegment(rawUrl: string): boolean {
-    return rawUrl.toLowerCase().replaceAll('%2e', '.').includes('..');
+    return rawUrl.toLowerCase().replace(/%2e/g, '.').includes('..');
   }
 }
