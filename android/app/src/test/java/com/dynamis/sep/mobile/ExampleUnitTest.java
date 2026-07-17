@@ -1,4 +1,4 @@
-package com.getcapacitor.myapp;
+package com.dynamis.sep.mobile;
 
 import static org.junit.Assert.*;
 
