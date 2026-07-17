@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Placeholder da marca SEP (M-Sprint 13) — wordmark "SEP" em branco, fundo transparente.
+  Fonte versionada usada para gerar icone adaptativo e splash Android via @capacitor/assets
+  (fundos solidos definidos por flag no comando; ver README §Android).
+  Substituir por arte oficial quando existir (follow-up registrado na SPRINT-M-13-PR.md).
+-->
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <text
+    x="512"
+    y="512"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="DejaVu Sans, sans-serif"
+    font-weight="bold"
+    font-size="300"
+    letter-spacing="8"
+    fill="#FFFFFF"
+  >SEP</text>
+</svg>

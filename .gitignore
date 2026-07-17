@@ -65,8 +65,7 @@ yarn-error.log
 testem.log
 /typings
 
-# Capacitor / native
-android/
+# Capacitor / native (android/ e versionado; artefatos de build cobertos por android/.gitignore)
 ios/
 .capacitor/
 

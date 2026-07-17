@@ -91,21 +91,53 @@ A separacao por **jornada** (tomador/credora) materializa o escopo reduzido do m
 - `appName: 'SEP'`
 - `webDir: 'www'`
 
-**Android e iOS** ficam fora do escopo da M-Sprint 0 (PWA-first). Adicao via `cap:add` entra na Epic 14 Fase Mobile 2+, depois da estabilizacao das M-Sprints 0-4.
+**Android** entrou na M-Sprint 13 (projeto `android/` versionado — ver secao abaixo). **iOS** entra na M-Sprint 14.
+
+## Android (nativo)
+
+Projeto gerado com `npx cap add android` (Capacitor 8.4 — [ADR 0019](../docs-SEP/adr/0019-baseline-capacitor-8-mobile.md)).
+
+**Pre-requisitos** (alem do setup PWA):
+
+- Node.js `>= 22` (o Capacitor CLI 8 aborta com Node < 22; use nvm — o restante do repo segue rodando em Node 20)
+- JDK 21
+- Android SDK: Platform 36, build-tools 36.0.0, platform-tools (o Gradle wrapper 8.14.3/AGP 8.13.0 baixam o resto)
+- Emulador/device para smoke (KVM no Linux)
+
+**Build e execucao**:
+
+```bash
+npm run build            # web prod -> www/
+npx cap sync android     # copia www/ + plugins para android/
+cd android
+./gradlew assembleDebug  # APK debug em app/build/outputs/apk/debug/
+./gradlew bundleDebug    # AAB debug em app/build/outputs/bundle/debug/
+npx cap run android      # instala e abre no emulador/device
+```
+
+**Configuracao relevante**:
+
+- `AndroidManifest.xml`: `allowBackup=false` (tokens em SharedPreferences nao entram em auto-backup), somente permissao INTERNET (VIBRATE vem do merge do plugin haptics), deep link por scheme `com.dynamis.sep.mobile://` (App Links https ficam para a Fase 5)
+- Icone/splash gerados de `resources/logo.svg` (fonte versionada, placeholder do DS) via `npx @capacitor/assets generate --android --assetPath resources --iconBackgroundColor '#2E67AD' --iconBackgroundColorDark '#2E67AD' --splashBackgroundColor '#2E67AD' --splashBackgroundColorDark '#14181F'`
+- Integracao runtime em `src/app/core/native/` (status bar por tema, back button, deep links por allowlist passando pelos guards)
+- **Nunca versionar**: keystore, `local.properties`, binarios (cobertos por `android/.gitignore`)
+
+**Smoke com MSW** (sem backend): `npx ng build --configuration dev-offline && npx cap sync android && cd android && ./gradlew assembleDebug` — o APK resultante embute MSW (mesmo seed dos e2e). Smoke contra backend real `:8080` permanece validacao manual.
 
 ## Continuous Integration
 
 `.github/workflows/ci.yml` (`name: CI-MOBILE`) roda em pushes para `feature/**`, `develop` e `main`, alem de PRs para `develop` e `main`.
 
-A pipeline tem duas fases:
+A pipeline tem tres fases:
 
 1. `Test, Lint, Coverage` — instala dependencias com `npm ci --legacy-peer-deps`, roda `format:check`, `lint`, `lint:scss` e `test:coverage`, e publica o artifact `mobile-coverage` (relatorio v8) com retention 14 dias.
 2. `Build PWA` — depende da fase anterior, reinstala dependencias com `npm ci --legacy-peer-deps`, roda `npm run build`, valida a existencia de `www/` e publica o artifact `mobile-pwa-www` com retention 14 dias.
+3. `Build Android (debug)` — depende de `test`; Node 22 + JDK 21 + cache Gradle, `npm run build` + `cap sync android`, `./gradlew test lint assembleDebug` e publica o artifact `mobile-android-apk-debug`. Sem assinatura nem keystore (release fica na Fase 5).
 
 ## Stack
 
 - Ionic 8 + Angular 20.3.x (Standalone Components, Signals, strict)
-- Capacitor 8.3 (Ionic CLI gerou Cap 8 por default; PRD/ADR 0003 originalmente apontavam Cap 6 — atualizar Ionic e mais alinhado que regredir Capacitor)
+- Capacitor 8.4 com plataforma Android versionada ([ADR 0019](../docs-SEP/adr/0019-baseline-capacitor-8-mobile.md) supersede o ADR 0003 no recorte do Capacitor)
 - SCSS puro — sem Bootstrap/Tailwind/Material; componentes Ionic customizados via CSS variables
 - ESLint 9 + Prettier 3 + Stylelint 16
 - Husky 9 + lint-staged 15

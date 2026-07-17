@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 
+import { redirectAuthenticatedGuard } from '../../core/guards/redirect-authenticated.guard';
+
 export const PUBLIC_ROUTES: Routes = [
   {
     path: '',
@@ -7,10 +9,12 @@ export const PUBLIC_ROUTES: Routes = [
   },
   {
     path: 'welcome',
+    canActivate: [redirectAuthenticatedGuard],
     loadComponent: () => import('./welcome/welcome.component').then((m) => m.WelcomeComponent),
   },
   {
     path: 'login',
+    canActivate: [redirectAuthenticatedGuard],
     loadComponent: () => import('./login/login.component').then((m) => m.LoginComponent),
   },
   {
@@ -25,6 +29,7 @@ export const PUBLIC_ROUTES: Routes = [
   },
   {
     path: 'register',
+    canActivate: [redirectAuthenticatedGuard],
     loadComponent: () => import('./register/register.component').then((m) => m.RegisterComponent),
   },
 ];

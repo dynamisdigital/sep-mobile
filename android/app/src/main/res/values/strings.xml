@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SEP</string>
+    <string name="title_activity_main">SEP</string>
+    <string name="package_name">com.dynamis.sep.mobile</string>
+    <string name="custom_url_scheme">com.dynamis.sep.mobile</string>
+</resources>

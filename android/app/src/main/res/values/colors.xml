@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<resources>
+    <!-- Tokens do New Design System SEP (src/styles/_sep-mobile-ds-tokens.scss) -->
+    <!-- $sep-primary: hsl(213deg 58% 43%) -->
+    <color name="colorPrimary">#2E67AD</color>
+    <!-- $sep-primary-shade: hsl(213deg 58% 36%) -->
+    <color name="colorPrimaryDark">#275691</color>
+    <!-- $sep-secondary: hsl(145deg 50% 50%) -->
+    <color name="colorAccent">#40BF75</color>
+</resources>
