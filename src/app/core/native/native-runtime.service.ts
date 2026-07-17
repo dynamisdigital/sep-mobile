@@ -137,6 +137,9 @@ export class NativeRuntimeService implements OnDestroy {
    * allowlist. Nunca registra a URL bruta em log.
    */
   private extractAllowedPath(rawUrl: string): string | null {
+    if (this.contemDotSegment(rawUrl)) {
+      return null;
+    }
     let parsed: URL;
     try {
       parsed = new URL(rawUrl);
@@ -155,5 +158,14 @@ export class NativeRuntimeService implements OnDestroy {
 
   private stripQueryAndFragment(url: string): string {
     return url.split(/[?#]/, 1)[0];
+  }
+
+  /**
+   * Rejeicao conservadora de path traversal: nenhuma rota legitima do app
+   * contem `..`, entao qualquer ocorrencia (inclusive percent-encoded, que a
+   * normalizacao da URL nao cobre em path opaco) derruba o deep link inteiro.
+   */
+  private contemDotSegment(rawUrl: string): boolean {
+    return rawUrl.toLowerCase().replaceAll('%2e', '.').includes('..');
   }
 }

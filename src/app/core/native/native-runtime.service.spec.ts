@@ -157,6 +157,18 @@ describe('NativeRuntimeService', () => {
       expect(routerMock.navigateByUrl).not.toHaveBeenCalled();
     });
 
+    it('rejeita path traversal com dot segments', async () => {
+      await service.init();
+      const callback = capturarDeepLinkCallback();
+
+      callback({ url: 'com.dynamis.sep.mobile://app/../../login' });
+      callback({ url: 'com.dynamis.sep.mobile:app/../..' });
+      callback({ url: 'com.dynamis.sep.mobile://app/%2E%2E/inicio' });
+      callback({ url: 'com.dynamis.sep.mobile://app/.%2e/inicio' });
+
+      expect(routerMock.navigateByUrl).not.toHaveBeenCalled();
+    });
+
     it('ignora URL malformada sem lancar erro', async () => {
       await service.init();
       const callback = capturarDeepLinkCallback();
