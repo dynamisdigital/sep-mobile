@@ -107,7 +107,9 @@ test.describe('M-Sprint 10 - jornada da empresa credora (MSW)', () => {
     });
     await expect(paginaAtiva(page).getByTestId('sep-operacao-detalhe-pagas')).toContainText('2');
 
-    // Assercoes negativas: sem dados internos/admin/aporte/tomador
+    // Assercoes negativas: sem dados internos/admin/tomador. A M-Sprint 16 passou a exibir os
+    // aportes da propria operacao em somente leitura, entao o que nao pode aparecer aqui e a
+    // superficie de mutacao (registrar/decidir/matching), nao a palavra "aporte".
     const corpo = (await page.locator('body').innerText())
       .normalize('NFD')
       .replace(/[̀-ͯ]/g, '')
@@ -115,7 +117,8 @@ test.describe('M-Sprint 10 - jornada da empresa credora (MSW)', () => {
     expect(corpo).not.toContain('justificativa');
     expect(corpo).not.toContain('associacao assistida operacional');
     expect(corpo).not.toContain('escrow');
-    expect(corpo).not.toContain('aporte de');
+    expect(corpo).not.toContain('registrar aporte');
+    expect(corpo).not.toContain('matching');
     expect(corpo).not.toContain('sincronizar');
     expect(corpo).not.toContain('contr-cred');
 
@@ -193,7 +196,12 @@ test.describe('M-Sprint 10 - jornada da empresa credora (MSW)', () => {
     expect(texto).not.toContain('matching');
     expect(texto).not.toContain('escrow');
     expect(texto).not.toContain('idempotency');
-    expect(texto).not.toContain('aporte-cred');
+
+    // IDs internos: checa o HTML, nao so o texto visivel — um id vazado por atributo
+    // (title/aria-label/href) nao apareceria em innerText.
+    const html = (await card.innerHTML()).toLowerCase();
+    expect(html).not.toContain('aporte-cred');
+    expect(html).not.toContain('oper-carteira');
   });
 
   test('operacao sem aportes mostra estado vazio, nao erro', async ({ page }) => {
