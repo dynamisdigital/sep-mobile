@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import {
+  AporteCredoraResponse,
   ElegibilidadeResponse,
   EmpresaCredoraResponse,
   InteresseResponse,
@@ -73,6 +74,16 @@ export class CredoraMobileService {
   consultarOperacao(operacaoId: string): Promise<OperacaoCarteiraResponse> {
     return firstValueFrom(
       this.http.get<OperacaoCarteiraResponse>(`${CREDORES_URL}/carteira/${operacaoId}`),
+    );
+  }
+
+  // Leitura owner-scoped dos aportes de uma operacao da propria credora (backend Sprint 29).
+  // Autenticado e sem step-up: o backend resolve ownership e devolve 404 neutro para operacao
+  // alheia ou inexistente, e ja entrega a lista ordenada. Registrar aporte exige FINANCEIRO/ADMIN
+  // e permanece fora do recorte mobile (Gate M-16.0).
+  listarAportes(operacaoId: string): Promise<AporteCredoraResponse[]> {
+    return firstValueFrom(
+      this.http.get<AporteCredoraResponse[]>(`${CREDORES_URL}/operacoes/${operacaoId}/aportes`),
     );
   }
 }

@@ -568,3 +568,21 @@ export interface PixOperacaoCredoraResponse {
   valor: number;
   atualizadoEm: string; // ISO-8601 com offset
 }
+
+// --- Aportes owner-scoped da credora (M-Sprint 16 / backend Sprint 29) ---
+
+// Ciclo de vida do aporte no backend: PENDENTE -> EM_PROCESSAMENTO -> LIQUIDADO | FALHOU. O app
+// apenas rotula o estado recebido; nunca deriva, antecipa transicao ou presume liquidacao.
+export type StatusAporteCredora = 'PENDENTE' | 'EM_PROCESSAMENTO' | 'LIQUIDADO' | 'FALHOU';
+
+// Recorte publico do aporte de uma operacao da propria credora. Nao modela escrow, provider,
+// Idempotency-Key, decisor nem motivo tecnico de falha. `valor` serve apenas para formatacao.
+// Registrar aporte exige FINANCEIRO/ADMIN e esta fora do recorte mobile (Gate M-16.0).
+export interface AporteCredoraResponse {
+  id: string;
+  operacaoId: string;
+  status: StatusAporteCredora;
+  valor: number;
+  dataCriacao: string; // ISO-8601 com offset
+  dataAtualizacao: string; // ISO-8601 com offset
+}
