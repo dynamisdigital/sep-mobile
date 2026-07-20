@@ -1040,6 +1040,9 @@ interface CredoraMockState {
   elegibilidade: 'ELEGIVEL' | 'PENDENTE' | 'INELEGIVEL';
   interesse: 'ATIVO' | 'AUSENTE';
   carteiraVazia: boolean;
+  // M-16.4: `LISTA` devolve os quatro estados de aporte; `VAZIA` prova o estado vazio (200 []).
+  // Operacao alheia/inexistente continua caindo no 404 neutro do proprio handler.
+  aportes: 'LISTA' | 'VAZIA';
 }
 
 function lerCredora(): CredoraMockState {
@@ -1048,6 +1051,7 @@ function lerCredora(): CredoraMockState {
     elegibilidade: 'ELEGIVEL',
     interesse: 'AUSENTE',
     carteiraVazia: false,
+    aportes: 'LISTA',
   });
 }
 
@@ -1128,6 +1132,47 @@ function operacoesMock() {
         proximoVencimento: '2026-08-15',
       },
       dataCriacao: '2026-07-01T09:00:00-03:00',
+    },
+  ];
+}
+
+// Aportes owner-scoped de uma operacao da propria credora (M-Sprint 16 / backend Sprint 29).
+// Somente leitura: o mock nao expoe POST — registrar aporte exige FINANCEIRO/ADMIN, persona fora
+// do mobile (Gate M-16.0). Ordem desc por dataCriacao, como o backend entrega; sem escrow,
+// provider, idempotency key ou dado do tomador.
+function aportesMock() {
+  return [
+    {
+      id: 'aporte-cred-4',
+      operacaoId: OPERACAO_CARTEIRA_ID,
+      status: 'FALHOU',
+      valor: 1500,
+      dataCriacao: '2026-07-05T09:00:00-03:00',
+      dataAtualizacao: '2026-07-05T10:30:00-03:00',
+    },
+    {
+      id: 'aporte-cred-3',
+      operacaoId: OPERACAO_CARTEIRA_ID,
+      status: 'PENDENTE',
+      valor: 2000,
+      dataCriacao: '2026-07-04T09:00:00-03:00',
+      dataAtualizacao: '2026-07-04T09:00:00-03:00',
+    },
+    {
+      id: 'aporte-cred-2',
+      operacaoId: OPERACAO_CARTEIRA_ID,
+      status: 'EM_PROCESSAMENTO',
+      valor: 3500,
+      dataCriacao: '2026-07-03T09:00:00-03:00',
+      dataAtualizacao: '2026-07-03T11:00:00-03:00',
+    },
+    {
+      id: 'aporte-cred-1',
+      operacaoId: OPERACAO_CARTEIRA_ID,
+      status: 'LIQUIDADO',
+      valor: 8000,
+      dataCriacao: '2026-07-02T09:00:00-03:00',
+      dataAtualizacao: '2026-07-02T14:00:00-03:00',
     },
   ];
 }
@@ -1225,6 +1270,20 @@ const credoresHandlers = [
     return operacao
       ? HttpResponse.json(operacao, { status: 200 })
       : credoraErro(404, 'Not Found', 'Credora ou operacao nao encontrada');
+  }),
+
+  // Mesma ownership do detalhe da carteira: sem credora / operacao alheia / inexistente -> 404
+  // neutro, sem enumerar. Lista vazia e 200 [], estado valido e distinto do 404.
+  http.get(`${baseUrl}/credores/operacoes/:operacaoId/aportes`, ({ params }) => {
+    const estado = lerCredora();
+    if (!estado.presente) {
+      return credoraErro(404, 'Not Found', 'Operacao nao encontrada');
+    }
+    const operacao = operacoesMock().find((o) => o.id === String(params['operacaoId']));
+    if (!operacao) {
+      return credoraErro(404, 'Not Found', 'Operacao nao encontrada');
+    }
+    return HttpResponse.json(estado.aportes === 'VAZIA' ? [] : aportesMock(), { status: 200 });
   }),
 ];
 

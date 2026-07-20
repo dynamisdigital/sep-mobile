@@ -11,6 +11,7 @@ interface CredoraSeed {
   elegibilidade?: 'ELEGIVEL' | 'PENDENTE' | 'INELEGIVEL';
   interesse?: 'ATIVO' | 'AUSENTE';
   carteiraVazia?: boolean;
+  aportes?: 'LISTA' | 'VAZIA';
 }
 
 function paginaAtiva(page: Page): Locator {
@@ -28,6 +29,7 @@ async function prepararSessao(page: Page, seed: CredoraSeed): Promise<void> {
           elegibilidade: estado.elegibilidade ?? 'ELEGIVEL',
           interesse: estado.interesse ?? 'AUSENTE',
           carteiraVazia: estado.carteiraVazia ?? false,
+          aportes: estado.aportes ?? 'LISTA',
         }),
       );
     },
@@ -159,6 +161,56 @@ test.describe('M-Sprint 10 - jornada da empresa credora (MSW)', () => {
       'nao gera carteira',
       { timeout: 10_000 },
     );
+  });
+
+  // --- M-Sprint 16: aportes owner-scoped no detalhe da operacao ---
+
+  test('credora ve os aportes da propria operacao em somente leitura', async ({ page }) => {
+    await prepararSessao(page, { presente: true });
+    await loginCliente(page);
+    await abrirDashboardCredora(page);
+    await paginaAtiva(page).getByTestId('sep-credora-atalho-carteira').click();
+    await paginaAtiva(page).getByTestId('sep-operacao-item-oper-carteira-1').click();
+
+    const card = paginaAtiva(page).getByTestId('sep-operacao-detalhe-aportes');
+    await expect(card).toBeVisible({ timeout: 10_000 });
+    await expect(paginaAtiva(page).getByTestId('sep-operacao-detalhe-aporte')).toHaveCount(4);
+
+    // Ordem e rotulos vem do backend; o app nao reordena nem deriva estado.
+    await expect(card.getByTestId('sep-aporte-status')).toHaveText([
+      'Falhou',
+      'Pendente',
+      'Em processamento',
+      'Liquidado',
+    ]);
+
+    // Unico controle do card e a releitura: nenhuma mutacao para a persona credora.
+    await expect(card.getByTestId('sep-operacao-detalhe-aportes-atualizar')).toBeVisible();
+    await expect(card.locator('ion-button')).toHaveCount(1);
+
+    const texto = (await card.innerText()).toLowerCase();
+    expect(texto).not.toContain('registrar');
+    expect(texto).not.toContain('matching');
+    expect(texto).not.toContain('escrow');
+    expect(texto).not.toContain('idempotency');
+    expect(texto).not.toContain('aporte-cred');
+  });
+
+  test('operacao sem aportes mostra estado vazio, nao erro', async ({ page }) => {
+    await prepararSessao(page, { presente: true, aportes: 'VAZIA' });
+    await loginCliente(page);
+    await abrirDashboardCredora(page);
+    await paginaAtiva(page).getByTestId('sep-credora-atalho-carteira').click();
+    await paginaAtiva(page).getByTestId('sep-operacao-item-oper-carteira-1').click();
+
+    await expect(paginaAtiva(page).getByTestId('sep-operacao-detalhe-aportes-vazio')).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(paginaAtiva(page).getByTestId('sep-operacao-detalhe-aporte')).toHaveCount(0);
+    await expect(paginaAtiva(page).getByTestId('sep-operacao-detalhe-aportes-erro')).toHaveCount(0);
+    await expect(
+      paginaAtiva(page).getByTestId('sep-operacao-detalhe-aportes-indisponivel'),
+    ).toHaveCount(0);
   });
 
   test('dashboard e detalhe nao estouram overflow em 320px', async ({ page }) => {
