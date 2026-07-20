@@ -75,6 +75,21 @@ describe('stepUpInterceptor', () => {
     await promise;
   });
 
+  // M-Sprint 16: a leitura owner-scoped de aportes e autenticada e sem step-up. O token e de uso
+  // unico, entao consumi-lo num GET inutilizaria a proxima mutacao legitima do usuario.
+  it('nao anexa em GET de aportes da credora nem consome o token', async () => {
+    store.set('step-up-aporte');
+    const url = 'http://localhost:8080/api/v1/credores/operacoes/2f0/aportes';
+    const promise = new Promise<void>((resolve) => {
+      http.get(url).subscribe(() => resolve());
+    });
+    const req = httpMock.expectOne(url);
+    expect(req.request.headers.has('X-Step-Up-Token')).toBe(false);
+    expect(store.hasToken()).toBe(true);
+    req.flush([]);
+    await promise;
+  });
+
   it('sem token no store, passa adiante sem header', async () => {
     const url = 'http://localhost:8080/api/v1/usuarios/1f0/senha';
     const promise = new Promise<void>((resolve) => {

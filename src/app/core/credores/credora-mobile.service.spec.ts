@@ -102,6 +102,36 @@ describe('CredoraMobileService', () => {
     await expect(promise).resolves.toMatchObject({ id: OPER_ID, status: 'ASSOCIADA' });
   });
 
+  it('listarAportes GET /credores/operacoes/{id}/aportes preservando a ordem do backend', async () => {
+    const promise = service.listarAportes(OPER_ID);
+    const req = httpMock.expectOne(`${CREDORES}/operacoes/${OPER_ID}/aportes`);
+    expect(req.request.method).toBe('GET');
+    req.flush([aporteFixture('LIQUIDADO'), aporteFixture('PENDENTE')]);
+    await expect(promise).resolves.toMatchObject([{ status: 'LIQUIDADO' }, { status: 'PENDENTE' }]);
+  });
+
+  it('listarAportes nao anexa X-Step-Up-Token nem Idempotency-Key (GET owner-scoped)', async () => {
+    const promise = service.listarAportes(OPER_ID);
+    const req = httpMock.expectOne(`${CREDORES}/operacoes/${OPER_ID}/aportes`);
+    expect(req.request.headers.has('X-Step-Up-Token')).toBe(false);
+    expect(req.request.headers.has('Idempotency-Key')).toBe(false);
+    req.flush([]);
+    await expect(promise).resolves.toEqual([]);
+  });
+
+  it('listarAportes trata lista vazia como estado valido, sem fabricar item', async () => {
+    const promise = service.listarAportes(OPER_ID);
+    httpMock.expectOne(`${CREDORES}/operacoes/${OPER_ID}/aportes`).flush([]);
+    await expect(promise).resolves.toEqual([]);
+  });
+
+  it('listarAportes propaga 404 neutro de operacao alheia/inexistente', async () => {
+    const promise = service.listarAportes(OPER_ID);
+    const req = httpMock.expectOne(`${CREDORES}/operacoes/${OPER_ID}/aportes`);
+    req.flush({ message: 'nao encontrado' }, { status: 404, statusText: 'Not Found' });
+    await expect(promise).rejects.toBeDefined();
+  });
+
   it('propaga erro HTTP (404/409/422) sem converter em vazio/sucesso', async () => {
     const promise = service.consultarInteresseAtivo(OP_ID);
     const req = httpMock.expectOne(`${CREDORES}/oportunidades/${OP_ID}/interesses/me`);
@@ -114,6 +144,16 @@ describe('CredoraMobileService', () => {
     expect(metodos).not.toContain('cadastrarCredora');
     expect(metodos).not.toContain('sincronizarOportunidades');
     expect(metodos).not.toContain('associarOperacao');
+  });
+
+  // Gate M-16.0: aporte e matching exigem FINANCEIRO/ADMIN, persona ausente no mobile. O service
+  // so pode ler aportes; qualquer mutacao aqui seria 403 e violaria o recorte da spec 216.
+  it('nao expoe mutacao de aporte, decisao de matching ou chaves Pix (persona FINANCEIRO)', () => {
+    const metodos = Object.getOwnPropertyNames(Object.getPrototypeOf(service));
+    expect(metodos).not.toContain('registrarAporte');
+    expect(metodos).not.toContain('decidirMatching');
+    expect(metodos).not.toContain('listarSugestoesMatching');
+    expect(metodos).not.toContain('listarChaves');
   });
 });
 
@@ -146,6 +186,17 @@ function oportunidadeFixture() {
     taxaJurosMensal: 1.99,
     status: 'DISPONIVEL',
     dataCriacao: DATA,
+  };
+}
+
+function aporteFixture(status: string) {
+  return {
+    id: 'ef0799c0-98b9-6d9d-bc4a-7d6f5b77000e',
+    operacaoId: OPER_ID,
+    status,
+    valor: 5000,
+    dataCriacao: DATA,
+    dataAtualizacao: DATA,
   };
 }
 
