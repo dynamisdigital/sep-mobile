@@ -4,11 +4,16 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { IonButton, IonContent, IonSpinner } from '@ionic/angular/standalone';
 
-import { OperacaoCarteiraResponse, PixOperacaoCredoraResponse } from '../../../core/api/api.models';
+import {
+  AporteCredoraResponse,
+  OperacaoCarteiraResponse,
+  PixOperacaoCredoraResponse,
+} from '../../../core/api/api.models';
 import { CredoraMobileService } from '../../../core/credores/credora-mobile.service';
 import { PixMobileService } from '../../../core/pix/pix-mobile.service';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
 import { PixStatusPublicoComponent } from '../../pix/pix-status-publico.component';
+import { AporteStatusComponent } from '../shared/aporte-status.component';
 import {
   formatarData,
   formatarDataLocal,
@@ -33,6 +38,7 @@ import { OperacaoStatusComponent } from '../shared/operacao-status.component';
     HeaderMobileComponent,
     OperacaoStatusComponent,
     PixStatusPublicoComponent,
+    AporteStatusComponent,
   ],
   templateUrl: './portfolio-detail.component.html',
   styleUrl: './portfolio-detail.component.scss',
@@ -55,6 +61,14 @@ export class PortfolioDetailComponent implements OnInit, ViewWillEnter {
   // 404 = ausencia neutra ("sem Pix"); distinto de erroPix (rede/5xx com retry).
   readonly pixIndisponivel = signal(false);
   readonly erroPix = signal<string | null>(null);
+
+  // Aportes owner-scoped da propria operacao (M-16.4, backend Sprint 29). Somente leitura: a
+  // credora nao registra aporte pelo app (POST exige FINANCEIRO/ADMIN — Gate M-16.0). Lista vazia
+  // e estado valido e distinto de aportesIndisponiveis (404 neutro) e de erroAportes (rede/5xx).
+  readonly aportes = signal<AporteCredoraResponse[]>([]);
+  readonly carregandoAportes = signal(false);
+  readonly aportesIndisponiveis = signal(false);
+  readonly erroAportes = signal<string | null>(null);
 
   protected readonly formatarMoeda = formatarMoeda;
   protected readonly formatarTaxaMensal = formatarTaxaMensal;
@@ -80,6 +94,7 @@ export class PortfolioDetailComponent implements OnInit, ViewWillEnter {
     this.carregando.set(true);
     this.erro.set(null);
     this.resetarStatusPix();
+    this.resetarAportes();
     try {
       const operacao = await this.service.consultarOperacao(this.id);
       if (geracao !== this.geracao) {
@@ -101,10 +116,11 @@ export class PortfolioDetailComponent implements OnInit, ViewWillEnter {
         this.carregando.set(false);
       }
     }
-    // Status Pix APOS liberar o spinner (nao bloqueia o detalhe; card tem loading proprio). So quando
-    // ha operacao carregada; resposta obsoleta e descartada pela geracao.
+    // Status Pix e aportes APOS liberar o spinner (nao bloqueiam o detalhe; cada card tem loading
+    // proprio). So quando ha operacao carregada; resposta obsoleta e descartada pela geracao.
     if (this.operacao()) {
       await this.consultarStatusPix(geracao);
+      await this.consultarAportes(geracao);
     }
   }
 
@@ -149,6 +165,50 @@ export class PortfolioDetailComponent implements OnInit, ViewWillEnter {
     this.carregandoPix.set(false);
     this.pixIndisponivel.set(false);
     this.erroPix.set(null);
+  }
+
+  // Leitura owner-scoped dos aportes da propria operacao (backend Sprint 29). 404 = ausencia
+  // neutra (operacao indisponivel, sem enumerar); 403/rede/5xx = erro isolado com retry. Nunca
+  // derruba o detalhe ja carregado. Resposta de geracao anterior nao sobrescreve a atual.
+  async consultarAportes(geracao = this.geracao): Promise<void> {
+    if (!this.id) {
+      return;
+    }
+    this.carregandoAportes.set(true);
+    this.erroAportes.set(null);
+    // Limpa a ausencia da leitura anterior: sem isso, um 404 seguido de retry com 5xx manteria
+    // "indisponivel" com prioridade no template e esconderia o erro tecnico.
+    this.aportesIndisponiveis.set(false);
+    try {
+      const aportes = await this.service.listarAportes(this.id);
+      if (geracao !== this.geracao) {
+        return;
+      }
+      // Ordem preservada como veio do backend; o app nao reordena nem agrega.
+      this.aportes.set(aportes);
+      this.aportesIndisponiveis.set(false);
+    } catch (err) {
+      if (geracao !== this.geracao) {
+        return;
+      }
+      this.aportes.set([]);
+      if (err instanceof HttpErrorResponse && err.status === 404) {
+        this.aportesIndisponiveis.set(true);
+      } else {
+        this.erroAportes.set('Nao foi possivel carregar os aportes. Tente novamente.');
+      }
+    } finally {
+      if (geracao === this.geracao) {
+        this.carregandoAportes.set(false);
+      }
+    }
+  }
+
+  private resetarAportes(): void {
+    this.aportes.set([]);
+    this.carregandoAportes.set(false);
+    this.aportesIndisponiveis.set(false);
+    this.erroAportes.set(null);
   }
 
   voltarParaLista(): void {

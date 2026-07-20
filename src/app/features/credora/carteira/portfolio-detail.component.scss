@@ -82,4 +82,32 @@
     font-size: 0.875rem;
     color: hsl(var(--muted-foreground));
   }
+
+  &-aportes-lista {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-12);
+    margin: 0 0 var(--sep-space-12);
+    padding: 0;
+    list-style: none;
+  }
+
+  &-aporte {
+    padding: var(--sep-space-12);
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--sep-radius-lg, 12px);
+
+    &-topo {
+      display: flex;
+      gap: var(--sep-space-12);
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    &-valor {
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: hsl(var(--foreground));
+    }
+  }
 }
