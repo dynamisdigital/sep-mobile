@@ -150,6 +150,75 @@
           {{ carregandoPix() ? 'Atualizando...' : 'Atualizar status Pix' }}
         </ion-button>
       </section>
+
+      <section class="sep-operacao-detalhe-aportes" data-testid="sep-operacao-detalhe-aportes">
+        <h2 class="sep-operacao-detalhe-subtitle">Aportes da operacao</h2>
+        @if (carregandoAportes()) {
+          <div
+            class="sep-operacao-detalhe-estado"
+            data-testid="sep-operacao-detalhe-aportes-loading"
+          >
+            <ion-spinner name="crescent"></ion-spinner>
+          </div>
+        } @else if (aportes().length > 0) {
+          <ul class="sep-operacao-detalhe-aportes-lista">
+            @for (aporte of aportes(); track aporte.id) {
+              <li class="sep-operacao-detalhe-aporte" data-testid="sep-operacao-detalhe-aporte">
+                <div class="sep-operacao-detalhe-aporte-topo">
+                  <span
+                    class="sep-operacao-detalhe-aporte-valor"
+                    data-testid="sep-operacao-detalhe-aporte-valor"
+                  >
+                    {{ formatarMoeda(aporte.valor) }}
+                  </span>
+                  <sep-aporte-status [status]="aporte.status" />
+                </div>
+                <dl class="sep-operacao-detalhe-grid">
+                  <div class="sep-operacao-detalhe-row">
+                    <dt>Registrado em</dt>
+                    <dd>{{ formatarData(aporte.dataCriacao) }}</dd>
+                  </div>
+                  <div class="sep-operacao-detalhe-row">
+                    <dt>Atualizado em</dt>
+                    <dd>{{ formatarData(aporte.dataAtualizacao) }}</dd>
+                  </div>
+                </dl>
+              </li>
+            }
+          </ul>
+          <p class="sep-operacao-detalhe-nota" data-testid="sep-operacao-detalhe-aportes-aviso">
+            Processamento local nesta fase; o status vem do backend e nao garante liquidacao.
+          </p>
+        } @else if (aportesIndisponiveis()) {
+          <p
+            class="sep-operacao-detalhe-nota"
+            data-testid="sep-operacao-detalhe-aportes-indisponivel"
+          >
+            Aportes indisponiveis para esta operacao.
+          </p>
+        } @else if (erroAportes(); as msg) {
+          <div
+            class="sep-operacao-detalhe-estado"
+            role="alert"
+            data-testid="sep-operacao-detalhe-aportes-erro"
+          >
+            <p>{{ msg }}</p>
+          </div>
+        } @else {
+          <p class="sep-operacao-detalhe-nota" data-testid="sep-operacao-detalhe-aportes-vazio">
+            Nenhum aporte registrado para esta operacao.
+          </p>
+        }
+        <ion-button
+          expand="block"
+          fill="outline"
+          (click)="consultarAportes()"
+          [disabled]="carregandoAportes()"
+          data-testid="sep-operacao-detalhe-aportes-atualizar"
+        >
+          {{ carregandoAportes() ? 'Atualizando...' : 'Atualizar aportes' }}
+        </ion-button>
+      </section>
     }
   </section>
 </ion-content>

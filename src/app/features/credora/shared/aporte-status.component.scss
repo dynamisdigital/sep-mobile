@@ -1,0 +1,27 @@
+.sep-aporte-status {
+  display: inline-block;
+  padding: var(--sep-space-4) var(--sep-space-8);
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--sep-radius-pill, 999px);
+
+  &[data-tone="success"] {
+    color: hsl(var(--success));
+    background: hsl(var(--success) / 12%);
+  }
+
+  &[data-tone="danger"] {
+    color: hsl(var(--destructive));
+    background: hsl(var(--destructive) / 12%);
+  }
+
+  &[data-tone="info"] {
+    color: hsl(var(--primary));
+    background: hsl(var(--primary) / 12%);
+  }
+
+  &[data-tone="neutral"] {
+    color: hsl(var(--muted-foreground));
+    background: hsl(var(--muted));
+  }
+}

@@ -1,14 +1,20 @@
 import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import {
+  HttpTestingController,
+  TestRequest,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  AporteCredoraResponse,
   CarteiraCobrancaResumo,
   OperacaoCarteiraResponse,
   PixOperacaoCredoraResponse,
+  StatusAporteCredora,
 } from '../../../core/api/api.models';
 import { AuthService } from '../../../core/auth/auth.service';
 import { PortfolioDetailComponent } from './portfolio-detail.component';
@@ -16,6 +22,7 @@ import { PortfolioDetailComponent } from './portfolio-detail.component';
 const ID = 'op-1';
 const URL = `http://localhost:8080/api/v1/credores/carteira/${ID}`;
 const PIX_URL = `${URL}/pix`;
+const APORTES_URL = `http://localhost:8080/api/v1/credores/operacoes/${ID}/aportes`;
 const authStub = { currentUser: signal(null), logout: async () => undefined };
 
 function cobranca(over: Partial<CarteiraCobrancaResumo> = {}): CarteiraCobrancaResumo {
@@ -56,6 +63,21 @@ function pixFixture(over: Partial<PixOperacaoCredoraResponse> = {}): PixOperacao
   };
 }
 
+function aporte(
+  status: StatusAporteCredora = 'LIQUIDADO',
+  over: Partial<AporteCredoraResponse> = {},
+): AporteCredoraResponse {
+  return {
+    id: `aporte-${status}`,
+    operacaoId: ID,
+    status,
+    valor: 5000,
+    dataCriacao: '2026-07-01T09:00:00-03:00',
+    dataAtualizacao: '2026-07-05T09:00:00-03:00',
+    ...over,
+  };
+}
+
 describe('PortfolioDetailComponent', () => {
   let fixture: ComponentFixture<PortfolioDetailComponent>;
   let httpMock: HttpTestingController;
@@ -86,22 +108,29 @@ describe('PortfolioDetailComponent', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
-  // Carrega a operacao (200) e responde o status Pix (P3, GET dedicado). `pix` pode ser um objeto
-  // (200) ou um status HTTP (para simular 404/5xx do Pix). Retorna o elemento renderizado.
+  // Carrega a operacao (200), o status Pix (P3) e os aportes owner-scoped (M-16.4), cada um em GET
+  // dedicado. `pix` e `aportes` aceitam um corpo (200) ou um status HTTP (para simular 404/5xx do
+  // card isolado). Retorna o elemento renderizado.
   async function renderOperacao(
     op: OperacaoCarteiraResponse = operacao(),
     pix: PixOperacaoCredoraResponse | number = pixFixture(),
+    aportes: AporteCredoraResponse[] | number = [aporte()],
   ): Promise<HTMLElement> {
     fixture.detectChanges();
     httpMock.expectOne(URL).flush(op);
     await fixture.whenStable();
-    const req = httpMock.expectOne(PIX_URL);
-    if (typeof pix === 'number') {
-      req.flush({ message: 'x' }, { status: pix, statusText: 'Error' });
-    } else {
-      req.flush(pix);
-    }
+    responder(httpMock.expectOne(PIX_URL), pix);
+    await fixture.whenStable();
+    responder(httpMock.expectOne(APORTES_URL), aportes);
     return render();
+  }
+
+  function responder(req: TestRequest, corpo: unknown): void {
+    if (typeof corpo === 'number') {
+      req.flush({ message: 'x' }, { status: corpo, statusText: 'Error' });
+    } else {
+      req.flush(corpo);
+    }
   }
 
   it('exibe status, contratoStatus e agregados de cobranca sem recalcular', async () => {
@@ -149,7 +178,7 @@ describe('PortfolioDetailComponent', () => {
     );
   });
 
-  it('404 mostra mensagem neutra e voltar; nao consulta o status Pix', async () => {
+  it('404 mostra mensagem neutra e voltar; nao consulta status Pix nem aportes', async () => {
     fixture.detectChanges();
     httpMock.expectOne(URL).flush({ message: 'x' }, { status: 404, statusText: 'Not Found' });
     const el = await render();
@@ -157,8 +186,9 @@ describe('PortfolioDetailComponent', () => {
       'indisponivel',
     );
     expect(el.querySelector('[data-testid="sep-operacao-detalhe-voltar"]')).not.toBeNull();
-    // Operacao null: nenhum GET de status Pix e disparado (httpMock.verify no afterEach confirma).
+    // Operacao null: nenhum GET secundario e disparado (httpMock.verify no afterEach confirma).
     expect(fixture.componentInstance.statusPix()).toBeNull();
+    expect(fixture.componentInstance.aportes()).toEqual([]);
   });
 
   it('nao expoe IDs internos, justificativa nem dados do tomador', async () => {
@@ -168,16 +198,21 @@ describe('PortfolioDetailComponent', () => {
     expect(el.innerHTML).not.toContain('justificativa-secreta-operacional');
   });
 
-  it('reentrada na stack reconsulta a operacao e o status Pix', async () => {
+  it('reentrada na stack reconsulta a operacao, o status Pix e os aportes', async () => {
     await renderOperacao();
 
     fixture.componentInstance.ionViewWillEnter();
     httpMock.expectOne(URL).flush(operacao({ status: 'ENCERRADA' }));
     await fixture.whenStable();
     httpMock.expectOne(PIX_URL).flush(pixFixture());
+    await fixture.whenStable();
+    httpMock.expectOne(APORTES_URL).flush([aporte('PENDENTE')]);
     const el = await render();
     expect(el.querySelector('[data-testid="sep-operacao-status"]')?.textContent).toContain(
       'Encerrada',
+    );
+    expect(el.querySelector('[data-testid="sep-aporte-status"]')?.textContent).toContain(
+      'Pendente',
     );
   });
 
@@ -241,5 +276,152 @@ describe('PortfolioDetailComponent', () => {
     expect(html).not.toContain('endtoend');
     expect(html).not.toContain('escrow');
     expect(html).not.toContain('tomador');
+  });
+
+  // --- Aportes owner-scoped da operacao (M-16.4 — backend Sprint 29) ---
+
+  it('lista os aportes na ordem recebida do backend, sem reordenar', async () => {
+    const el = await renderOperacao(operacao(), pixFixture(), [
+      aporte('LIQUIDADO', { id: 'a1' }),
+      aporte('PENDENTE', { id: 'a2' }),
+      aporte('FALHOU', { id: 'a3' }),
+    ]);
+
+    const badges = [...el.querySelectorAll('[data-testid="sep-aporte-status"]')].map((b) =>
+      b.textContent?.trim(),
+    );
+    expect(badges).toEqual(['Liquidado', 'Pendente', 'Falhou']);
+  });
+
+  it('renderiza os quatro estados de aporte com rotulo textual, nao so cor', async () => {
+    const el = await renderOperacao(operacao(), pixFixture(), [
+      aporte('PENDENTE', { id: 'a1' }),
+      aporte('EM_PROCESSAMENTO', { id: 'a2' }),
+      aporte('LIQUIDADO', { id: 'a3' }),
+      aporte('FALHOU', { id: 'a4' }),
+    ]);
+
+    const badges = [...el.querySelectorAll('[data-testid="sep-aporte-status"]')];
+    expect(badges.map((b) => b.textContent?.trim())).toEqual([
+      'Pendente',
+      'Em processamento',
+      'Liquidado',
+      'Falhou',
+    ]);
+    // O tom acompanha o rotulo, mas o texto sozinho ja identifica o estado.
+    expect(badges.map((b) => b.getAttribute('data-tone'))).toEqual([
+      'neutral',
+      'info',
+      'success',
+      'danger',
+    ]);
+  });
+
+  it('lista vazia e estado valido e distinto de indisponivel', async () => {
+    const el = await renderOperacao(operacao(), pixFixture(), []);
+    expect(el.querySelector('[data-testid="sep-operacao-detalhe-aportes-vazio"]')).not.toBeNull();
+    expect(
+      el.querySelector('[data-testid="sep-operacao-detalhe-aportes-indisponivel"]'),
+    ).toBeNull();
+    expect(el.querySelector('[data-testid="sep-operacao-detalhe-aportes-erro"]')).toBeNull();
+  });
+
+  it('404 dos aportes vira ausencia neutra, sem ecoar o id da operacao', async () => {
+    const el = await renderOperacao(operacao(), pixFixture(), 404);
+    const nota = el.querySelector('[data-testid="sep-operacao-detalhe-aportes-indisponivel"]');
+    expect(nota).not.toBeNull();
+    expect(nota?.textContent).not.toContain(ID);
+    expect(el.querySelector('[data-testid="sep-operacao-detalhe-aportes-erro"]')).toBeNull();
+    expect(fixture.componentInstance.aportesIndisponiveis()).toBe(true);
+  });
+
+  it('rede/5xx dos aportes nao derruba o detalhe ja carregado e permite retry', async () => {
+    const el = await renderOperacao(operacao(), pixFixture(), 500);
+    expect(el.querySelector('[data-testid="sep-operacao-detalhe-aportes-erro"]')).not.toBeNull();
+    // Detalhe e status Pix seguem intactos.
+    expect(el.querySelector('[data-testid="sep-operacao-detalhe-valor"]')).not.toBeNull();
+    expect(el.querySelector('[data-testid="sep-pix-status-publico"]')).not.toBeNull();
+    expect(fixture.componentInstance.erro()).toBeNull();
+
+    const p = fixture.componentInstance.consultarAportes();
+    httpMock.expectOne(APORTES_URL).flush([aporte('LIQUIDADO')]);
+    await p;
+    const el2 = await render();
+    expect(el2.querySelector('[data-testid="sep-aporte-status"]')?.textContent).toContain(
+      'Liquidado',
+    );
+    expect(el2.querySelector('[data-testid="sep-operacao-detalhe-aportes-erro"]')).toBeNull();
+  });
+
+  it('retry com 5xx apos um 404 mostra o erro tecnico, nao a ausencia neutra', async () => {
+    await renderOperacao(operacao(), pixFixture(), 404);
+    expect(fixture.componentInstance.aportesIndisponiveis()).toBe(true);
+
+    const p = fixture.componentInstance.consultarAportes();
+    httpMock.expectOne(APORTES_URL).flush({ message: 'x' }, { status: 500, statusText: 'Error' });
+    await p;
+    const el = await render();
+    expect(fixture.componentInstance.aportesIndisponiveis()).toBe(false);
+    expect(el.querySelector('[data-testid="sep-operacao-detalhe-aportes-erro"]')).not.toBeNull();
+  });
+
+  it('atualizar aportes fica bloqueado durante a request, evitando duas em voo', async () => {
+    const el = await renderOperacao();
+    const seletor = '[data-testid="sep-operacao-detalhe-aportes-atualizar"]';
+    expect(el.querySelector(seletor)?.textContent).toContain('Atualizar aportes');
+    expect(fixture.componentInstance.carregandoAportes()).toBe(false);
+
+    const p = fixture.componentInstance.consultarAportes();
+    const elCarregando = await render();
+    // `[disabled]` do ion-button e propriedade do web component, nao atributo: verifica o estado
+    // que alimenta o binding e o rotulo que o usuario ve.
+    expect(fixture.componentInstance.carregandoAportes()).toBe(true);
+    expect(elCarregando.querySelector<HTMLIonButtonElement>(seletor)?.disabled).toBe(true);
+    expect(elCarregando.querySelector(seletor)?.textContent).toContain('Atualizando...');
+
+    httpMock.expectOne(APORTES_URL).flush([aporte()]);
+    await p;
+    expect(fixture.componentInstance.carregandoAportes()).toBe(false);
+  });
+
+  it('duplo toque em atualizar dispara uma unica request, nao duas concorrentes', async () => {
+    await renderOperacao();
+
+    // Duas chamadas no mesmo tick, antes de qualquer change detection aplicar o [disabled].
+    const p1 = fixture.componentInstance.consultarAportes();
+    const p2 = fixture.componentInstance.consultarAportes();
+
+    // expectOne falha se houver mais de uma request em voo para a mesma URL.
+    httpMock.expectOne(APORTES_URL).flush([aporte('LIQUIDADO')]);
+    await Promise.all([p1, p2]);
+
+    const el = await render();
+    expect(el.querySelectorAll('[data-testid="sep-operacao-detalhe-aporte"]')).toHaveLength(1);
+    expect(fixture.componentInstance.carregandoAportes()).toBe(false);
+  });
+
+  it('nao oferece nenhum CTA de mutacao de aporte a persona credora', async () => {
+    const el = await renderOperacao();
+    const card = el.querySelector('[data-testid="sep-operacao-detalhe-aportes"]');
+    const texto = (card?.textContent ?? '').toLowerCase();
+    expect(texto).not.toContain('registrar');
+    expect(texto).not.toContain('novo aporte');
+    expect(texto).not.toContain('matching');
+    expect(texto).not.toContain('confirmar');
+    // O unico botao do card e a releitura.
+    const botoes = card?.querySelectorAll('ion-button') ?? [];
+    expect(botoes).toHaveLength(1);
+    expect(botoes[0].getAttribute('data-testid')).toBe('sep-operacao-detalhe-aportes-atualizar');
+  });
+
+  it('o card de aportes nao expoe escrow, provider, idempotency key nem IDs internos', async () => {
+    const el = await renderOperacao();
+    const card = el.querySelector('[data-testid="sep-operacao-detalhe-aportes"]');
+    const html = (card?.innerHTML ?? '').toLowerCase();
+    expect(html).not.toContain('escrow');
+    expect(html).not.toContain('provider');
+    expect(html).not.toContain('idempotency');
+    expect(html).not.toContain('contrato-secreto');
+    expect(html).not.toContain('celcoin');
   });
 });

@@ -11,6 +11,7 @@ interface CredoraSeed {
   elegibilidade?: 'ELEGIVEL' | 'PENDENTE' | 'INELEGIVEL';
   interesse?: 'ATIVO' | 'AUSENTE';
   carteiraVazia?: boolean;
+  aportes?: 'LISTA' | 'VAZIA';
 }
 
 function paginaAtiva(page: Page): Locator {
@@ -28,6 +29,7 @@ async function prepararSessao(page: Page, seed: CredoraSeed): Promise<void> {
           elegibilidade: estado.elegibilidade ?? 'ELEGIVEL',
           interesse: estado.interesse ?? 'AUSENTE',
           carteiraVazia: estado.carteiraVazia ?? false,
+          aportes: estado.aportes ?? 'LISTA',
         }),
       );
     },
@@ -105,7 +107,9 @@ test.describe('M-Sprint 10 - jornada da empresa credora (MSW)', () => {
     });
     await expect(paginaAtiva(page).getByTestId('sep-operacao-detalhe-pagas')).toContainText('2');
 
-    // Assercoes negativas: sem dados internos/admin/aporte/tomador
+    // Assercoes negativas: sem dados internos/admin/tomador. A M-Sprint 16 passou a exibir os
+    // aportes da propria operacao em somente leitura, entao o que nao pode aparecer aqui e a
+    // superficie de mutacao (registrar/decidir/matching), nao a palavra "aporte".
     const corpo = (await page.locator('body').innerText())
       .normalize('NFD')
       .replace(/[̀-ͯ]/g, '')
@@ -113,7 +117,8 @@ test.describe('M-Sprint 10 - jornada da empresa credora (MSW)', () => {
     expect(corpo).not.toContain('justificativa');
     expect(corpo).not.toContain('associacao assistida operacional');
     expect(corpo).not.toContain('escrow');
-    expect(corpo).not.toContain('aporte de');
+    expect(corpo).not.toContain('registrar aporte');
+    expect(corpo).not.toContain('matching');
     expect(corpo).not.toContain('sincronizar');
     expect(corpo).not.toContain('contr-cred');
 
@@ -159,6 +164,61 @@ test.describe('M-Sprint 10 - jornada da empresa credora (MSW)', () => {
       'nao gera carteira',
       { timeout: 10_000 },
     );
+  });
+
+  // --- M-Sprint 16: aportes owner-scoped no detalhe da operacao ---
+
+  test('credora ve os aportes da propria operacao em somente leitura', async ({ page }) => {
+    await prepararSessao(page, { presente: true });
+    await loginCliente(page);
+    await abrirDashboardCredora(page);
+    await paginaAtiva(page).getByTestId('sep-credora-atalho-carteira').click();
+    await paginaAtiva(page).getByTestId('sep-operacao-item-oper-carteira-1').click();
+
+    const card = paginaAtiva(page).getByTestId('sep-operacao-detalhe-aportes');
+    await expect(card).toBeVisible({ timeout: 10_000 });
+    await expect(paginaAtiva(page).getByTestId('sep-operacao-detalhe-aporte')).toHaveCount(4);
+
+    // Ordem e rotulos vem do backend; o app nao reordena nem deriva estado.
+    await expect(card.getByTestId('sep-aporte-status')).toHaveText([
+      'Falhou',
+      'Pendente',
+      'Em processamento',
+      'Liquidado',
+    ]);
+
+    // Unico controle do card e a releitura: nenhuma mutacao para a persona credora.
+    await expect(card.getByTestId('sep-operacao-detalhe-aportes-atualizar')).toBeVisible();
+    await expect(card.locator('ion-button')).toHaveCount(1);
+
+    const texto = (await card.innerText()).toLowerCase();
+    expect(texto).not.toContain('registrar');
+    expect(texto).not.toContain('matching');
+    expect(texto).not.toContain('escrow');
+    expect(texto).not.toContain('idempotency');
+
+    // IDs internos: checa o HTML, nao so o texto visivel — um id vazado por atributo
+    // (title/aria-label/href) nao apareceria em innerText.
+    const html = (await card.innerHTML()).toLowerCase();
+    expect(html).not.toContain('aporte-cred');
+    expect(html).not.toContain('oper-carteira');
+  });
+
+  test('operacao sem aportes mostra estado vazio, nao erro', async ({ page }) => {
+    await prepararSessao(page, { presente: true, aportes: 'VAZIA' });
+    await loginCliente(page);
+    await abrirDashboardCredora(page);
+    await paginaAtiva(page).getByTestId('sep-credora-atalho-carteira').click();
+    await paginaAtiva(page).getByTestId('sep-operacao-item-oper-carteira-1').click();
+
+    await expect(paginaAtiva(page).getByTestId('sep-operacao-detalhe-aportes-vazio')).toBeVisible({
+      timeout: 10_000,
+    });
+    await expect(paginaAtiva(page).getByTestId('sep-operacao-detalhe-aporte')).toHaveCount(0);
+    await expect(paginaAtiva(page).getByTestId('sep-operacao-detalhe-aportes-erro')).toHaveCount(0);
+    await expect(
+      paginaAtiva(page).getByTestId('sep-operacao-detalhe-aportes-indisponivel'),
+    ).toHaveCount(0);
   });
 
   test('dashboard e detalhe nao estouram overflow em 320px', async ({ page }) => {
