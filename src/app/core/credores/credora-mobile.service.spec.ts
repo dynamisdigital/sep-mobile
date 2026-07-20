@@ -3,6 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { StatusAporteCredora } from '../api/api.models';
+
 import { CredoraMobileService } from './credora-mobile.service';
 
 const API = 'http://localhost:8080/api/v1';
@@ -189,7 +191,7 @@ function oportunidadeFixture() {
   };
 }
 
-function aporteFixture(status: string) {
+function aporteFixture(status: StatusAporteCredora) {
   return {
     id: 'ef0799c0-98b9-6d9d-bc4a-7d6f5b77000e',
     operacaoId: OPER_ID,
