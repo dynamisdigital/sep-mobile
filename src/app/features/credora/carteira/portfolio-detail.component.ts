@@ -171,7 +171,10 @@ export class PortfolioDetailComponent implements OnInit, ViewWillEnter {
   // neutra (operacao indisponivel, sem enumerar); 403/rede/5xx = erro isolado com retry. Nunca
   // derruba o detalhe ja carregado. Resposta de geracao anterior nao sobrescreve a atual.
   async consultarAportes(geracao = this.geracao): Promise<void> {
-    if (!this.id) {
+    // Uma request por gesto: o [disabled] do botao so vale a partir do proximo ciclo de change
+    // detection, entao um duplo toque cabe na fresta e dispararia duas leituras concorrentes com
+    // a mesma geracao — a ultima a responder venceria, podendo reexibir estado mais velho.
+    if (!this.id || this.carregandoAportes()) {
       return;
     }
     this.carregandoAportes.set(true);

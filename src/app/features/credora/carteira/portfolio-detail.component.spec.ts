@@ -384,6 +384,22 @@ describe('PortfolioDetailComponent', () => {
     expect(fixture.componentInstance.carregandoAportes()).toBe(false);
   });
 
+  it('duplo toque em atualizar dispara uma unica request, nao duas concorrentes', async () => {
+    await renderOperacao();
+
+    // Duas chamadas no mesmo tick, antes de qualquer change detection aplicar o [disabled].
+    const p1 = fixture.componentInstance.consultarAportes();
+    const p2 = fixture.componentInstance.consultarAportes();
+
+    // expectOne falha se houver mais de uma request em voo para a mesma URL.
+    httpMock.expectOne(APORTES_URL).flush([aporte('LIQUIDADO')]);
+    await Promise.all([p1, p2]);
+
+    const el = await render();
+    expect(el.querySelectorAll('[data-testid="sep-operacao-detalhe-aporte"]')).toHaveLength(1);
+    expect(fixture.componentInstance.carregandoAportes()).toBe(false);
+  });
+
   it('nao oferece nenhum CTA de mutacao de aporte a persona credora', async () => {
     const el = await renderOperacao();
     const card = el.querySelector('[data-testid="sep-operacao-detalhe-aportes"]');
