@@ -120,6 +120,46 @@ describe('errorInterceptor', () => {
     expect((resultado as HttpErrorResponse).status).toBe(423);
   });
 
+  // `clearSession()` chama `tokenStorage.clearAll()`, que em device e Capacitor Preferences e pode
+  // falhar. Antes destes dois testes, uma rejeicao ali impedia o `switchMap` de rodar: o usuario
+  // ficava na tela autenticada e recebia o erro de storage no lugar do status original.
+  it('423 redireciona e propaga o status original mesmo se clearSession falhar', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    authStub.clearSession.mockRejectedValue(new Error('storage offline'));
+    const errorPromise = new Promise<unknown>((resolve) => {
+      http.get('/api/v1/auth/me').subscribe({
+        next: (ok) => resolve(ok),
+        error: (err) => resolve(err),
+      });
+    });
+    const req = httpMock.expectOne('/api/v1/auth/me');
+    req.flush({ message: 'Conta bloqueada' }, { status: 423, statusText: 'Locked' });
+    const resultado = await errorPromise;
+    await Promise.resolve();
+    expect(routerStub.navigateByUrl).toHaveBeenCalledExactlyOnceWith('/account-locked');
+    // O erro de storage nao pode mascarar o 423, que e o que os chamadores discriminam.
+    expect(resultado).toBeInstanceOf(HttpErrorResponse);
+    expect((resultado as HttpErrorResponse).status).toBe(423);
+  });
+
+  it('401 redireciona e propaga o status original mesmo se clearSession falhar', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    authStub.clearSession.mockRejectedValue(new Error('storage offline'));
+    const errorPromise = new Promise<unknown>((resolve) => {
+      http.get('/api/v1/auth/me').subscribe({
+        next: (ok) => resolve(ok),
+        error: (err) => resolve(err),
+      });
+    });
+    const req = httpMock.expectOne('/api/v1/auth/me');
+    req.flush({ message: 'unauth' }, { status: 401, statusText: 'Unauthorized' });
+    const resultado = await errorPromise;
+    await Promise.resolve();
+    expect(routerStub.navigateByUrl).toHaveBeenCalledExactlyOnceWith('/session-expired');
+    expect(resultado).toBeInstanceOf(HttpErrorResponse);
+    expect((resultado as HttpErrorResponse).status).toBe(401);
+  });
+
   // Teste negativo: rate limit nao e conta bloqueada. O backend passou o limite de login para 10
   // justamente para o 429 nao mascarar o 423 (Sprint 33); tratar os dois igual aqui desfaria isso e
   // mandaria para /account-locked quem so precisa esperar alguns segundos.
