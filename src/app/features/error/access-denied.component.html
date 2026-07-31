@@ -1,6 +1,8 @@
 <ion-content class="sep-error">
   <section class="sep-error-section">
-    <h1 class="sep-error-title" data-testid="sep-access-denied-title">Acesso negado</h1>
+    <h1 #titulo tabindex="-1" class="sep-error-title" data-testid="sep-access-denied-title">
+      Acesso negado
+    </h1>
     <p class="sep-error-body">Voce nao tem permissao para acessar essa area.</p>
     <a class="sep-error-button" [routerLink]="fallbackLink()" data-testid="sep-access-denied-back">
       {{ fallbackLabel() }}

@@ -1,4 +1,9 @@
-import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  provideHttpClient,
+  withInterceptors,
+} from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
@@ -68,6 +73,108 @@ describe('errorInterceptor', () => {
     req.flush({ message: 'forbidden' }, { status: 403, statusText: 'Forbidden' });
     await errorPromise;
     expect(routerStub.navigateByUrl).toHaveBeenCalledWith('/access-denied');
+    expect(authStub.clearSession).not.toHaveBeenCalled();
+  });
+
+  // 423 = conta bloqueada. O ramo existe desde a Sprint 5 e ficou sem teste ate a M-Sprint 17.
+  // O `toHaveBeenCalledExactlyOnceWith` nao e preciosismo: o ramo do 403 acima nao tem `return`,
+  // entao um `if (403 || 423)` cairia nos dois e navegaria duas vezes — `toHaveBeenCalledWith`
+  // sozinho aceitaria isso.
+  it('423 limpa sessao, redireciona e propaga o erro', async () => {
+    const errorPromise = new Promise<unknown>((resolve) => {
+      http.get('/api/v1/auth/me').subscribe({
+        next: (ok) => resolve(ok),
+        error: (err) => resolve(err),
+      });
+    });
+    const req = httpMock.expectOne('/api/v1/auth/me');
+    req.flush({ message: 'Conta bloqueada' }, { status: 423, statusText: 'Locked' });
+    const resultado = await errorPromise;
+    await Promise.resolve();
+    expect(authStub.clearSession).toHaveBeenCalled();
+    expect(routerStub.navigateByUrl).toHaveBeenCalledExactlyOnceWith('/account-locked');
+    // O erro precisa continuar propagando: login, verify-totp e guards dependem do `catch` para
+    // nao seguirem o fluxo feliz. Um interceptor que engolisse o 423 e devolvesse `next` passaria
+    // nos asserts acima e quebraria os tres chamadores.
+    expect(resultado).toBeInstanceOf(HttpErrorResponse);
+    expect((resultado as HttpErrorResponse).status).toBe(423);
+  });
+
+  // O 423 chega tambem de /auth/login, que e a origem real da jornada: ao contrario do 401, o
+  // interceptor NAO abre excecao para a rota de login. Sem este teste, mover a checagem de 423 para
+  // dentro do `!isLogoutOrLogin` passaria despercebido e a jornada inteira morreria.
+  it('423 em /auth/login tambem limpa sessao, redireciona e propaga', async () => {
+    const errorPromise = new Promise<unknown>((resolve) => {
+      http.post('/api/v1/auth/login', {}).subscribe({
+        next: (ok) => resolve(ok),
+        error: (err) => resolve(err),
+      });
+    });
+    const req = httpMock.expectOne('/api/v1/auth/login');
+    req.flush({ message: 'Conta bloqueada' }, { status: 423, statusText: 'Locked' });
+    const resultado = await errorPromise;
+    await Promise.resolve();
+    expect(authStub.clearSession).toHaveBeenCalled();
+    expect(routerStub.navigateByUrl).toHaveBeenCalledExactlyOnceWith('/account-locked');
+    expect(resultado).toBeInstanceOf(HttpErrorResponse);
+    expect((resultado as HttpErrorResponse).status).toBe(423);
+  });
+
+  // `clearSession()` chama `tokenStorage.clearAll()`, que em device e Capacitor Preferences e pode
+  // falhar. Antes destes dois testes, uma rejeicao ali impedia o `switchMap` de rodar: o usuario
+  // ficava na tela autenticada e recebia o erro de storage no lugar do status original.
+  it('423 redireciona e propaga o status original mesmo se clearSession falhar', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    authStub.clearSession.mockRejectedValue(new Error('storage offline'));
+    const errorPromise = new Promise<unknown>((resolve) => {
+      http.get('/api/v1/auth/me').subscribe({
+        next: (ok) => resolve(ok),
+        error: (err) => resolve(err),
+      });
+    });
+    const req = httpMock.expectOne('/api/v1/auth/me');
+    req.flush({ message: 'Conta bloqueada' }, { status: 423, statusText: 'Locked' });
+    const resultado = await errorPromise;
+    await Promise.resolve();
+    expect(routerStub.navigateByUrl).toHaveBeenCalledExactlyOnceWith('/account-locked');
+    // O erro de storage nao pode mascarar o 423, que e o que os chamadores discriminam.
+    expect(resultado).toBeInstanceOf(HttpErrorResponse);
+    expect((resultado as HttpErrorResponse).status).toBe(423);
+  });
+
+  it('401 redireciona e propaga o status original mesmo se clearSession falhar', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    authStub.clearSession.mockRejectedValue(new Error('storage offline'));
+    const errorPromise = new Promise<unknown>((resolve) => {
+      http.get('/api/v1/auth/me').subscribe({
+        next: (ok) => resolve(ok),
+        error: (err) => resolve(err),
+      });
+    });
+    const req = httpMock.expectOne('/api/v1/auth/me');
+    req.flush({ message: 'unauth' }, { status: 401, statusText: 'Unauthorized' });
+    const resultado = await errorPromise;
+    await Promise.resolve();
+    expect(routerStub.navigateByUrl).toHaveBeenCalledExactlyOnceWith('/session-expired');
+    expect(resultado).toBeInstanceOf(HttpErrorResponse);
+    expect((resultado as HttpErrorResponse).status).toBe(401);
+  });
+
+  // Teste negativo: rate limit nao e conta bloqueada. O backend passou o limite de login para 10
+  // justamente para o 429 nao mascarar o 423 (Sprint 33); tratar os dois igual aqui desfaria isso e
+  // mandaria para /account-locked quem so precisa esperar alguns segundos.
+  it('429 nao redireciona nem apaga a sessao', async () => {
+    const errorPromise = new Promise<unknown>((resolve) => {
+      http.post('/api/v1/auth/login', {}).subscribe({
+        next: () => resolve('ok'),
+        error: (err) => resolve(err),
+      });
+    });
+    const req = httpMock.expectOne('/api/v1/auth/login');
+    req.flush({ message: 'Muitas tentativas' }, { status: 429, statusText: 'Too Many Requests' });
+    await errorPromise;
+    await Promise.resolve();
+    expect(routerStub.navigateByUrl).not.toHaveBeenCalled();
     expect(authStub.clearSession).not.toHaveBeenCalled();
   });
 
