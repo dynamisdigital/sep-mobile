@@ -421,6 +421,39 @@ describe('PortfolioDetailComponent', () => {
     expect(fixture.componentInstance.carregandoAportes()).toBe(false);
   });
 
+  // Regressao: reentrada na stack enquanto o status Pix esta em voo faz o carregar() obsoleto
+  // chegar em consultarAportes DEPOIS que o carregar() novo ja reabilitou o flag. Sem a rejeicao de
+  // geracao vencida na entrada, a chamada obsoleta tomava a guarda, o carregar() corrente desistia
+  // da propria leitura e o finally da obsoleta pulava o reset (exige geracao igual): o card ficava
+  // com spinner eterno e o retry desabilitado para sempre.
+  it('reentrada com o status Pix em voo nao prende o card de aportes carregando', async () => {
+    await renderOperacao();
+    const componente = fixture.componentInstance;
+
+    // Geracao 2: operacao respondida, status Pix deixado em voo.
+    const carregarG2 = componente.carregar();
+    httpMock.expectOne(URL).flush(operacao());
+    await fixture.whenStable();
+    const pixEmVoo = httpMock.expectOne(PIX_URL);
+
+    // Geracao 3 entra antes de a geracao 2 terminar.
+    componente.ionViewWillEnter();
+    await fixture.whenStable();
+
+    pixEmVoo.flush(pixFixture());
+    await fixture.whenStable();
+    httpMock.match(URL).forEach((req) => req.flush(operacao()));
+    await fixture.whenStable();
+    httpMock.match(PIX_URL).forEach((req) => req.flush(pixFixture()));
+    await fixture.whenStable();
+    httpMock.match(APORTES_URL).forEach((req) => req.flush([aporte()]));
+    await fixture.whenStable();
+    await carregarG2;
+
+    expect(componente.carregandoAportes()).toBe(false);
+    expect(componente.carregandoPix()).toBe(false);
+  });
+
   it('nao oferece nenhum CTA de mutacao de aporte a persona credora', async () => {
     const el = await renderOperacao();
     const card = el.querySelector('[data-testid="sep-operacao-detalhe-aportes"]');

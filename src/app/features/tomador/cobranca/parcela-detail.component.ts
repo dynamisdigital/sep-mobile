@@ -136,6 +136,15 @@ export class ParcelaDetailComponent implements OnInit, ViewWillEnter {
   // Pix"); 403/rede/5xx = erro isolado com retry. Complementa o status de cobranca (nao substitui) e
   // nao bloqueia o detalhe. Resposta de geracao anterior nao sobrescreve a atual.
   async consultarStatusPix(geracao = this.geracao): Promise<void> {
+    // Chamada de geracao vencida nao pode nem comecar: ela tomaria a guarda abaixo, faria o
+    // `carregar()` corrente desistir da propria leitura e depois pularia o reset do `finally` (que
+    // exige geracao igual), prendendo `carregandoPix` em true — spinner eterno e retry
+    // desabilitado. Hoje esta e a unica leitura depois do `try`, entao a geracao nunca chega
+    // vencida; a linha existe para que acrescentar outra leitura antes dela nao reintroduza o
+    // defeito, que e o que aconteceu com `consultarAportes` no portfolio-detail.
+    if (geracao !== this.geracao) {
+      return;
+    }
     // Uma request por gesto: o [disabled] do botao so vale a partir do proximo ciclo de change
     // detection, entao um duplo toque cabe na fresta e dispararia duas leituras concorrentes com
     // a mesma geracao — o guard de geracao nao descartaria nenhuma, a ultima a responder venceria
