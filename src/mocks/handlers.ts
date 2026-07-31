@@ -42,15 +42,40 @@ interface RegistroUsuario {
   senha: string;
 }
 
-const usuariosPorUsername = new Map<string, RegistroUsuario>([
-  [usuarioCliente.username, { usuario: usuarioCliente, senha: SENHA_CLIENTE_SEED }],
-]);
+// Persistido em `localStorage`, como os estados de credito/formalizacao/cobranca/credora, e pelo
+// mesmo motivo: sobreviver ao reload da pagina. So memoria nao basta — o usuario cadastrado sumiria
+// e `/auth/me` voltaria a responder com o seed, que tem `mfaHabilitado: true` e desviaria o
+// change-password para o step-up. O token do mock e o mesmo para todos, entao a identidade da sessao
+// nao pode vir dele; vem daqui.
+const CHAVE_AUTH = 'mock.auth';
+
+interface EstadoAuth {
+  usuarios: [string, RegistroUsuario][];
+  autenticado: string;
+  proximoId: number;
+}
+
+function estadoAuthSeed(): EstadoAuth {
+  return {
+    usuarios: [[usuarioCliente.username, { usuario: usuarioCliente, senha: SENHA_CLIENTE_SEED }]],
+    autenticado: usuarioCliente.username,
+    proximoId: 1,
+  };
+}
+
+let estadoAuth: EstadoAuth = lerEstado<EstadoAuth>(CHAVE_AUTH, estadoAuthSeed());
+let usuariosPorUsername = new Map<string, RegistroUsuario>(estadoAuth.usuarios);
+
+function salvarAuth(): void {
+  estadoAuth = { ...estadoAuth, usuarios: [...usuariosPorUsername.entries()] };
+  salvarEstado(CHAVE_AUTH, estadoAuth);
+}
 
 // Devolvido por `/auth/me`. Antes era sempre o par fixo, entao o golden path logava como o usuario
 // recem-criado e a casca exibia o e-mail do seed.
-let usuarioAutenticado: UsuarioResponse = usuarioCliente;
-
-let proximoIdUsuario = 1;
+function usuarioDaSessao(): UsuarioResponse {
+  return usuariosPorUsername.get(estadoAuth.autenticado)?.usuario ?? usuarioCliente;
+}
 
 function registrarUsuario(
   username: string,
@@ -58,10 +83,11 @@ function registrarUsuario(
   role: 'ADMIN' | 'CLIENTE',
 ): RegistroUsuario {
   const usuario: UsuarioResponse = {
-    // Bloco `7711` de proposito: `7710xx` ja e usado pelo seed (`...771001`) e por fixtures dos
-    // specs. Colidir aqui faz o PATCH de senha achar o usuario errado e recusar a senha atual —
-    // sintoma distante da causa, custou uma sessao de debug.
-    id: `1f0799c0-98b9-6d9d-bc4a-7d6f5b7711${String(proximoIdUsuario++).padStart(2, '0')}`,
+    // Bloco `772` de proposito: `770xxx`/`771xxx` ja sao usados pelo seed (`...771001`) e por
+    // fixtures dos specs. Colidir aqui faz o PATCH de senha achar o usuario errado e recusar a senha
+    // atual — sintoma distante da causa, custou uma sessao de debug. Os 3 digitos mantem o segmento
+    // final do UUID com 12 caracteres ate o milesimo usuario.
+    id: `1f0799c0-98b9-6d9d-bc4a-7d6f5b772${String(estadoAuth.proximoId++).padStart(3, '0')}`,
     username,
     role,
     dataCriacao: '2026-04-24T18:30:00-03:00',
@@ -75,15 +101,27 @@ function registrarUsuario(
   };
   const registro = { usuario, senha };
   usuariosPorUsername.set(username, registro);
+  salvarAuth();
   return registro;
 }
 
-// Politica de senha do sep-api espelhada no mock: 12+ caracteres OU passphrase de 4+ palavras.
+// Espelha `PasswordPolicy` do sep-api: 12+ caracteres OU passphrase de 4+ palavras, cada uma com
+// pelo menos 3 caracteres. O piso por palavra (`MIN_CHARS_POR_PALAVRA`) nao e detalhe: sem ele o
+// mock aceitava "a b c d", que o backend recusa com 400 — a direcao PERIGOSA da assimetria, porque
+// passa offline e quebra em producao.
+//
+// Curiosidade util para quem for mexer: no backend o ramo de passphrase e inalcancavel, ja que
+// 4 palavras x 3 chars + 3 separadores = 15 >= MIN_CHARS. `senha.length >= 12` sozinho teria o mesmo
+// comportamento; a regra completa fica aqui para o espelho continuar obvio se os limites mudarem.
 function senhaAceita(senha: string | undefined): boolean {
   if (!senha) {
     return false;
   }
-  return senha.length >= 12 || senha.trim().split(/\s+/).length >= 4;
+  if (senha.length >= 12) {
+    return true;
+  }
+  const palavras = senha.trim().split(/\s+/);
+  return palavras.length >= 4 && palavras.every((palavra) => palavra.length >= 3);
 }
 
 // --- Account lockout no login (M-Sprint 17 / backend Sprints 5 e 33) -----------------
@@ -119,19 +157,16 @@ const LOCKOUT_MINUTOS = 30;
 // MESMO contador, chaveado por username.
 const falhasDeLoginPorUsuario = new Map<string, number>();
 
-// Restaura o contador de falhas para o estado de seed. Hoje nenhum chamador: o MSW nao esta plugado
-// no Vitest (ver test-setup.ts) e cada teste Playwright carrega a pagina do zero, o que ja reavalia
-// o modulo. Existe para que plugar o MSW no Vitest — follow-up registrado — nao exija tambem
-// descobrir como isolar o estado entre specs.
-export function resetLoginMockState(): void {
+// Restaura tudo que o modulo de auth acumula — contador de lockout, usuarios cadastrados e sessao —
+// para o estado de seed. Hoje nenhum chamador: o MSW nao esta plugado no Vitest (ver test-setup.ts)
+// e cada teste Playwright abre um contexto novo. Com a persistencia em `localStorage`, porem, o
+// estado passa a sobreviver ao reload DENTRO de um teste, entao um spec que precise recomecar do
+// zero tem por onde.
+export function resetAuthMockState(): void {
   falhasDeLoginPorUsuario.clear();
-  usuariosPorUsername.clear();
-  usuariosPorUsername.set(usuarioCliente.username, {
-    usuario: usuarioCliente,
-    senha: SENHA_CLIENTE_SEED,
-  });
-  usuarioAutenticado = usuarioCliente;
-  proximoIdUsuario = 1;
+  estadoAuth = estadoAuthSeed();
+  usuariosPorUsername = new Map(estadoAuth.usuarios);
+  salvarAuth();
 }
 
 function errorResponse(
@@ -178,7 +213,8 @@ const baseHandlers = [
     if (registro && registro.senha === body.password) {
       // Sucesso NAO zera o contador: LockoutService le apenas instantes de falha na janela e nao ha
       // caminho de reset no sep-api.
-      usuarioAutenticado = registro.usuario;
+      estadoAuth.autenticado = username;
+      salvarAuth();
       const tokenResponse: TokenResponse = {
         accessToken: MOCK_TOKEN,
         tokenType: 'Bearer',
@@ -202,7 +238,7 @@ const baseHandlers = [
     if (auth === `Bearer ${MOCK_TOKEN}`) {
       // Reflete quem logou por ultimo, e nao o seed: sem isso o golden path cadastra um usuario,
       // autentica com ele e a casca exibe o e-mail de outra pessoa.
-      return HttpResponse.json(usuarioAutenticado, { status: 200 });
+      return HttpResponse.json(usuarioDaSessao(), { status: 200 });
     }
     return HttpResponse.json(
       errorResponse(401, 'Unauthorized', 'Token invalido ou ausente', '/api/v1/auth/me'),
@@ -245,11 +281,44 @@ const baseHandlers = [
 
   // Troca de senha do proprio usuario. Nao existia: o golden path chegava a alterar a senha e o
   // relogin com a nova credencial nao tinha como funcionar.
+  //
+  // A ordem espelha `AlterarSenhaUseCase` + `StepUpEnforcementAspect` do sep-api: autenticacao,
+  // depois ownership, depois step-up, e so entao credencial e politica. Sem os tres primeiros o mock
+  // aceitava um PATCH SEM `Authorization` e para o id de QUALQUER usuario — passa offline e quebra
+  // em producao, a direcao errada da assimetria.
   http.patch(`${baseUrl}/usuarios/:id/senha`, async ({ request, params }) => {
     const body = (await request.json()) as { passwordAtual?: string; novaSenha?: string };
-    const path = `/api/v1/usuarios/${String(params['id'])}/senha`;
-    const registro = [...usuariosPorUsername.values()].find((r) => r.usuario.id === params['id']);
+    const id = String(params['id']);
+    const path = `/api/v1/usuarios/${id}/senha`;
 
+    if (request.headers.get('Authorization') !== `Bearer ${MOCK_TOKEN}`) {
+      return HttpResponse.json(
+        errorResponse(401, 'Unauthorized', 'Token invalido ou ausente', path),
+        { status: 401 },
+      );
+    }
+
+    // O backend compara `principal.id()` com o id da rota ANTES de buscar o usuario, entao id alheio
+    // ou inexistente responde 403 — nunca 404. O app distingue os dois (change-password mostra
+    // "Voce nao tem permissao..." so no 403), entao devolver 404 aqui ensinaria a UI errada.
+    const sessao = usuarioDaSessao();
+    if (sessao.id !== id) {
+      return HttpResponse.json(
+        errorResponse(403, 'Forbidden', 'Voce nao tem permissao para alterar essa senha', path),
+        { status: 403 },
+      );
+    }
+
+    // `@RequireStepUp` no controller: o aspecto so dispensa o token quando o usuario nao tem MFA
+    // (bypass de migracao pre-MFA). Mesma exigencia dos outros dois endpoints do stepUpInterceptor,
+    // `contratos/:id/aceite` e `cobranca/renegociacoes/:id/aceite`, que ja a fazem neste arquivo.
+    if (sessao.mfaHabilitado && !request.headers.get('X-Step-Up-Token')) {
+      return HttpResponse.json(errorResponse(403, 'Forbidden', 'step-up obrigatorio', path), {
+        status: 403,
+      });
+    }
+
+    const registro = usuariosPorUsername.get(sessao.username);
     if (!registro) {
       return HttpResponse.json(errorResponse(404, 'Not Found', 'usuario nao encontrado', path), {
         status: 404,
@@ -273,6 +342,7 @@ const baseHandlers = [
     }
 
     registro.senha = body.novaSenha as string;
+    salvarAuth();
     return new HttpResponse(null, { status: 204 });
   }),
 ];

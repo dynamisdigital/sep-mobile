@@ -16,6 +16,9 @@ async function enableMsw(page: Page): Promise<void> {
 // O ion-router-outlet mantem as paginas anteriores no DOM (.ion-page-hidden), entao os campos de
 // e-mail/senha do register e do login coexistem e o seletor por label estoura o strict mode. Mesma
 // convencao de `pix-mobile.spec.ts` e `cobranca-mobile.spec.ts`.
+//
+// Quem isola de fato e o `.last()`, nao o filtro: `ion-app` tambem carrega a classe `ion-page`, e
+// por isso o seletor casa mais de um elemento mesmo com uma unica pagina montada.
 function paginaAtiva(page: Page): Locator {
   return page.locator('.ion-page:not(.ion-page-hidden)').last();
 }
@@ -46,19 +49,28 @@ test.describe('Golden path mobile - cadastro, login, perfil, alterar senha, logo
     await enableMsw(page);
   });
 
-  // Controle positivo do fixture, no padrao que a F-Sprint 21 adotou no sep-app: prova que
-  // `defaultPassword` REALMENTE atende a politica e autentica. Sem ele, uma derivacao futura no
-  // fixture faria o golden path falhar la na frente, com sintoma distante da causa.
-  test('a senha do fixture atende a politica e autentica', async ({ page }) => {
-    const email = uniqueEmail('m17-controle');
+  // Controle positivo do fixture, no padrao que a F-Sprint 21 adotou no sep-app. Cobre as DUAS
+  // senhas: a `changedPassword` so e exercitada no passo 8 do golden path, entao uma derivacao nela
+  // falharia la na frente, com sintoma distante da causa — foi o que uma mutacao mostrou.
+  //
+  // Limite conhecido: isto prova que as senhas passam pelo `senhaAceita()` do MOCK, nao pela
+  // `PasswordPolicy` do sep-api. As duas so continuam equivalentes enquanto o espelho for mantido;
+  // ver o comentario de `senhaAceita` em `src/mocks/handlers.ts`.
+  for (const [nome, senha] of [
+    ['defaultPassword', defaultPassword],
+    ['changedPassword', changedPassword],
+  ] as const) {
+    test(`${nome} atende a politica e autentica`, async ({ page }) => {
+      const email = uniqueEmail(`m17-controle-${nome}`);
 
-    await page.goto('/register');
-    // Cadastro aceito: a politica de senha nao recusou.
-    await cadastrar(page, email, defaultPassword);
+      await page.goto('/register');
+      // Cadastro aceito: a politica de senha nao recusou.
+      await cadastrar(page, email, senha);
 
-    await entrar(page, email, defaultPassword);
-    await expect(page).toHaveURL(/\/app\/inicio$/, { timeout: 10_000 });
-  });
+      await entrar(page, email, senha);
+      await expect(page).toHaveURL(/\/app\/inicio$/, { timeout: 10_000 });
+    });
+  }
 
   test('CLIENTE conclui golden path autenticado', async ({ page }) => {
     const email = uniqueEmail('m4-cliente');
@@ -113,13 +125,18 @@ test.describe('Golden path mobile - cadastro, login, perfil, alterar senha, logo
     await paginaAtiva(page).getByTestId('sep-profile-logout').click();
     await expect(page).toHaveURL(/\/welcome$/, { timeout: 10_000 });
 
-    // 11. Relogin com a nova senha. Prova que a troca do passo 8 persistiu: a senha inicial nao
-    // serve mais e a nova serve.
+    // 11. Relogin. Prova que a troca do passo 8 persistiu nas DUAS pontas: a senha inicial deixou de
+    // servir e a nova serve. Sem a primeira metade, um PATCH que gravasse a nova senha mantendo a
+    // antiga valida — regressao classica de invalidacao — passaria batido.
     await paginaAtiva(page)
       .getByRole('link', { name: /entrar|login/i })
-      .first()
       .click();
     await expect(page).toHaveURL(/\/login$/);
+
+    await entrar(page, email, defaultPassword);
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByText(/credenciais invalidas/i)).toBeVisible({ timeout: 10_000 });
+
     await entrar(page, email, changedPassword);
     await expect(page).toHaveURL(/\/app\/inicio$/, { timeout: 10_000 });
     await expect(page.getByTestId('sep-tomador-email')).toContainText(email);
