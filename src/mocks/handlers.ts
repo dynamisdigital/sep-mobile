@@ -32,30 +32,38 @@ const usuarioCliente: UsuarioResponse = {
 // falhas trancam a conta por `lockout-minutes`.
 //
 // NAO e simulado: a janela de 15 min (`window-minutes`) e a duracao de 30 min do bloqueio. O mock
-// nao tem relogio e nenhum smoke vive tanto. Consequencia pratica: o bloqueio dura ate
-// `resetLoginMockState()` ou ate o reload da pagina, que reavalia o modulo — nao expira sozinho.
-// O que precisa ser fiel e a ordem de avaliacao e o limiar, que e o que torna /account-locked
-// alcancavel offline.
+// nao tem relogio e nenhum smoke vive tanto. Consequencia pratica: o bloqueio dura ate o reload da
+// pagina, que reavalia o modulo — nao expira sozinho. O que precisa ser fiel e a ordem de avaliacao
+// e o limiar, que e o que torna /account-locked alcancavel offline.
 const LOCKOUT_MAX_TENTATIVAS = 5;
 const LOCKOUT_MINUTOS = 30;
 
 // DIVERGENCIA DELIBERADA do backend, herdada da F-Sprint 21 no sep-app: aqui QUALQUER credencial
-// recusada incrementa, inclusive username desconhecido. No sep-api o
-// AutenticarUsuarioUseCase chega a chamar `avaliarPosFalha` para usuario inexistente, mas
+// recusada incrementa, inclusive username desconhecido, vazio ou fora do formato e-mail. No sep-api
+// o AutenticarUsuarioUseCase chega a chamar `avaliarPosFalha` para usuario inexistente, mas
 // LockoutService.STATUSES_FALHA so admite SENHA_INVALIDA e TOTP_INVALIDO — entao USUARIO_INEXISTENTE
-// nao entra na contagem e um username desconhecido responde 401 para sempre. O mock e portanto mais
-// estrito que a producao nesse caso; a assimetria e segura (falha offline, passa em producao —
-// nunca o contrario).
+// nao entra na contagem e um username desconhecido responde 401 para sempre; um username
+// vazio/malformado nem chega ao use case, porque cai em 400 por bean validation (@NotBlank @Email em
+// LoginRequestDto).
+//
+// DIRECAO DO RISCO — vale para esta divergencia E para a ausencia de relogio acima. O mock e mais
+// ESTRITO que a producao: tranca onde o backend nao trancaria (username inexistente, 5 falhas
+// espalhadas por mais de 15 min, tentativa apos os 30 min ja vencidos). Para um teste que afirma
+// sucesso ou 401 isso e seguro — falha offline, passa em producao. Mas para um teste que afirma o
+// BLOQUEIO, que e justamente o que este mock existe para viabilizar, a direcao se inverte: ele passa
+// offline e a jornada pode nao existir em producao. Portanto todo teste de /account-locked deve usar
+// um usuario que o backend tambem contaria — usuario EXISTENTE com senha errada, em tentativas
+// consecutivas.
 //
 // TOTP_INVALIDO nao se aplica aqui: o mock nao expoe `/auth/totp/verify` (o handler de login devolve
 // `mfaRequired: false`), entao a unica origem de falha e a senha. No sep-api os dois status somam no
 // MESMO contador, chaveado por username.
 const falhasDeLoginPorUsuario = new Map<string, number>();
 
-// Restaura o contador de falhas para o estado de seed. Hoje nenhum teste o chama: o MSW nao esta
-// plugado no Vitest (ver test-setup.ts) e cada teste Playwright carrega a pagina do zero, o que ja
-// reavalia o modulo. Existe para que plugar o MSW no Vitest — follow-up registrado — nao exija
-// tambem descobrir como isolar o estado entre specs.
+// Restaura o contador de falhas para o estado de seed. Hoje nenhum chamador: o MSW nao esta plugado
+// no Vitest (ver test-setup.ts) e cada teste Playwright carrega a pagina do zero, o que ja reavalia
+// o modulo. Existe para que plugar o MSW no Vitest — follow-up registrado — nao exija tambem
+// descobrir como isolar o estado entre specs.
 export function resetLoginMockState(): void {
   falhasDeLoginPorUsuario.clear();
 }
@@ -79,12 +87,15 @@ const baseHandlers = [
   http.post(`${baseUrl}/auth/login`, async ({ request }) => {
     const body = (await request.json()) as LoginRequest;
     const path = '/api/v1/auth/login';
+    // O cast acima nao valida nada: em runtime o corpo e JSON arbitrario. Normalizar aqui evita que
+    // `undefined` vire chave do Map e faca o tipo `Map<string, number>` mentir.
+    const username = body.username ?? '';
 
     // Mesma posicao que o lockout ocupa em AutenticarUsuarioUseCase#executar: verificado ANTES de
     // resolver o usuario e de avaliar a credencial. Duas consequencias preservadas de proposito:
     // a 5a senha errada ainda responde 401 (o 423 so aparece na 6a requisicao) e a senha CORRETA
     // depois do bloqueio tambem responde 423, porque a credencial nem chega a ser avaliada.
-    const falhas = falhasDeLoginPorUsuario.get(body.username) ?? 0;
+    const falhas = falhasDeLoginPorUsuario.get(username) ?? 0;
     if (falhas >= LOCKOUT_MAX_TENTATIVAS) {
       return HttpResponse.json(
         errorResponse(
@@ -97,7 +108,7 @@ const baseHandlers = [
       );
     }
 
-    if (body.username === 'cliente@empresa.com' && body.password === 'senha-passphrase-segura') {
+    if (username === 'cliente@empresa.com' && body.password === 'senha-passphrase-segura') {
       // Sucesso NAO zera o contador: LockoutService le apenas instantes de falha na janela e nao ha
       // caminho de reset no sep-api.
       const tokenResponse: TokenResponse = {
@@ -112,7 +123,7 @@ const baseHandlers = [
       return HttpResponse.json(tokenResponse, { status: 200 });
     }
 
-    falhasDeLoginPorUsuario.set(body.username, falhas + 1);
+    falhasDeLoginPorUsuario.set(username, falhas + 1);
     return HttpResponse.json(errorResponse(401, 'Unauthorized', 'Credenciais invalidas', path), {
       status: 401,
     });
