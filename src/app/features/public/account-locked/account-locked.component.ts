@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { ViewDidEnter } from '@ionic/angular';
 import {
   IonButton,
   IonContent,
@@ -61,7 +62,7 @@ import {
     </ion-header>
     <ion-content class="ion-padding">
       <ion-text>
-        <h2 data-testid="sep-account-locked-title">Tentativas excessivas</h2>
+        <h2 #titulo tabindex="-1" data-testid="sep-account-locked-title">Tentativas excessivas</h2>
         <p>
           Detectamos varias tentativas de acesso malsucedidas — senha ou codigo de verificacao. Por
           seguranca, sua conta fica bloqueada por ate 30 minutos, contados a partir da ultima
@@ -88,4 +89,19 @@ import {
     </ion-content>
   `,
 })
-export class AccountLockedComponent {}
+export class AccountLockedComponent implements ViewDidEnter {
+  private readonly titulo = viewChild.required<ElementRef<HTMLHeadingElement>>('titulo');
+
+  // `ionViewDidEnter`, e nao `ngAfterViewInit` como no `sep-app`: o Ionic anima a pagina para
+  // dentro do outlet, e no `ngAfterViewInit` ela ainda esta invisivel — `focus()` em elemento
+  // invisivel e no-op e o foco fica em <body>. Medido em browser real: com `ngAfterViewInit` o
+  // `document.activeElement` continuava sendo BODY mesmo com o `tabindex` no lugar.
+  ionViewDidEnter(): void {
+    // Destino de redirect automatico das tres camadas que tratam 423. O Angular nao move foco na
+    // navegacao, o app nao tem live region de rota e o `focusManagerPriority` do Ionic esta
+    // desligado (`provideIonicAngular()` sem config, decisao da sprint) — entao sem isto quem usa
+    // leitor de tela cai em silencio numa tela nova, sem saber que a conta foi bloqueada, justo no
+    // desfecho de um evento de seguranca.
+    this.titulo().nativeElement.focus();
+  }
+}

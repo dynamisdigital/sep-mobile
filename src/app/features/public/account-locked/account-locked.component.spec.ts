@@ -30,6 +30,20 @@ describe('AccountLockedComponent', () => {
     return (renderizar().textContent ?? '').replace(/\s+/g, ' ').trim();
   }
 
+  // Trava so a ligacao: que o hook de entrada da pagina foca o heading. NAO prova que o foco
+  // funciona de verdade — no happy-dom `focus()` pega em heading mesmo SEM `tabindex="-1"`, entao
+  // este teste passaria com o atributo removido, quando em browser real o foco ficaria em <body>.
+  // A prova real esta em `e2e/foco-redirect-mobile.spec.ts`, que roda em Chromium.
+  it('o hook de entrada da pagina move o foco para o heading', () => {
+    const fixture = TestBed.createComponent(AccountLockedComponent);
+    fixture.detectChanges();
+    fixture.componentInstance.ionViewDidEnter();
+    const titulo = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="sep-account-locked-title"]',
+    );
+    expect(document.activeElement).toBe(titulo);
+  });
+
   it('anuncia o bloqueio no titulo', () => {
     const titulo = renderizar().querySelector('[data-testid="sep-account-locked-title"]');
     expect(titulo?.textContent?.trim()).toBe('Tentativas excessivas');

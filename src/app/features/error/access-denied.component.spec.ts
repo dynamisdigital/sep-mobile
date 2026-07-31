@@ -41,6 +41,19 @@ describe('AccessDeniedComponent', () => {
     );
   });
 
+  // Trava so a ligacao: que o hook de entrada da pagina foca o heading. NAO prova que o foco
+  // funciona de verdade — no happy-dom `focus()` pega em heading mesmo SEM `tabindex="-1"`, entao
+  // este teste passaria com o atributo removido, quando em browser real o foco ficaria em <body>.
+  // A prova real esta em `e2e/foco-redirect-mobile.spec.ts`, que roda em Chromium.
+  it('o hook de entrada da pagina move o foco para o heading', () => {
+    const fixture = setup(null);
+    fixture.componentInstance.ionViewDidEnter();
+    const titulo = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-testid="sep-access-denied-title"]',
+    );
+    expect(document.activeElement).toBe(titulo);
+  });
+
   it('autenticado: link volta para /app/inicio', () => {
     const fixture = setup(cliente);
     expect(fixture.componentInstance.fallbackLink()).toBe('/app/inicio');
