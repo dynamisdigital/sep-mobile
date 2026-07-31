@@ -24,17 +24,30 @@ import {
  *   `AuthController` so expoe `/logout` e `/logout-all`, que encerram sem listar.
  * - "tente novamente em alguns minutos" -> "ate 30 minutos, contados a partir da ultima tentativa":
  *   `PoliticaLockout.eventoDeBloqueio` compara `agora - duracaoBloqueio` com a falha que fecha a
- *   janela, entao o prazo corre desde a tentativa, nao desde a abertura desta tela. Como nenhuma
- *   falha e gravada durante o bloqueio (`LockoutService.verificar` lanca antes do registro), o prazo
- *   nunca se estende. "Alguns minutos" convidava a tentar de novo aos 5 e falhar. O 30 vem de
- *   `app.security.lockout.lockout-minutes`, sobrescrevivel por ambiente: se ops mudar, esta pagina
- *   desalinha (follow-up: expor o valor no contrato — escopo da Sprint 34).
+ *   janela, entao o prazo corre desde a tentativa, nao desde a abertura desta tela. Dentro de um
+ *   episodio o prazo nao se estende, porque nenhuma falha e gravada enquanto a conta esta bloqueada
+ *   (`LockoutService.verificar` lanca antes do registro). "Alguns minutos" convidava a tentar de
+ *   novo aos 5 e falhar. O 30 vem de `app.security.lockout.lockout-minutes`, sobrescrevivel por
+ *   ambiente, hoje sem override em nenhum perfil.
  * - "credenciais invalidas" -> "senha ou codigo de verificacao": `LockoutService.STATUSES_FALHA`
  *   conta SENHA_INVALIDA e TOTP_INVALIDO no mesmo contador, e `VerificarTotpUseCase` chama o mesmo
  *   `lockoutService.verificar`, entao quem errou o TOTP tambem cai aqui.
  *
  * Acrescentado: o desbloqueio e so por expiracao. Conferido que nao ha endpoint de unlock, acao de
- * backoffice, job ou delete em `LoginAttemptRepository` — a unica saida e o prazo vencer.
+ * backoffice, job ou delete em `LoginAttemptRepository` — a unica saida e o prazo vencer. A frase
+ * nao e cruel porque tambem nao existe fluxo de recuperacao de senha para quem nao esta
+ * autenticado: nao ha o que a pessoa pudesse fazer alem de esperar.
+ *
+ * LIMITE CONHECIDO: o contador e por `username`, sem distinguir quem tentou. Vencido o bloqueio,
+ * cinco novas falhas o renovam — entao sob ataque sustentado o usuario legitimo fica sem entrada e
+ * esta tela nao oferece saida. E a lacuna do 3o paragrafo, compartilhada com o `sep-app`; fechar
+ * exige controle compensatorio no backend (follow-up aberto desde a Sprint 33, exige ADR).
+ *
+ * FOLLOW-UP do prazo fixo: o `sep-api` ja manda os minutos no corpo do 423
+ * (`ContaBloqueadaException` -> `ApiExceptionHandler`), entao o que falta e local — carregar a
+ * `message` atraves da navegacao, que hoje descarta o `HttpErrorResponse`. A Sprint 34 planeja
+ * ainda um `GET /auth/politica-lockout` publico, util para o acesso por URL direta, onde nao houve
+ * request nenhuma.
  */
 @Component({
   selector: 'sep-account-locked',

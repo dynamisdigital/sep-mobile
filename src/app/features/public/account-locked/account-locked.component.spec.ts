@@ -21,46 +21,58 @@ describe('AccountLockedComponent', () => {
     return fixture.nativeElement as HTMLElement;
   }
 
+  // O template quebra as frases em varias linhas, entao o `textContent` vem cheio de espaco. As
+  // assercoes travam a FRASE INTEIRA, e nao pedacos soltos: com `toContain('30 minutos')` e
+  // `toContain('ultima tentativa')` separados, uma reescrita para "bloqueada por 30 minutos
+  // contados a partir de agora. Sua ultima tentativa ficou registrada" passaria — e diria
+  // exatamente a inverdade que esta sprint removeu.
+  function textoNormalizado(): string {
+    return (renderizar().textContent ?? '').replace(/\s+/g, ' ').trim();
+  }
+
   it('anuncia o bloqueio no titulo', () => {
-    const el = renderizar();
-    expect(el.querySelector('[data-testid="sep-account-locked-title"]')?.textContent).toContain(
-      'Tentativas excessivas',
-    );
+    const titulo = renderizar().querySelector('[data-testid="sep-account-locked-title"]');
+    expect(titulo?.textContent?.trim()).toBe('Tentativas excessivas');
   });
 
   it('atribui o bloqueio tambem ao codigo de verificacao, nao so a senha', () => {
     // LockoutService.STATUSES_FALHA conta SENHA_INVALIDA e TOTP_INVALIDO no mesmo contador, e
     // VerificarTotpUseCase chama o mesmo lockoutService.verificar.
-    expect(renderizar().textContent).toContain('senha ou codigo de verificacao');
+    expect(textoNormalizado()).toContain(
+      'tentativas de acesso malsucedidas — senha ou codigo de verificacao',
+    );
   });
 
   it('informa o prazo real e a partir de quando ele conta', () => {
     // PoliticaLockout.eventoDeBloqueio mede o prazo desde a falha que fecha a janela, nao desde a
     // abertura desta tela. Dizer so "alguns minutos" convidava a tentar de novo aos 5 e falhar.
-    const texto = renderizar().textContent ?? '';
-    expect(texto).toContain('30 minutos');
-    expect(texto).toContain('ultima tentativa');
+    expect(textoNormalizado()).toContain(
+      'bloqueada por ate 30 minutos, contados a partir da ultima tentativa',
+    );
   });
 
   it('diz que o desbloqueio e automatico e que nao ha liberacao manual', () => {
     // Conferido que nao existe endpoint de unlock, acao de backoffice, job nem delete em
     // LoginAttemptRepository: a unica saida e a expiracao do prazo.
-    const texto = renderizar().textContent ?? '';
-    expect(texto).toContain('desbloqueio e automatico');
-    expect(texto).toContain('nao existe liberacao manual');
+    expect(textoNormalizado()).toContain(
+      'O desbloqueio e automatico e acontece so por expiracao desse prazo: nao existe liberacao manual.',
+    );
   });
 
   // Assercao NEGATIVA, e a mais importante desta spec: a copy anterior mandava "revise os
   // dispositivos conectados". Nao existe tela de sessoes no app nem endpoint que liste dispositivos
-  // no backend (o AuthController so expoe /logout e /logout-all). Este teste impede que a instrucao
-  // impossivel volte numa revisao futura de texto.
-  it('nao manda revisar dispositivos conectados, que o produto nao oferece', () => {
-    expect(renderizar().textContent).not.toContain('dispositivos');
+  // no backend (o AuthController so expoe /logout e /logout-all). O regex cobre as reescritas
+  // obvias — singular, "aparelho", "sessoes ativas" —, senao trocar uma palavra devolveria a
+  // instrucao impossivel sem quebrar o teste.
+  it('nao manda revisar dispositivos ou sessoes, que o produto nao oferece', () => {
+    expect(textoNormalizado()).not.toMatch(/dispositivo|aparelho|sess(ao|oes|ão|ões) ativ/i);
   });
 
   it('oferece volta para o login', () => {
     const link = renderizar().querySelector('[data-testid="sep-account-locked-back"]');
-    expect(link).not.toBeNull();
-    expect(link?.textContent).toContain('Voltar ao login');
+    expect(link?.textContent?.trim()).toBe('Voltar ao login');
+    // O RouterLinkDelegate do Ionic renderiza o href; sem este assert, remover o `routerLink` (ou
+    // apontar para outra rota) deixaria o botao inerte e o teste verde.
+    expect(link?.getAttribute('href')).toBe('/login');
   });
 });

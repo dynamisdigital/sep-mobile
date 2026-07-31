@@ -1,4 +1,9 @@
-import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  provideHttpClient,
+  withInterceptors,
+} from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
@@ -72,36 +77,47 @@ describe('errorInterceptor', () => {
   });
 
   // 423 = conta bloqueada. O ramo existe desde a Sprint 5 e ficou sem teste ate a M-Sprint 17.
-  it('423 limpa sessao e redireciona para /account-locked', async () => {
+  // O `toHaveBeenCalledExactlyOnceWith` nao e preciosismo: o ramo do 403 acima nao tem `return`,
+  // entao um `if (403 || 423)` cairia nos dois e navegaria duas vezes — `toHaveBeenCalledWith`
+  // sozinho aceitaria isso.
+  it('423 limpa sessao, redireciona e propaga o erro', async () => {
     const errorPromise = new Promise<unknown>((resolve) => {
       http.get('/api/v1/auth/me').subscribe({
-        next: () => resolve('ok'),
+        next: (ok) => resolve(ok),
         error: (err) => resolve(err),
       });
     });
     const req = httpMock.expectOne('/api/v1/auth/me');
     req.flush({ message: 'Conta bloqueada' }, { status: 423, statusText: 'Locked' });
-    await errorPromise;
+    const resultado = await errorPromise;
     await Promise.resolve();
     expect(authStub.clearSession).toHaveBeenCalled();
-    expect(routerStub.navigateByUrl).toHaveBeenCalledWith('/account-locked');
+    expect(routerStub.navigateByUrl).toHaveBeenCalledExactlyOnceWith('/account-locked');
+    // O erro precisa continuar propagando: login, verify-totp e guards dependem do `catch` para
+    // nao seguirem o fluxo feliz. Um interceptor que engolisse o 423 e devolvesse `next` passaria
+    // nos asserts acima e quebraria os tres chamadores.
+    expect(resultado).toBeInstanceOf(HttpErrorResponse);
+    expect((resultado as HttpErrorResponse).status).toBe(423);
   });
 
   // O 423 chega tambem de /auth/login, que e a origem real da jornada: ao contrario do 401, o
   // interceptor NAO abre excecao para a rota de login. Sem este teste, mover a checagem de 423 para
   // dentro do `!isLogoutOrLogin` passaria despercebido e a jornada inteira morreria.
-  it('423 em /auth/login tambem redireciona', async () => {
+  it('423 em /auth/login tambem limpa sessao, redireciona e propaga', async () => {
     const errorPromise = new Promise<unknown>((resolve) => {
       http.post('/api/v1/auth/login', {}).subscribe({
-        next: () => resolve('ok'),
+        next: (ok) => resolve(ok),
         error: (err) => resolve(err),
       });
     });
     const req = httpMock.expectOne('/api/v1/auth/login');
     req.flush({ message: 'Conta bloqueada' }, { status: 423, statusText: 'Locked' });
-    await errorPromise;
+    const resultado = await errorPromise;
     await Promise.resolve();
-    expect(routerStub.navigateByUrl).toHaveBeenCalledWith('/account-locked');
+    expect(authStub.clearSession).toHaveBeenCalled();
+    expect(routerStub.navigateByUrl).toHaveBeenCalledExactlyOnceWith('/account-locked');
+    expect(resultado).toBeInstanceOf(HttpErrorResponse);
+    expect((resultado as HttpErrorResponse).status).toBe(423);
   });
 
   // Teste negativo: rate limit nao e conta bloqueada. O backend passou o limite de login para 10

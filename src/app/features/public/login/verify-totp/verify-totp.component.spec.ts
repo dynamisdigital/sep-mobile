@@ -96,17 +96,40 @@ describe('VerifyTotpComponent', () => {
   });
 
   it('codigo valido conclui o login', async () => {
-    mfaSpy.verify.mockResolvedValue({
-      accessToken: 'jwt-1',
-      usuario: { precisaRedefinirSenha: false },
-    });
+    const response = { accessToken: 'jwt-1', usuario: { precisaRedefinirSenha: false } };
+    mfaSpy.verify.mockResolvedValue(response);
     const component = componenteComCodigo();
 
     await component.submit();
 
     expect(mfaSpy.verify).toHaveBeenCalledWith({ mfaChallengeId: 'challenge-1', codigo: '123456' });
-    expect(authSpy.applyMfaVerifyResponse).toHaveBeenCalled();
+    // Com argumento: sem ele, entregar um payload vazio a sessao passaria no teste.
+    expect(authSpy.applyMfaVerifyResponse).toHaveBeenCalledWith(response);
     expect(routerSpy.navigateByUrl).toHaveBeenCalledWith('/app/inicio');
+  });
+
+  // O `ngOnInit` e o que recupera o challenge ao reabrir o app; sem esta cobertura o corpo dele
+  // podia ser esvaziado inteiro sem quebrar nenhum teste, e os stubs de hydrate/biometria eram
+  // setup morto.
+  it('ngOnInit recupera o challenge pendente e consulta a biometria', async () => {
+    biometricSpy.checkAvailability.mockResolvedValue(true);
+    const component = buildComponent();
+
+    await component.ngOnInit();
+
+    expect(authSpy.hydratePendingMfa).toHaveBeenCalled();
+    expect(component.challengeAusente()).toBe(false);
+    expect(component.biometriaDisponivel()).toBe(true);
+  });
+
+  it('ngOnInit sem challenge sinaliza a ausencia e nem consulta a biometria', async () => {
+    authSpy.pendingMfaChallenge.mockReturnValue(null);
+    const component = buildComponent();
+
+    await component.ngOnInit();
+
+    expect(component.challengeAusente()).toBe(true);
+    expect(biometricSpy.checkAvailability).not.toHaveBeenCalled();
   });
 
   it('form invalido nao chama verify', async () => {
