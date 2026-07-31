@@ -373,6 +373,40 @@ describe('ParcelaDetailComponent', () => {
     expect(component.erroPix()).not.toBeNull();
   });
 
+  // Duplo toque no botao de atualizar. Aqui o service e um vi.fn(), nao HttpTestingController como
+  // no portfolio-detail, entao a prova e contar chamadas com a primeira leitura ainda pendente: o
+  // [disabled] do botao so vale a partir do proximo ciclo de change detection, e sem a guarda as
+  // duas chamadas passariam com a MESMA geracao — que o guard de geracao nao descarta.
+  it('duplo toque em atualizar status Pix dispara uma unica leitura, nao duas concorrentes', async () => {
+    let liberar: (v: PixPagamentoParcelaResponse) => void = () => undefined;
+    const emVoo = new Promise<PixPagamentoParcelaResponse>((resolve) => {
+      liberar = resolve;
+    });
+    const consultarStatusPixDaParcela = vi
+      .fn()
+      .mockResolvedValueOnce(statusPixFixture())
+      .mockReturnValueOnce(emVoo);
+    const { component } = setup(
+      { contratoId: CONTRATO_ID, parcelaId: PARCELA_ID },
+      {},
+      { consultarStatusPixDaParcela },
+    );
+    await component.ngOnInit();
+    expect(consultarStatusPixDaParcela).toHaveBeenCalledTimes(1);
+
+    // Dois toques no mesmo tick, com a leitura do primeiro ainda em voo.
+    const p1 = component.consultarStatusPix();
+    const p2 = component.consultarStatusPix();
+
+    // 1 do ngOnInit + 1 do primeiro toque. Sem a guarda seriam 3.
+    expect(consultarStatusPixDaParcela).toHaveBeenCalledTimes(2);
+
+    liberar(statusPixFixture('LIQUIDADO'));
+    await Promise.all([p1, p2]);
+    expect(component.statusPix()?.status).toBe('LIQUIDADO');
+    expect(component.carregandoPix()).toBe(false);
+  });
+
   it('falha do status Pix e isolada: o detalhe da parcela permanece intacto', async () => {
     const { component } = setup(
       { contratoId: CONTRATO_ID, parcelaId: PARCELA_ID },

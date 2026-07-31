@@ -5,7 +5,7 @@
     <p class="sep-login__subtitle">Acesse sua conta SEP</p>
   </header>
 
-  <main class="sep-login__inner">
+  <div class="sep-login__inner">
     <form class="sep-login__form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
       <div class="sep-login__field">
         <ion-input
@@ -61,5 +61,5 @@
         <a routerLink="/register" class="sep-login__alt-link">Criar conta</a>
       </p>
     </form>
-  </main>
+  </div>
 </ion-content>

@@ -267,6 +267,27 @@ describe('PortfolioDetailComponent', () => {
     expect(el.querySelector('[data-testid="sep-operacao-detalhe-pix-erro"]')).not.toBeNull();
   });
 
+  // Mesmo molde do duplo toque em aportes (M-16), agora no status Pix: o [disabled] do botao so
+  // vale a partir do proximo ciclo de change detection, entao duas chamadas no mesmo tick passavam
+  // as duas e disparavam requests concorrentes com a MESMA geracao — que o guard de geracao nao
+  // descarta.
+  it('duplo toque em atualizar status Pix dispara uma unica request, nao duas concorrentes', async () => {
+    await renderOperacao(operacao(), 500);
+
+    const p1 = fixture.componentInstance.consultarStatusPix();
+    const p2 = fixture.componentInstance.consultarStatusPix();
+
+    // expectOne falha se houver mais de uma request em voo para a mesma URL.
+    httpMock.expectOne(PIX_URL).flush(pixFixture({ status: 'LIQUIDADO' }));
+    await Promise.all([p1, p2]);
+
+    const el = await render();
+    expect(el.querySelector('[data-testid="sep-pix-status-publico"]')?.textContent).toContain(
+      'Liquidado',
+    );
+    expect(fixture.componentInstance.carregandoPix()).toBe(false);
+  });
+
   it('o card de status Pix nao expoe tomador, contrato, transferencia, provider nem escrow', async () => {
     const el = await renderOperacao(operacao(), pixFixture());
     const card = el.querySelector('[data-testid="sep-operacao-detalhe-pix"]');
@@ -398,6 +419,39 @@ describe('PortfolioDetailComponent', () => {
     const el = await render();
     expect(el.querySelectorAll('[data-testid="sep-operacao-detalhe-aporte"]')).toHaveLength(1);
     expect(fixture.componentInstance.carregandoAportes()).toBe(false);
+  });
+
+  // Regressao: reentrada na stack enquanto o status Pix esta em voo faz o carregar() obsoleto
+  // chegar em consultarAportes DEPOIS que o carregar() novo ja reabilitou o flag. Sem a rejeicao de
+  // geracao vencida na entrada, a chamada obsoleta tomava a guarda, o carregar() corrente desistia
+  // da propria leitura e o finally da obsoleta pulava o reset (exige geracao igual): o card ficava
+  // com spinner eterno e o retry desabilitado para sempre.
+  it('reentrada com o status Pix em voo nao prende o card de aportes carregando', async () => {
+    await renderOperacao();
+    const componente = fixture.componentInstance;
+
+    // Geracao 2: operacao respondida, status Pix deixado em voo.
+    const carregarG2 = componente.carregar();
+    httpMock.expectOne(URL).flush(operacao());
+    await fixture.whenStable();
+    const pixEmVoo = httpMock.expectOne(PIX_URL);
+
+    // Geracao 3 entra antes de a geracao 2 terminar.
+    componente.ionViewWillEnter();
+    await fixture.whenStable();
+
+    pixEmVoo.flush(pixFixture());
+    await fixture.whenStable();
+    httpMock.match(URL).forEach((req) => req.flush(operacao()));
+    await fixture.whenStable();
+    httpMock.match(PIX_URL).forEach((req) => req.flush(pixFixture()));
+    await fixture.whenStable();
+    httpMock.match(APORTES_URL).forEach((req) => req.flush([aporte()]));
+    await fixture.whenStable();
+    await carregarG2;
+
+    expect(componente.carregandoAportes()).toBe(false);
+    expect(componente.carregandoPix()).toBe(false);
   });
 
   it('nao oferece nenhum CTA de mutacao de aporte a persona credora', async () => {

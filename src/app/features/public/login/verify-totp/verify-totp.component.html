@@ -4,7 +4,7 @@
     <h1 class="sep-verify-totp__title">Verificacao em duas etapas</h1>
   </header>
 
-  <main class="sep-verify-totp__inner">
+  <div class="sep-verify-totp__inner">
     @if (challengeAusente()) {
       <ion-text>
         <h2>Sessao expirada</h2>
@@ -64,5 +64,5 @@
 
       <ion-button expand="block" fill="clear" routerLink="/login">Cancelar</ion-button>
     }
-  </main>
+  </div>
 </ion-content>
