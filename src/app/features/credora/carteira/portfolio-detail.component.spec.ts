@@ -267,6 +267,27 @@ describe('PortfolioDetailComponent', () => {
     expect(el.querySelector('[data-testid="sep-operacao-detalhe-pix-erro"]')).not.toBeNull();
   });
 
+  // Mesmo molde do duplo toque em aportes (M-16), agora no status Pix: o [disabled] do botao so
+  // vale a partir do proximo ciclo de change detection, entao duas chamadas no mesmo tick passavam
+  // as duas e disparavam requests concorrentes com a MESMA geracao — que o guard de geracao nao
+  // descarta.
+  it('duplo toque em atualizar status Pix dispara uma unica request, nao duas concorrentes', async () => {
+    await renderOperacao(operacao(), 500);
+
+    const p1 = fixture.componentInstance.consultarStatusPix();
+    const p2 = fixture.componentInstance.consultarStatusPix();
+
+    // expectOne falha se houver mais de uma request em voo para a mesma URL.
+    httpMock.expectOne(PIX_URL).flush(pixFixture({ status: 'LIQUIDADO' }));
+    await Promise.all([p1, p2]);
+
+    const el = await render();
+    expect(el.querySelector('[data-testid="sep-pix-status-publico"]')?.textContent).toContain(
+      'Liquidado',
+    );
+    expect(fixture.componentInstance.carregandoPix()).toBe(false);
+  });
+
   it('o card de status Pix nao expoe tomador, contrato, transferencia, provider nem escrow', async () => {
     const el = await renderOperacao(operacao(), pixFixture());
     const card = el.querySelector('[data-testid="sep-operacao-detalhe-pix"]');

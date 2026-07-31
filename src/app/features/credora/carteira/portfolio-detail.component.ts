@@ -128,7 +128,11 @@ export class PortfolioDetailComponent implements OnInit, ViewWillEnter {
   // neutra ("sem Pix"); 403/rede/5xx = erro isolado com retry. Nao bloqueia o detalhe. Resposta de
   // geracao anterior nao sobrescreve a atual.
   async consultarStatusPix(geracao = this.geracao): Promise<void> {
-    if (!this.id) {
+    // Uma request por gesto: o [disabled] do botao so vale a partir do proximo ciclo de change
+    // detection, entao um duplo toque cabe na fresta e dispararia duas leituras concorrentes com
+    // a mesma geracao — o guard de geracao nao descartaria nenhuma, a ultima a responder venceria
+    // e o finally da primeira reabilitaria o botao com request ainda em voo.
+    if (!this.id || this.carregandoPix()) {
       return;
     }
     this.carregandoPix.set(true);
