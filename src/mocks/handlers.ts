@@ -27,6 +27,65 @@ const usuarioCliente: UsuarioResponse = {
   mfaHabilitado: true,
 };
 
+const SENHA_CLIENTE_SEED = 'senha-passphrase-segura';
+
+// --- Cadastro dinamico de usuarios (M-Sprint 17) -------------------------------------
+// Ate aqui o mock so conhecia um par fixo, entao a jornada de cadastro -> login do
+// `golden-path-mobile` era impossivel offline: o spec cria o usuario com `uniqueEmail()` e depois
+// tenta autenticar com ele. O par fixo continua semeado porque os outros 8 specs e2e logam com ele.
+//
+// So o necessario para a jornada e simulado: credencial, papel e troca de senha. Nao ha hash, nao ha
+// expiracao de token e o token e o mesmo para qualquer usuario — nada aqui vale como referencia de
+// seguranca.
+interface RegistroUsuario {
+  usuario: UsuarioResponse;
+  senha: string;
+}
+
+const usuariosPorUsername = new Map<string, RegistroUsuario>([
+  [usuarioCliente.username, { usuario: usuarioCliente, senha: SENHA_CLIENTE_SEED }],
+]);
+
+// Devolvido por `/auth/me`. Antes era sempre o par fixo, entao o golden path logava como o usuario
+// recem-criado e a casca exibia o e-mail do seed.
+let usuarioAutenticado: UsuarioResponse = usuarioCliente;
+
+let proximoIdUsuario = 1;
+
+function registrarUsuario(
+  username: string,
+  senha: string,
+  role: 'ADMIN' | 'CLIENTE',
+): RegistroUsuario {
+  const usuario: UsuarioResponse = {
+    // Bloco `7711` de proposito: `7710xx` ja e usado pelo seed (`...771001`) e por fixtures dos
+    // specs. Colidir aqui faz o PATCH de senha achar o usuario errado e recusar a senha atual —
+    // sintoma distante da causa, custou uma sessao de debug.
+    id: `1f0799c0-98b9-6d9d-bc4a-7d6f5b7711${String(proximoIdUsuario++).padStart(2, '0')}`,
+    username,
+    role,
+    dataCriacao: '2026-04-24T18:30:00-03:00',
+    dataModificacao: '2026-04-24T18:30:00-03:00',
+    criadoPor: 'system',
+    modificadoPor: 'system',
+    precisaRedefinirSenha: false,
+    // Sem MFA: o change-password do golden path exigiria step-up com a flag ligada, e a jornada
+    // testada aqui e a do usuario recem-cadastrado, que no backend nasce sem TOTP configurado.
+    mfaHabilitado: false,
+  };
+  const registro = { usuario, senha };
+  usuariosPorUsername.set(username, registro);
+  return registro;
+}
+
+// Politica de senha do sep-api espelhada no mock: 12+ caracteres OU passphrase de 4+ palavras.
+function senhaAceita(senha: string | undefined): boolean {
+  if (!senha) {
+    return false;
+  }
+  return senha.length >= 12 || senha.trim().split(/\s+/).length >= 4;
+}
+
 // --- Account lockout no login (M-Sprint 17 / backend Sprints 5 e 33) -----------------
 // Espelha LockoutService + LockoutProperties do sep-api: `app.security.lockout.max-attempts`
 // falhas trancam a conta por `lockout-minutes`.
@@ -66,6 +125,13 @@ const falhasDeLoginPorUsuario = new Map<string, number>();
 // descobrir como isolar o estado entre specs.
 export function resetLoginMockState(): void {
   falhasDeLoginPorUsuario.clear();
+  usuariosPorUsername.clear();
+  usuariosPorUsername.set(usuarioCliente.username, {
+    usuario: usuarioCliente,
+    senha: SENHA_CLIENTE_SEED,
+  });
+  usuarioAutenticado = usuarioCliente;
+  proximoIdUsuario = 1;
 }
 
 function errorResponse(
@@ -108,15 +174,17 @@ const baseHandlers = [
       );
     }
 
-    if (username === 'cliente@empresa.com' && body.password === 'senha-passphrase-segura') {
+    const registro = usuariosPorUsername.get(username);
+    if (registro && registro.senha === body.password) {
       // Sucesso NAO zera o contador: LockoutService le apenas instantes de falha na janela e nao ha
       // caminho de reset no sep-api.
+      usuarioAutenticado = registro.usuario;
       const tokenResponse: TokenResponse = {
         accessToken: MOCK_TOKEN,
         tokenType: 'Bearer',
         expiresIn: 900,
         refreshToken: MOCK_REFRESH,
-        usuario: usuarioCliente,
+        usuario: registro.usuario,
         mfaRequired: false,
         mfaChallengeId: null,
       };
@@ -132,7 +200,9 @@ const baseHandlers = [
   http.get(`${baseUrl}/auth/me`, ({ request }) => {
     const auth = request.headers.get('Authorization');
     if (auth === `Bearer ${MOCK_TOKEN}`) {
-      return HttpResponse.json(usuarioCliente, { status: 200 });
+      // Reflete quem logou por ultimo, e nao o seed: sem isso o golden path cadastra um usuario,
+      // autentica com ele e a casca exibe o e-mail de outra pessoa.
+      return HttpResponse.json(usuarioAutenticado, { status: 200 });
     }
     return HttpResponse.json(
       errorResponse(401, 'Unauthorized', 'Token invalido ou ausente', '/api/v1/auth/me'),
@@ -144,12 +214,12 @@ const baseHandlers = [
     const body = (await request.json()) as UsuarioCreateRequest;
     const path = '/api/v1/usuarios';
 
-    if (body.username === 'duplicado@empresa.com') {
+    if (body.username === 'duplicado@empresa.com' || usuariosPorUsername.has(body.username)) {
       return HttpResponse.json(errorResponse(409, 'Conflict', 'username ja existe', path), {
         status: 409,
       });
     }
-    if (!body.password || body.password.length < 12) {
+    if (!senhaAceita(body.password)) {
       return HttpResponse.json(
         errorResponse(
           400,
@@ -167,18 +237,43 @@ const baseHandlers = [
       );
     }
 
-    const novoUsuario: UsuarioResponse = {
-      id: '1f0799c0-98b9-6d9d-bc4a-7d6f5b771010',
-      username: body.username,
-      role: body.role,
-      dataCriacao: '2026-04-24T18:30:00-03:00',
-      dataModificacao: '2026-04-24T18:30:00-03:00',
-      criadoPor: 'system',
-      modificadoPor: 'system',
-      precisaRedefinirSenha: false,
-      mfaHabilitado: false,
-    };
-    return HttpResponse.json(novoUsuario, { status: 201 });
+    // Registra de fato: e o que permite o golden path autenticar depois com o usuario que acabou de
+    // criar. Antes o handler devolvia 201 e esquecia o usuario.
+    const { usuario } = registrarUsuario(body.username, body.password, body.role);
+    return HttpResponse.json(usuario, { status: 201 });
+  }),
+
+  // Troca de senha do proprio usuario. Nao existia: o golden path chegava a alterar a senha e o
+  // relogin com a nova credencial nao tinha como funcionar.
+  http.patch(`${baseUrl}/usuarios/:id/senha`, async ({ request, params }) => {
+    const body = (await request.json()) as { passwordAtual?: string; novaSenha?: string };
+    const path = `/api/v1/usuarios/${String(params['id'])}/senha`;
+    const registro = [...usuariosPorUsername.values()].find((r) => r.usuario.id === params['id']);
+
+    if (!registro) {
+      return HttpResponse.json(errorResponse(404, 'Not Found', 'usuario nao encontrado', path), {
+        status: 404,
+      });
+    }
+    if (registro.senha !== body.passwordAtual) {
+      return HttpResponse.json(errorResponse(400, 'Bad Request', 'senha atual invalida', path), {
+        status: 400,
+      });
+    }
+    if (!senhaAceita(body.novaSenha)) {
+      return HttpResponse.json(
+        errorResponse(
+          400,
+          'Bad Request',
+          'Senha nao atende a politica de seguranca: minimo 12 caracteres OU passphrase 4+ palavras',
+          path,
+        ),
+        { status: 400 },
+      );
+    }
+
+    registro.senha = body.novaSenha as string;
+    return new HttpResponse(null, { status: 204 });
   }),
 ];
 
