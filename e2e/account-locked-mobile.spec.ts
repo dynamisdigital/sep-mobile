@@ -98,5 +98,11 @@ test.describe('M-Sprint 17 - conta bloqueada (MSW)', () => {
 
     await expect(page).toHaveURL(/\/account-locked$/);
     await expect(page.getByRole('heading', { name: /Tentativas excessivas/i })).toBeVisible();
+
+    // Foco pelo caminho de REDIRECT (navegacao SPA), nao por deep link. Os dois sao observavelmente
+    // diferentes — o redirect leva centenas de ms a mais ate o foco assentar e a pagina nao passa
+    // por `.ion-page-invisible` —, entao uma regressao que quebrasse so este caminho escaparia do
+    // `e2e/foco-redirect-mobile.spec.ts`, que so faz `goto`.
+    await expect(page.getByTestId('sep-account-locked-title')).toBeFocused();
   });
 });

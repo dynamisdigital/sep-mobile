@@ -30,6 +30,12 @@ test.describe('M-Sprint 17 - foco nos destinos de redirect', () => {
       // Comparar pelo testid do elemento focado, e nao so `toBeFocused()`, deixa a falha legivel:
       // quando o foco fica em <body> o valor vem null em vez de um mismatch opaco.
       await expect.poll(() => testidDoFoco(page)).toBe(testid);
+
+      // O `poll` sozinho so prova que o foco TOCOU o heading em algum instante: um `blur()` logo
+      // depois passaria batido. Reconferir apos a transicao do Ionic assentar prova que ele
+      // REPOUSA la, que e o que o leitor de tela precisa.
+      await page.waitForTimeout(1_000);
+      await expect(page.getByTestId(testid)).toBeFocused();
     });
   }
 });

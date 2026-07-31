@@ -34,6 +34,11 @@ import {
  *   conta SENHA_INVALIDA e TOTP_INVALIDO no mesmo contador, e `VerificarTotpUseCase` chama o mesmo
  *   `lockoutService.verificar`, entao quem errou o TOTP tambem cai aqui.
  *
+ * O heading e `h1`, e nao `h2`: o `ion-title` do header nao e exposto como heading, entao este e o
+ * unico da pagina — como `h2` ela ficava sem nivel 1. Alem disso o Ionic so neutraliza o outline de
+ * foco de `h1[tabindex="-1"]:focus` (regra propria em `styles.css`), entao com `h2` o heading
+ * ganhava um anel azul do `:focus-visible` de `global.scss` ao ser focado por deep link.
+ *
  * Acrescentado: o desbloqueio e so por expiracao. Conferido que nao ha endpoint de unlock, acao de
  * backoffice, job ou delete em `LoginAttemptRepository` — a unica saida e o prazo vencer. A frase
  * nao e cruel porque tambem nao existe fluxo de recuperacao de senha para quem nao esta
@@ -62,7 +67,7 @@ import {
     </ion-header>
     <ion-content class="ion-padding">
       <ion-text>
-        <h2 #titulo tabindex="-1" data-testid="sep-account-locked-title">Tentativas excessivas</h2>
+        <h1 #titulo tabindex="-1" data-testid="sep-account-locked-title">Tentativas excessivas</h1>
         <p>
           Detectamos varias tentativas de acesso malsucedidas — senha ou codigo de verificacao. Por
           seguranca, sua conta fica bloqueada por ate 30 minutos, contados a partir da ultima
@@ -92,10 +97,13 @@ import {
 export class AccountLockedComponent implements ViewDidEnter {
   private readonly titulo = viewChild.required<ElementRef<HTMLHeadingElement>>('titulo');
 
-  // `ionViewDidEnter`, e nao `ngAfterViewInit` como no `sep-app`: o Ionic anima a pagina para
-  // dentro do outlet, e no `ngAfterViewInit` ela ainda esta invisivel — `focus()` em elemento
-  // invisivel e no-op e o foco fica em <body>. Medido em browser real: com `ngAfterViewInit` o
-  // `document.activeElement` continuava sendo BODY mesmo com o `tabindex` no lugar.
+  // `ionViewDidEnter`, e nao `ngAfterViewInit` como no `sep-app`. Medido em Chromium: no
+  // `ngAfterViewInit` o heading esta no documento e visivel por estilo
+  // (`display:block; visibility:visible; opacity:1`), mas SEM caixa de layout —
+  // `offsetParent === null` e rect 0x0 —, porque os web components do Ionic ainda nao renderizaram,
+  // e `focus()` em elemento sem caixa e no-op: o `activeElement` continuava em BODY mesmo com o
+  // `tabindex` no lugar. Nao e a animacao nem opacidade: no `ionViewDidEnter` a pagina ainda carrega
+  // `.ion-page-invisible` (opacity 0) e o foco funciona.
   ionViewDidEnter(): void {
     // Destino de redirect automatico das tres camadas que tratam 423. O Angular nao move foco na
     // navegacao, o app nao tem live region de rota e o `focusManagerPriority` do Ionic esta

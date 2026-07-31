@@ -29,9 +29,9 @@ export class AccessDeniedComponent implements ViewDidEnter {
     this.auth.currentUser() ? 'Voltar ao inicio' : 'Voltar ao welcome',
   );
 
-  // `ionViewDidEnter`, e nao `ngAfterViewInit`: no `ngAfterViewInit` a pagina ainda esta sendo
-  // animada para dentro do outlet e `focus()` em elemento invisivel e no-op. Ver o comentario
-  // equivalente em `account-locked.component.ts`.
+  // `ionViewDidEnter`, e nao `ngAfterViewInit`: naquele momento o heading ainda nao tem caixa de
+  // layout (`offsetParent === null`) porque os web components do Ionic nao renderizaram, e
+  // `focus()` vira no-op. Ver o comentario com a medicao em `account-locked.component.ts`.
   ionViewDidEnter(): void {
     // Destino de redirect do `roleGuard` e do 403 no `errorInterceptor`. Mesmo motivo do
     // account-locked: o Angular nao move foco na navegacao, nao ha live region de rota e o

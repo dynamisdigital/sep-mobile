@@ -30,10 +30,10 @@ describe('AccountLockedComponent', () => {
     return (renderizar().textContent ?? '').replace(/\s+/g, ' ').trim();
   }
 
-  // Trava so a ligacao: que o hook de entrada da pagina foca o heading. NAO prova que o foco
-  // funciona de verdade — no happy-dom `focus()` pega em heading mesmo SEM `tabindex="-1"`, entao
-  // este teste passaria com o atributo removido, quando em browser real o foco ficaria em <body>.
-  // A prova real esta em `e2e/foco-redirect-mobile.spec.ts`, que roda em Chromium.
+  // Trava a ligacao (nome do hook + elemento focado), nao a focabilidade. No happy-dom `focus()`
+  // pega em heading mesmo SEM `tabindex="-1"`, entao este teste fica cego a remocao do atributo —
+  // em browser real, sem ele o foco ficaria em <body>. Essa unica mutacao e coberta por
+  // `e2e/foco-redirect-mobile.spec.ts`, que roda em Chromium.
   it('o hook de entrada da pagina move o foco para o heading', () => {
     const fixture = TestBed.createComponent(AccountLockedComponent);
     fixture.detectChanges();
