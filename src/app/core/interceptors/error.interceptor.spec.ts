@@ -71,6 +71,57 @@ describe('errorInterceptor', () => {
     expect(authStub.clearSession).not.toHaveBeenCalled();
   });
 
+  // 423 = conta bloqueada. O ramo existe desde a Sprint 5 e ficou sem teste ate a M-Sprint 17.
+  it('423 limpa sessao e redireciona para /account-locked', async () => {
+    const errorPromise = new Promise<unknown>((resolve) => {
+      http.get('/api/v1/auth/me').subscribe({
+        next: () => resolve('ok'),
+        error: (err) => resolve(err),
+      });
+    });
+    const req = httpMock.expectOne('/api/v1/auth/me');
+    req.flush({ message: 'Conta bloqueada' }, { status: 423, statusText: 'Locked' });
+    await errorPromise;
+    await Promise.resolve();
+    expect(authStub.clearSession).toHaveBeenCalled();
+    expect(routerStub.navigateByUrl).toHaveBeenCalledWith('/account-locked');
+  });
+
+  // O 423 chega tambem de /auth/login, que e a origem real da jornada: ao contrario do 401, o
+  // interceptor NAO abre excecao para a rota de login. Sem este teste, mover a checagem de 423 para
+  // dentro do `!isLogoutOrLogin` passaria despercebido e a jornada inteira morreria.
+  it('423 em /auth/login tambem redireciona', async () => {
+    const errorPromise = new Promise<unknown>((resolve) => {
+      http.post('/api/v1/auth/login', {}).subscribe({
+        next: () => resolve('ok'),
+        error: (err) => resolve(err),
+      });
+    });
+    const req = httpMock.expectOne('/api/v1/auth/login');
+    req.flush({ message: 'Conta bloqueada' }, { status: 423, statusText: 'Locked' });
+    await errorPromise;
+    await Promise.resolve();
+    expect(routerStub.navigateByUrl).toHaveBeenCalledWith('/account-locked');
+  });
+
+  // Teste negativo: rate limit nao e conta bloqueada. O backend passou o limite de login para 10
+  // justamente para o 429 nao mascarar o 423 (Sprint 33); tratar os dois igual aqui desfaria isso e
+  // mandaria para /account-locked quem so precisa esperar alguns segundos.
+  it('429 nao redireciona nem apaga a sessao', async () => {
+    const errorPromise = new Promise<unknown>((resolve) => {
+      http.post('/api/v1/auth/login', {}).subscribe({
+        next: () => resolve('ok'),
+        error: (err) => resolve(err),
+      });
+    });
+    const req = httpMock.expectOne('/api/v1/auth/login');
+    req.flush({ message: 'Muitas tentativas' }, { status: 429, statusText: 'Too Many Requests' });
+    await errorPromise;
+    await Promise.resolve();
+    expect(routerStub.navigateByUrl).not.toHaveBeenCalled();
+    expect(authStub.clearSession).not.toHaveBeenCalled();
+  });
+
   it('outros erros nao redirecionam', async () => {
     const errorPromise = new Promise<HttpErrorResponse>((resolve) => {
       http.get('/api/v1/auth/me').subscribe({

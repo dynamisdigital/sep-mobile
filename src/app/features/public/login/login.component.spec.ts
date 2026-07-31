@@ -78,6 +78,22 @@ describe('LoginComponent', () => {
     expect(routerSpy.navigateByUrl).toHaveBeenCalledWith('/app/inicio');
   });
 
+  // 423 = conta bloqueada. Ramo presente desde a Sprint 5 e sem teste ate a M-Sprint 17. O
+  // componente navega e retorna ANTES do toast: quem foi bloqueado nao pode ver "credenciais
+  // invalidas", que sugeriria que basta tentar de novo.
+  it('423 navega para /account-locked sem mostrar toast', async () => {
+    const { HttpErrorResponse } = await import('@angular/common/http');
+    authSpy.login.mockRejectedValue(new HttpErrorResponse({ status: 423 }));
+    const component = buildComponent();
+    component.form.setValue({
+      username: 'cliente@empresa.com',
+      password: 'senha-passphrase-segura',
+    });
+    await component.submit();
+    expect(routerSpy.navigateByUrl).toHaveBeenCalledWith('/account-locked');
+    expect(toastSpy.create).not.toHaveBeenCalled();
+  });
+
   it('credenciais invalidas mostram toast com 401', async () => {
     const { HttpErrorResponse } = await import('@angular/common/http');
     authSpy.login.mockRejectedValue(new HttpErrorResponse({ status: 401 }));
