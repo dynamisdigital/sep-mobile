@@ -54,6 +54,14 @@ jobs:
       - name: Format check
         run: npm run format:check
 
+      # D-Sprint 1: falha o job em `high`/`critical`. Limiar high, e nao `total`, porque
+      # `moderate`/`low` aqui so tem correcao em major de Angular/Capacitor — barrado pelos
+      # ADR 0018 e 0019 — e gate cronicamente vermelho vira gate ignorado.
+      # Vai SO neste job: `build` e `android` instalam do mesmo lock, entao repetir triplicaria o
+      # tempo sem cobrir nada a mais.
+      - name: Security audit (dependencias, falha em high/critical)
+        run: npm run audit
+
       - name: Lint TS/HTML
         run: npm run lint
 
