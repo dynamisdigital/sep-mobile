@@ -3,12 +3,8 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonButton, IonContent, IonSpinner } from '@ionic/angular/standalone';
 
-import {
-  ApiErrorResponse,
-  DecisaoParecer,
-  PropostaResponse,
-  TipoOperacao,
-} from '../../../core/api/api.models';
+import { mensagemDaApi } from '../../../core/api/api-error';
+import { DecisaoParecer, PropostaResponse, TipoOperacao } from '../../../core/api/api.models';
 import { CreditoMobileService } from '../../../core/credito/credito-mobile.service';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
 import { PropostaStatusComponent } from './proposta-status.component';
@@ -106,7 +102,7 @@ export class PropostaDetailComponent implements OnInit {
       if (err.status === 404) {
         return 'Proposta nao encontrada.';
       }
-      const mensagem = (err.error as ApiErrorResponse | undefined)?.message;
+      const mensagem = mensagemDaApi(err);
       if (mensagem) {
         return mensagem;
       }

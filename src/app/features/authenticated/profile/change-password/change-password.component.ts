@@ -10,7 +10,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 
-import { ApiErrorResponse } from '../../../../core/api/api.models';
+import { mensagemDaApi } from '../../../../core/api/api-error';
 import { AuthService } from '../../../../core/auth/auth.service';
 import { StepUpTokenStore } from '../../../../core/auth/step-up-token.store';
 import { UsuariosService } from '../../../../core/users/usuarios.service';
@@ -101,8 +101,7 @@ export class ChangePasswordComponent {
   }
 
   private isStepUpRequiredError(error: HttpErrorResponse): boolean {
-    const body = error.error as ApiErrorResponse | null | undefined;
-    const message = (body?.message ?? '').toString().toLowerCase();
+    const message = mensagemDaApi(error)?.toLowerCase() ?? '';
     return message.includes('step-up') || message.includes('step_up');
   }
 
@@ -112,9 +111,9 @@ export class ChangePasswordComponent {
 
   private extractMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
-      const body = error.error as ApiErrorResponse | null | undefined;
-      if (body?.message) {
-        return body.message;
+      const mensagem = mensagemDaApi(error);
+      if (mensagem) {
+        return mensagem;
       }
       if (error.status === 400) {
         return 'Senha atual incorreta ou nova senha invalida.';

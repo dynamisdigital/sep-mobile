@@ -4,7 +4,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ViewWillEnter } from '@ionic/angular';
 import { IonContent, IonSpinner } from '@ionic/angular/standalone';
 
-import { ApiErrorResponse, RenegociacaoTomadorResponse } from '../../../core/api/api.models';
+import { mensagemDaApi } from '../../../core/api/api-error';
+import { RenegociacaoTomadorResponse } from '../../../core/api/api.models';
 import { AuthService } from '../../../core/auth/auth.service';
 import { StepUpTokenStore } from '../../../core/auth/step-up-token.store';
 import { CobrancaMobileService } from '../../../core/cobranca/cobranca-mobile.service';
@@ -254,9 +255,7 @@ export class RenegociacaoDetailComponent implements OnInit, ViewWillEnter {
   }
 
   private isStepUpRequiredError(err: HttpErrorResponse): boolean {
-    const message = ((err.error as ApiErrorResponse | null | undefined)?.message ?? '')
-      .toString()
-      .toLowerCase();
+    const message = mensagemDaApi(err)?.toLowerCase() ?? '';
     return message.includes('step-up') || message.includes('step_up');
   }
 }
