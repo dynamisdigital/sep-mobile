@@ -18,7 +18,8 @@ import {
   IonSpinner,
 } from '@ionic/angular/standalone';
 
-import { ApiErrorResponse, TipoOperacao } from '../../../core/api/api.models';
+import { mensagemDaApi } from '../../../core/api/api-error';
+import { TipoOperacao } from '../../../core/api/api.models';
 import { CreditoMobileService } from '../../../core/credito/credito-mobile.service';
 import { OnboardingJourneyStore } from '../../../core/onboarding/onboarding-journey.store';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
@@ -135,5 +136,5 @@ function inteiroPositivo(control: AbstractControl): ValidationErrors | null {
 }
 
 function mensagemApi(err: HttpErrorResponse): string | null {
-  return (err.error as ApiErrorResponse | undefined)?.message ?? null;
+  return mensagemDaApi(err) ?? null;
 }

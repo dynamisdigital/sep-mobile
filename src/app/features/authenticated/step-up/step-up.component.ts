@@ -4,7 +4,7 @@ import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { IonContent } from '@ionic/angular/standalone';
 
-import { ApiErrorResponse } from '../../../core/api/api.models';
+import { mensagemDaApi } from '../../../core/api/api-error';
 import { StepUpService } from '../../../core/auth/step-up.service';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
 
@@ -88,9 +88,9 @@ export class StepUpComponent implements OnInit {
 
   private extractMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
-      const body = error.error as ApiErrorResponse | null | undefined;
-      if (body?.message) {
-        return body.message;
+      const mensagem = mensagemDaApi(error);
+      if (mensagem) {
+        return mensagem;
       }
       if (error.status === 400) {
         return 'Codigo invalido ou expirado.';
