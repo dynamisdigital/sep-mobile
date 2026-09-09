@@ -4,8 +4,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { IonButton, IonContent, IonInput, IonNote, IonSpinner } from '@ionic/angular/standalone';
 
+import { mensagemDaApi } from '../../../core/api/api-error';
 import {
-  ApiErrorResponse,
   MovimentacaoConsolidadaResponse,
   OpenFinanceStatusResponse,
   StatusConsentimento,
@@ -158,9 +158,7 @@ export class OpenFinanceComponent implements OnInit {
   }
 
   private mensagem(err: unknown): string | null {
-    return err instanceof HttpErrorResponse
-      ? ((err.error as ApiErrorResponse | undefined)?.message ?? null)
-      : null;
+    return mensagemDaApi(err) ?? null;
   }
 }
 

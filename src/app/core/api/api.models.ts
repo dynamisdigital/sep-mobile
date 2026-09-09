@@ -73,6 +73,23 @@ export interface ApiErrorResponse {
   message: string;
   path: string;
   traceId?: string;
+  /**
+   * Identificador estavel da condicao de erro (`ErrorResponseDto.codigo`, backend Sprint 36).
+   *
+   * **Opcional porque a ausencia e o caso normal, nao a excecao.** O backend publica um subconjunto
+   * da taxonomia: handlers sem codigo, e toda a cadeia de seguranca (`401`/`403`/`429`), que escreve
+   * na response sem passar pelo `@RestControllerAdvice`, respondem sem o campo. Bean validation na
+   * fronteira do controller tambem — um `@NotBlank` reprovado volta sem `codigo`. Somam-se a esses os
+   * backends anteriores a Sprint 36.
+   *
+   * Quem le ramifica pelo codigo quando ele vem e cai no comportamento por status quando nao vem.
+   * Nao ha `enum` fechado aqui de proposito: o perimetro publicado muda entre sprints, e um tipo
+   * fechado faria o mobile recusar codigo novo em vez de degradar para o ramo legado.
+   *
+   * Leia com `codigoDeErroDaApi` (`core/api/api-error.ts`), nunca direto: em runtime o corpo e JSON
+   * arbitrario e este campo pode chegar nao-string.
+   */
+  codigo?: string;
 }
 
 // DTOs de borda espelhando os contratos reais de `sep-api` (onboarding Sprints 6-7).

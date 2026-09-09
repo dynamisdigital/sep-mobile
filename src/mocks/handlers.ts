@@ -169,11 +169,22 @@ export function resetAuthMockState(): void {
   salvarAuth();
 }
 
+/**
+ * `codigo` e o ULTIMO parametro e e opcional porque a ausencia e o caso majoritario no backend:
+ * dos 17 handlers do `ApiExceptionHandler`, 13 ainda respondem sem taxonomia, e a cadeia de
+ * seguranca (`401`/`403`/`429`) escreve direto na response, sem passar pelo `@RestControllerAdvice`.
+ * Os chamadores que nao passam o argumento produzem o corpo de antes, byte a byte.
+ *
+ * **Nunca derivar um codigo do status.** A direcao perigosa da assimetria e o mock ser mais
+ * generoso que a producao: um teste que ramifica por um codigo inventado passa offline e a jornada
+ * nao existe de verdade. Cada inclusao aqui foi conferida contra o handler que a emite no `sep-api`.
+ */
 function errorResponse(
   status: number,
   error: string,
   message: string,
   path: string,
+  codigo?: string,
 ): ApiErrorResponse {
   return {
     timestamp: new Date().toISOString(),
@@ -181,6 +192,7 @@ function errorResponse(
     error,
     message,
     path,
+    ...(codigo === undefined ? {} : { codigo }),
   };
 }
 
@@ -198,12 +210,16 @@ const baseHandlers = [
     // depois do bloqueio tambem responde 423, porque a credencial nem chega a ser avaliada.
     const falhas = falhasDeLoginPorUsuario.get(username) ?? 0;
     if (falhas >= LOCKOUT_MAX_TENTATIVAS) {
+      // `ApiExceptionHandler#handleLocked` chama `build(..., ex.getCodigo())` e publica
+      // `AUTH-423-001` (`ContaBloqueadaException.CODIGO`), que esta no `CatalogoCodigosErro`.
+      // Conferido na fonte do `sep-api`, nao inferido do status.
       return HttpResponse.json(
         errorResponse(
           423,
           'Locked',
           `Conta bloqueada temporariamente. Tente novamente em ${LOCKOUT_MINUTOS} minutos.`,
           path,
+          'AUTH-423-001',
         ),
         { status: 423 },
       );
@@ -228,6 +244,10 @@ const baseHandlers = [
     }
 
     falhasDeLoginPorUsuario.set(username, falhas + 1);
+    // SEM `codigo`, e isso e fidelidade e nao esquecimento: no `sep-api` a credencial recusada vira
+    // `AuthenticationException` e cai no `handleAuth`, que chama `build(...)` na sobrecarga de
+    // QUATRO argumentos. Inventar um codigo aqui faria o app ramificar offline por algo que a
+    // producao nunca envia.
     return HttpResponse.json(errorResponse(401, 'Unauthorized', 'Credenciais invalidas', path), {
       status: 401,
     });

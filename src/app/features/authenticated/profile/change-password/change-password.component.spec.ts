@@ -107,6 +107,26 @@ describe('ChangePasswordComponent', () => {
     expect(cmp.successMessage()).toBeNull();
   });
 
+  // M-Sprint 18: a extracao passou por `mensagemDaApi`, que normaliza branco e nao-string para
+  // ausente. Sem isso o `if (body?.message)` antigo devolveria '' (tela muda) ou o numero cru.
+  it.each([
+    ['em branco', '   '],
+    ['numerica', 42],
+  ])('mensagem %s do backend cai no fallback por status, nao na tela', async (_rotulo, message) => {
+    const { fixture, usuariosStub } = setup(cliente);
+    usuariosStub.alterarSenha.mockRejectedValue(
+      new HttpErrorResponse({ status: 400, error: { message } }),
+    );
+    const cmp = fixture.componentInstance;
+    cmp.form.setValue({
+      passwordAtual: 'wrong1',
+      novaSenha: '654321',
+      confirmacaoNovaSenha: '654321',
+    });
+    await cmp.submit();
+    expect(cmp.errorMessage()).toBe('Senha atual incorreta ou nova senha invalida.');
+  });
+
   it('sem usuario atual, submit nao chama service', async () => {
     const { fixture, usuariosStub } = setup(null);
     const cmp = fixture.componentInstance;

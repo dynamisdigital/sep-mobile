@@ -10,8 +10,8 @@ import {
 import { ActivatedRoute, Router } from '@angular/router';
 import { IonButton, IonContent, IonSpinner } from '@ionic/angular/standalone';
 
+import { mensagemDaApi } from '../../../core/api/api-error';
 import {
-  ApiErrorResponse,
   ContratoResponse,
   PixDesembolsoTomadorResponse,
   StatusAssinaturaResponse,
@@ -482,9 +482,7 @@ export class ContratoDetailComponent implements OnInit {
   }
 
   private isStepUpRequiredError(err: HttpErrorResponse): boolean {
-    const message = ((err.error as ApiErrorResponse | null | undefined)?.message ?? '')
-      .toString()
-      .toLowerCase();
+    const message = mensagemDaApi(err)?.toLowerCase() ?? '';
     return message.includes('step-up') || message.includes('step_up');
   }
 
