@@ -6,10 +6,26 @@
 
   <div class="sep-verify-totp__inner">
     @if (challengeAusente()) {
-      <ion-text>
-        <h2>Sessao expirada</h2>
-        <p>Refaca o login para receber um novo desafio.</p>
-      </ion-text>
+      <!--
+        Dois motivos distintos fecham o formulario e por isso a copy nao e uma so:
+        - sem `mensagemTerminal`, nao havia desafio pendente ao entrar na rota (estado local);
+        - com `mensagemTerminal`, o backend recusou o desafio por codigo (`MFA-400-003`/`004`) e a
+          frase e a dele. Dizer "Sessao expirada" para uma conta sem TOTP ativo mandaria o usuario
+          refazer o login atras de um desafio que a conta nunca vai emitir.
+        `role="alert"` porque este bloco SUBSTITUI o formulario depois de um envio: o leitor de tela
+        precisa ser avisado de que a tela mudou, e nao ha toast aqui que o faca.
+      -->
+      @if (mensagemTerminal(); as msg) {
+        <ion-text role="alert" data-testid="sep-verify-totp-terminal">
+          <h2>Nao foi possivel concluir a verificacao</h2>
+          <p>{{ msg }}</p>
+        </ion-text>
+      } @else {
+        <ion-text>
+          <h2>Sessao expirada</h2>
+          <p>Refaca o login para receber um novo desafio.</p>
+        </ion-text>
+      }
       <ion-button class="sep-verify-totp__submit" expand="block" routerLink="/login">
         Voltar ao login
       </ion-button>

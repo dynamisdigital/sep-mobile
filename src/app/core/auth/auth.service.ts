@@ -101,6 +101,25 @@ export class AuthService {
     }
   }
 
+  /**
+   * Descarta **somente** o desafio MFA pendente, em memoria e no storage.
+   *
+   * Existe separado de {@link clearSession} de proposito: ali o objetivo e derrubar a sessao
+   * inteira (tokens de acesso e refresh, usuario corrente). Aqui nao ha sessao a derrubar — quem
+   * chama esta parado na verificacao TOTP, ainda nao autenticado — e o unico estado obsoleto e o
+   * `mfaChallengeId`.
+   *
+   * Chamado quando o backend responde que o desafio nao pode mais ser aceito (`MFA-400-004`,
+   * desafio consumido/expirado; `MFA-400-003`, conta sem TOTP ativo — o `VerificarTotpUseCase`
+   * consome o desafio ANTES de checar o secret, entao ele morre nos dois casos). Sem isto o
+   * `hydratePendingMfa` de uma reentrada na rota ressuscitaria o desafio morto do storage e a tela
+   * ofereceria o formulario de novo, que e exatamente a armadilha que esta sprint fecha.
+   */
+  async descartarDesafioMfa(): Promise<void> {
+    await this.tokenStorage.clearPendingMfaChallenge();
+    this.pendingMfaChallengeState.set(null);
+  }
+
   async clearSession(): Promise<void> {
     await this.tokenStorage.clearAll();
     this.currentUserState.set(null);
