@@ -164,6 +164,14 @@ export const AUTHENTICATED_ROUTES: Routes = [
         data: { tab: 'perfil' },
       },
       {
+        // Central de notificacoes (M-Sprint 19): de todas as areas autenticadas, sem guarda de
+        // tomador/credora — o authGuard do shell basta, e o backend filtra pelo dono do token.
+        path: 'notificacoes',
+        loadComponent: () =>
+          import('./notificacoes/notificacoes.component').then((m) => m.NotificacoesComponent),
+        data: { title: 'Notificacoes' },
+      },
+      {
         path: 'step-up',
         loadComponent: () => import('./step-up/step-up.component').then((m) => m.StepUpComponent),
         data: { tab: 'perfil' },

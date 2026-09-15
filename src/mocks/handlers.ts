@@ -3,6 +3,7 @@ import { http, HttpResponse } from 'msw';
 import type {
   ApiErrorResponse,
   LoginRequest,
+  NotificacaoResponse,
   TokenResponse,
   UsuarioCreateRequest,
   UsuarioResponse,
@@ -28,6 +29,27 @@ const usuarioCliente: UsuarioResponse = {
 };
 
 const SENHA_CLIENTE_SEED = 'senha-passphrase-segura';
+
+// Duas contas a mais so para a central de notificacoes (M-Sprint 19): provar owner-scope exige um
+// segundo dono com avisos proprios, e o vazio comum exige alguem sem aviso in-app. Sem MFA, pelo mesmo
+// motivo do cadastro dinamico: nenhum dos dois passa por step-up.
+const SENHA_SEED_NOTIFICACOES = 'senha-notificacoes-segura';
+
+function usuarioSeedSemMfa(id: string, username: string): UsuarioResponse {
+  return { ...usuarioCliente, id, username, mfaHabilitado: false };
+}
+
+// Tomadora com avisos proprios: nenhum dos dela pode aparecer para a conta seed, nem o inverso.
+const usuarioTomadoraB = usuarioSeedSemMfa(
+  '1f0799c0-98b9-6d9d-bc4a-7d6f5b773001',
+  'tomadora.b@empresa.com',
+);
+// So atua como credora: nenhum gatilho ativo fala com ela, entao a central e vazia. Tem um e-mail no
+// historico, que a central nao mostra.
+const usuarioCredoraSemAviso = usuarioSeedSemMfa(
+  '1f0799c0-98b9-6d9d-bc4a-7d6f5b773002',
+  'credora@empresa.com',
+);
 
 // --- Cadastro dinamico de usuarios (M-Sprint 17) -------------------------------------
 // Ate aqui o mock so conhecia um par fixo, entao a jornada de cadastro -> login do
@@ -57,7 +79,14 @@ interface EstadoAuth {
 
 function estadoAuthSeed(): EstadoAuth {
   return {
-    usuarios: [[usuarioCliente.username, { usuario: usuarioCliente, senha: SENHA_CLIENTE_SEED }]],
+    usuarios: [
+      [usuarioCliente.username, { usuario: usuarioCliente, senha: SENHA_CLIENTE_SEED }],
+      [usuarioTomadoraB.username, { usuario: usuarioTomadoraB, senha: SENHA_SEED_NOTIFICACOES }],
+      [
+        usuarioCredoraSemAviso.username,
+        { usuario: usuarioCredoraSemAviso, senha: SENHA_SEED_NOTIFICACOES },
+      ],
+    ],
     autenticado: usuarioCliente.username,
     proximoId: 1,
   };
@@ -1647,6 +1676,244 @@ const pixHandlers = [
   }),
 ];
 
+// --- Central de notificacoes (M-Sprint 19 / backend Sprint 38, ADR 0021 §9) --------------------
+// Espelha `NotificacaoController` + `ConsultarCentralNotificacoesUseCase` +
+// `MarcarNotificacaoLidaUseCase`, conferidos na fonte do sep-api (`develop@98d427c`).
+//
+// O que precisa ser fiel, porque e o que o app ramifica ou o que esconderia o defeito mais grave:
+// - dono e SEMPRE a sessao, nunca parametro; o filtro por dono e canal IN_APP vem ANTES de paginar e
+//   contar. Um mock que ignora owner-scope passa offline mostrando aviso de outra pessoa;
+// - `404 NTF-404-001` identico para aviso inexistente, de outro dono ou de e-mail — so o `path` muda,
+//   porque repete a URL da propria requisicao, como no backend;
+// - marcar de novo devolve `200` com a `lidaEm` da primeira leitura;
+// - `200` com `content: []` e `naoLidas: 0` sao sucesso;
+// - `400 NTF-400-001` so para faixa de paginacao; parametro que nem e numero e UUID invalido caem no
+//   handler de type mismatch, SEM codigo. Inventar codigo ali seria o mock mais generoso que producao;
+// - `401` da cadeia de seguranca, tambem sem codigo.
+//
+// O que NAO e fiel, de proposito: doze desembolsos para o mesmo contrato nao existem de verdade — o
+// volume esta aqui para haver duas paginas. A referencia aponta para o contrato do mock de
+// formalizacao (id que nao e UUID) para que "Ver contrato" abra uma tela que o mock responde.
+//
+// Estado em `localStorage` (`mock.notificacoes`), como os demais: a leitura sobrevive a reload e a
+// reentrada dentro do mesmo teste, e cada teste Playwright comeca do seed por abrir contexto novo.
+const NOTIFICACOES_KEY = 'mock.notificacoes';
+// Efeito de teste, no padrao do `mock.pix`: com `true`, a proxima listagem responde 500 uma unica vez
+// (prova a superficie de erro e o retry). O Playwright nao consegue fazer isso com `page.route`,
+// porque requisicao atendida pelo service worker do MSW nao passa pelo roteamento da pagina.
+const NOTIFICACOES_FALHAR_KEY = 'mock.notificacoes.falhar';
+const NOTIFICACOES_PATH = '/api/v1/notificacoes';
+const UUID_VALIDO = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Metadados internos (dono, canal) ficam fora do DTO publico: o backend nunca os expoe.
+interface NotificacaoMock {
+  usuarioId: string;
+  canal: 'IN_APP' | 'EMAIL';
+  publica: NotificacaoResponse;
+}
+
+function avisoDesembolsoMock(
+  usuarioId: string,
+  sufixo: string,
+  dia: number,
+  lida: boolean,
+): NotificacaoMock {
+  const dd = String(dia).padStart(2, '0');
+  return {
+    usuarioId,
+    canal: 'IN_APP',
+    publica: {
+      id: `1f0a8c2e-7d3b-6e10-9a4f-${sufixo}`,
+      tipo: 'DESEMBOLSO_PIX_CONCLUIDO',
+      // Texto fixo por tipo, igual ao listener do backend: nada do evento vira texto livre.
+      titulo: 'Desembolso concluido',
+      mensagem: 'A transferencia Pix do desembolso do seu contrato foi concluida.',
+      criadaEm: `2026-09-${dd}T12:00:00.000000-03:00`,
+      lidaEm: lida ? `2026-09-${dd}T18:30:00.000000-03:00` : null,
+      referencia: { tipo: 'CONTRATO', id: CONTRATO_FORMALIZACAO_ID },
+    },
+  };
+}
+
+function notificacoesSeed(): NotificacaoMock[] {
+  // Conta seed: 12 avisos in-app (duas paginas de 10), nao lidos nos dias 12, 11 e 1 — um deles na
+  // segunda pagina —, mais um e-mail nao lido que nao pode entrar na lista nem na contagem.
+  const daContaSeed = Array.from({ length: 12 }, (_, i) => {
+    const dia = i + 1;
+    return avisoDesembolsoMock(
+      usuarioCliente.id,
+      `00000000a${String(dia).padStart(3, '0')}`,
+      dia,
+      ![1, 11, 12].includes(dia),
+    );
+  });
+  const emailDaContaSeed: NotificacaoMock = {
+    usuarioId: usuarioCliente.id,
+    canal: 'EMAIL',
+    publica: {
+      id: '1f0a8c2e-7d3b-6e10-9a4f-00000000e001',
+      tipo: 'CONTA_BLOQUEADA',
+      titulo: 'Conta bloqueada',
+      mensagem: 'Sua conta foi bloqueada temporariamente.',
+      criadaEm: '2026-09-13T12:00:00.000000-03:00',
+      lidaEm: null,
+      referencia: null,
+    },
+  };
+  const daTomadoraB = [
+    avisoDesembolsoMock(usuarioTomadoraB.id, '00000000b001', 5, false),
+    avisoDesembolsoMock(usuarioTomadoraB.id, '00000000b002', 6, false),
+  ];
+  const emailDaCredora: NotificacaoMock = {
+    ...emailDaContaSeed,
+    usuarioId: usuarioCredoraSemAviso.id,
+    publica: { ...emailDaContaSeed.publica, id: '1f0a8c2e-7d3b-6e10-9a4f-00000000e002' },
+  };
+  return [...daContaSeed, emailDaContaSeed, ...daTomadoraB, emailDaCredora];
+}
+
+function lerNotificacoes(): NotificacaoMock[] {
+  return lerEstado<NotificacaoMock[]>(NOTIFICACOES_KEY, notificacoesSeed());
+}
+
+// So o que o dono da sessao ve na central, ja na ordem do backend (`criadaEm` desc, `id` desc).
+function centralDaSessao(): NotificacaoMock[] {
+  const dono = usuarioDaSessao().id;
+  return lerNotificacoes()
+    .filter((n) => n.usuarioId === dono && n.canal === 'IN_APP')
+    .sort(
+      (a, b) =>
+        b.publica.criadaEm.localeCompare(a.publica.criadaEm) ||
+        b.publica.id.localeCompare(a.publica.id),
+    );
+}
+
+function naoAutenticado(request: Request, path: string): Response | null {
+  if (request.headers.get('Authorization') === `Bearer ${MOCK_TOKEN}`) {
+    return null;
+  }
+  return HttpResponse.json(errorResponse(401, 'Unauthorized', 'Autenticacao requerida', path), {
+    status: 401,
+  });
+}
+
+function parametroInvalido(nome: string, tipo: string, path: string): Response {
+  return HttpResponse.json(
+    errorResponse(400, 'Bad Request', `Path/query param '${nome}' invalido: nao eh ${tipo}`, path),
+    { status: 400 },
+  );
+}
+
+// `@RequestParam int` com default: ausente usa o default; presente e nao inteiro e type mismatch.
+function inteiroDaQuery(url: URL, nome: string, padrao: number): number | null {
+  const bruto = url.searchParams.get(nome);
+  if (bruto === null) {
+    return padrao;
+  }
+  return /^-?\d+$/.test(bruto) ? Number(bruto) : null;
+}
+
+const notificacoesHandlers = [
+  http.get(`${baseUrl}/notificacoes/nao-lidas/contagem`, ({ request }) => {
+    const path = `${NOTIFICACOES_PATH}/nao-lidas/contagem`;
+    const semAuth = naoAutenticado(request, path);
+    if (semAuth) {
+      return semAuth;
+    }
+    const naoLidas = centralDaSessao().filter((n) => n.publica.lidaEm === null).length;
+    return HttpResponse.json({ naoLidas }, { status: 200 });
+  }),
+
+  http.get(`${baseUrl}/notificacoes`, ({ request }) => {
+    const semAuth = naoAutenticado(request, NOTIFICACOES_PATH);
+    if (semAuth) {
+      return semAuth;
+    }
+    if (lerEstado<boolean>(NOTIFICACOES_FALHAR_KEY, false)) {
+      salvarEstado(NOTIFICACOES_FALHAR_KEY, false);
+      // Mesma frase do `handleGeneric` do sep-api; sem traceId, o app nao acrescenta codigo de suporte.
+      return HttpResponse.json(
+        errorResponse(
+          500,
+          'Internal Server Error',
+          'Erro interno. Consulte o suporte com o traceId.',
+          NOTIFICACOES_PATH,
+        ),
+        { status: 500 },
+      );
+    }
+    const url = new URL(request.url);
+    const page = inteiroDaQuery(url, 'page', 0);
+    const size = inteiroDaQuery(url, 'size', 20);
+    if (page === null) {
+      return parametroInvalido('page', 'int', NOTIFICACOES_PATH);
+    }
+    if (size === null) {
+      return parametroInvalido('size', 'int', NOTIFICACOES_PATH);
+    }
+    if (page < 0 || size < 1 || size > 100) {
+      return HttpResponse.json(
+        errorResponse(
+          400,
+          'Bad Request',
+          'Paginacao invalida: page deve ser maior ou igual a 0 e size entre 1 e 100',
+          NOTIFICACOES_PATH,
+          'NTF-400-001',
+        ),
+        { status: 400 },
+      );
+    }
+    const doDono = centralDaSessao();
+    const inicio = page * size;
+    const content = doDono.slice(inicio, inicio + size).map((n) => n.publica);
+    // Formato do `Page` do Spring: `totalPages` e 0 sem elementos (o `pageResponse` dos outros mocks
+    // devolve 1, divergencia que ninguem le ali).
+    return HttpResponse.json(
+      {
+        content,
+        totalElements: doDono.length,
+        totalPages: Math.ceil(doDono.length / size),
+        number: page,
+        size,
+        first: page === 0,
+        last: inicio + size >= doDono.length,
+        numberOfElements: content.length,
+        empty: content.length === 0,
+      },
+      { status: 200 },
+    );
+  }),
+
+  http.post(`${baseUrl}/notificacoes/:id/leitura`, ({ request, params }) => {
+    const id = String(params['id']);
+    const path = `${NOTIFICACOES_PATH}/${id}/leitura`;
+    const semAuth = naoAutenticado(request, path);
+    if (semAuth) {
+      return semAuth;
+    }
+    if (!UUID_VALIDO.test(id)) {
+      return parametroInvalido('id', 'UUID', path);
+    }
+    const dono = usuarioDaSessao().id;
+    const todas = lerNotificacoes();
+    const alvo = todas.find(
+      (n) => n.publica.id === id && n.usuarioId === dono && n.canal === 'IN_APP',
+    );
+    if (!alvo) {
+      return HttpResponse.json(
+        errorResponse(404, 'Not Found', 'Notificacao nao encontrada', path, 'NTF-404-001'),
+        { status: 404 },
+      );
+    }
+    // Idempotente: a segunda marcacao preserva a `lidaEm` da primeira.
+    if (alvo.publica.lidaEm === null) {
+      alvo.publica = { ...alvo.publica, lidaEm: new Date().toISOString() };
+      salvarEstado(NOTIFICACOES_KEY, todas);
+    }
+    return HttpResponse.json(alvo.publica, { status: 200 });
+  }),
+];
+
 export const handlers = [
   ...baseHandlers,
   ...onboardingHandlers,
@@ -1656,4 +1923,5 @@ export const handlers = [
   ...cobrancaHandlers,
   ...pixHandlers,
   ...credoresHandlers,
+  ...notificacoesHandlers,
 ];

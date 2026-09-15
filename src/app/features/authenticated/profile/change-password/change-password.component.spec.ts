@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UsuarioResponse } from '../../../../core/api/api.models';
 import { AuthService } from '../../../../core/auth/auth.service';
+import { NotificacoesNaoLidasStore } from '../../../../core/notificacoes/notificacoes-nao-lidas.store';
 import { UsuariosService } from '../../../../core/users/usuarios.service';
 import { ChangePasswordComponent } from './change-password.component';
 
@@ -30,6 +31,8 @@ function setup(user: UsuarioResponse | null) {
     providers: [
       provideRouter([]),
       { provide: AuthService, useValue: authStub },
+      // O header da pagina le a contagem de nao lidas (M-Sprint 19); nenhuma consulta aqui.
+      { provide: NotificacoesNaoLidasStore, useValue: { contagem: signal(null) } },
       { provide: UsuariosService, useValue: usuariosStub },
     ],
   });

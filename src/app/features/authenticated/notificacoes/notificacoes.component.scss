@@ -1,0 +1,202 @@
+@use "../../../../styles/sep-mobile-ds-components" as comp;
+
+.sep-notificacoes {
+  --background: var(--ion-background-color);
+  --padding-bottom: calc(56px + env(safe-area-inset-bottom, 0));
+
+  &-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-16);
+    padding: var(--sep-space-24) var(--sep-space-16) var(--sep-space-48);
+  }
+
+  &-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+  }
+
+  &-title {
+    margin: 0;
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: hsl(var(--foreground));
+
+    &:focus {
+      outline: none;
+    }
+  }
+
+  &-subtitle {
+    margin: 0;
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+  }
+
+  // So para leitor de tela: o conteudo visivel ja mostra a pagina, e um paragrafo vazio ocuparia
+  // espaco no gap da coluna.
+  &-anuncio {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  &-estado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sep-space-12);
+    padding: var(--sep-space-32) var(--sep-space-16);
+    text-align: center;
+    color: hsl(var(--muted-foreground));
+
+    p {
+      margin: 0;
+    }
+
+    &-titulo {
+      font-weight: 600;
+      color: hsl(var(--foreground));
+    }
+  }
+
+  &-total {
+    margin: 0;
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+  }
+
+  &-lista {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-12);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &-item {
+    @include comp.sep-mobile-surface-card;
+
+    display: flex;
+    flex-direction: column;
+    gap: var(--sep-space-8);
+    padding: var(--sep-space-16);
+
+    // Nao lida tem borda de destaque, mas o rotulo "Nao lida" e o que diz o estado: cor sozinha nao.
+    &-nao-lida {
+      border-left: 4px solid hsl(var(--primary));
+    }
+
+    &-titulo {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+      overflow-wrap: anywhere;
+
+      &:focus {
+        outline: none;
+      }
+    }
+
+    &-mensagem {
+      margin: 0;
+      color: hsl(var(--foreground));
+      overflow-wrap: anywhere;
+    }
+
+    &-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sep-space-4) var(--sep-space-12);
+      margin: 0;
+      font-size: 0.8125rem;
+      color: hsl(var(--muted-foreground));
+    }
+
+    &-marcar {
+      align-self: flex-start;
+
+      &[aria-disabled="true"] {
+        opacity: 0.6;
+      }
+    }
+
+    &-falha {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sep-space-8);
+      align-items: flex-start;
+      font-size: 0.875rem;
+      color: hsl(var(--destructive));
+
+      p {
+        margin: 0;
+      }
+    }
+
+    &-rotulo-nao-lida {
+      font-weight: 600;
+      color: hsl(var(--foreground));
+    }
+  }
+
+  &-cta {
+    @include comp.sep-mobile-touch-state;
+
+    min-height: var(--sep-touch-target);
+    padding: 0 var(--sep-space-16);
+    font-weight: 600;
+    color: hsl(var(--primary-foreground));
+    background: hsl(var(--primary));
+    border: none;
+    border-radius: var(--sep-radius-md);
+  }
+
+  &-link {
+    @include comp.sep-mobile-touch-state;
+
+    align-self: flex-start;
+    min-height: var(--sep-touch-target);
+    padding: 0 var(--sep-space-12);
+    font-weight: 600;
+    color: hsl(var(--primary));
+    background: transparent;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--sep-radius-md);
+  }
+
+  &-paginacao {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--sep-space-12);
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.875rem;
+    color: hsl(var(--muted-foreground));
+  }
+
+  &-pagina {
+    @include comp.sep-mobile-touch-state;
+
+    min-height: var(--sep-touch-target);
+    padding: 0 var(--sep-space-16);
+    font-weight: 600;
+    color: hsl(var(--foreground));
+    background: transparent;
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--sep-radius-md);
+
+    &:disabled {
+      opacity: 0.5;
+    }
+  }
+}
