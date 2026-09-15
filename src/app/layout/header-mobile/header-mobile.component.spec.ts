@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { UsuarioResponse } from '../../core/api/api.models';
 import { AuthService } from '../../core/auth/auth.service';
+import { NotificacoesNaoLidasStore } from '../../core/notificacoes/notificacoes-nao-lidas.store';
 import { HeaderMobileComponent } from './header-mobile.component';
 
 const usuario: UsuarioResponse = {
@@ -37,6 +38,7 @@ describe('HeaderMobileComponent', () => {
       providers: [
         { provide: AuthService, useValue: authStub },
         { provide: Router, useValue: routerStub },
+        { provide: NotificacoesNaoLidasStore, useValue: { contagem: signal(null) } },
       ],
     }).compileComponents();
     fixture = TestBed.createComponent(HeaderMobileComponent);

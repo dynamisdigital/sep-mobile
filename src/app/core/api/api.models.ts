@@ -603,3 +603,38 @@ export interface AporteCredoraResponse {
   dataCriacao: string; // ISO-8601 com offset
   dataAtualizacao: string; // ISO-8601 com offset
 }
+
+// DTOs da central de notificacoes (M-Sprint 19), espelhando `notificacao.web.dto` do sep-api
+// (Sprint 38, ADR 0021 §9). So o canal IN_APP do usuario autenticado chega aqui: nao ha dono, canal,
+// origem nem situacao de entrega no fio, e o mobile nao os modela.
+
+// `TipoNotificacao` no backend. CONTA_BLOQUEADA hoje so vai por e-mail e nao chega a central, mas o
+// enum publicado e um so.
+export type TipoNotificacao = 'DESEMBOLSO_PIX_CONCLUIDO' | 'CONTA_BLOQUEADA';
+
+// `TipoReferencia` no backend: allowlist dos recursos para os quais um aviso pode apontar.
+export type TipoReferenciaNotificacao = 'CONTRATO';
+
+export interface ReferenciaNotificacaoResponse {
+  tipo: TipoReferenciaNotificacao;
+  id: string;
+}
+
+// Item de `GET /notificacoes` e resposta de `POST /notificacoes/{id}/leitura`. `lidaEm` e
+// `referencia` chegam presentes e nulos quando vazios, mas o OpenAPI 3.1 do springdoc descarta a
+// nulidade e nao os marca required: opcionais E nulos, e quem renderiza tolera os dois.
+// `criadaEm`/`lidaEm` sao ISO-8601 com offset e ate microssegundos.
+export interface NotificacaoResponse {
+  id: string;
+  tipo: TipoNotificacao;
+  titulo: string;
+  mensagem: string;
+  criadaEm: string;
+  lidaEm?: string | null;
+  referencia?: ReferenciaNotificacaoResponse | null;
+}
+
+// `GET /notificacoes/nao-lidas/contagem`: mesmo recorte da lista; zero quando nao ha.
+export interface NotificacoesNaoLidasResponse {
+  naoLidas: number;
+}

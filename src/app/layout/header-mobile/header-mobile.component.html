@@ -14,6 +14,26 @@
     }
 
     <div class="sep-header-mobile-actions">
+      @if (user()) {
+        <button
+          type="button"
+          class="sep-header-mobile-notificacoes"
+          [attr.aria-label]="rotuloNotificacoes()"
+          data-testid="sep-header-mobile-notificacoes"
+          (click)="abrirNotificacoes()"
+        >
+          <ion-icon name="notifications-outline" aria-hidden="true"></ion-icon>
+          @if (marcadorNotificacoes(); as marcador) {
+            <span
+              class="sep-header-mobile-notificacoes-marcador"
+              [attr.data-situacao]="situacaoNotificacoes()"
+              aria-hidden="true"
+              data-testid="sep-header-mobile-notificacoes-marcador"
+              >{{ marcador }}</span
+            >
+          }
+        </button>
+      }
       <button
         type="button"
         class="sep-header-mobile-theme"

@@ -1,0 +1,174 @@
+<sep-header-mobile />
+<ion-content class="sep-notificacoes">
+  <section class="sep-notificacoes-section" aria-labelledby="sep-notificacoes-titulo">
+    <header class="sep-notificacoes-header">
+      <h1
+        #titulo
+        id="sep-notificacoes-titulo"
+        class="sep-notificacoes-title"
+        tabindex="-1"
+        data-testid="sep-notificacoes-titulo"
+      >
+        Notificacoes
+      </h1>
+      <p class="sep-notificacoes-subtitle">
+        Avisos sobre a sua conta. A lista e o contador no topo atualizam ao abrir esta central e ao
+        marcar um aviso como lido.
+      </p>
+    </header>
+
+    <p class="sep-notificacoes-anuncio" role="status" data-testid="sep-notificacoes-anuncio">
+      {{ anuncio() }}
+    </p>
+
+    @switch (consulta().situacao) {
+      @case ('carregando') {
+        <div class="sep-notificacoes-estado" data-testid="sep-notificacoes-carregando">
+          <ion-spinner name="crescent" aria-hidden="true"></ion-spinner>
+          <p>Carregando notificacoes...</p>
+        </div>
+      }
+      @case ('erro') {
+        <div class="sep-notificacoes-estado" role="alert" data-testid="sep-notificacoes-erro">
+          <p>{{ mensagemErro() }}</p>
+          <button
+            type="button"
+            class="sep-notificacoes-cta"
+            data-testid="sep-notificacoes-retry"
+            (click)="tentarNovamente()"
+          >
+            Tentar novamente
+          </button>
+        </div>
+      }
+      @case ('pronta') {
+        @if (total() === 0) {
+          <div class="sep-notificacoes-estado" data-testid="sep-notificacoes-vazio">
+            <p class="sep-notificacoes-estado-titulo">Voce nao tem notificacoes.</p>
+            <p>Quando houver um aviso sobre a sua conta, ele aparece aqui.</p>
+          </div>
+        } @else if (itens().length === 0) {
+          <div class="sep-notificacoes-estado" data-testid="sep-notificacoes-pagina-vazia">
+            <p>Esta pagina nao tem notificacoes.</p>
+            <button
+              type="button"
+              class="sep-notificacoes-cta"
+              data-testid="sep-notificacoes-ultima-pagina"
+              (click)="irParaPagina(totalPaginas() - 1)"
+            >
+              Ir para a pagina {{ totalPaginas() }}
+            </button>
+          </div>
+        } @else {
+          <p class="sep-notificacoes-total" data-testid="sep-notificacoes-total">
+            {{ total() }} {{ total() === 1 ? 'notificacao' : 'notificacoes' }}
+          </p>
+          <!-- role="list" explicito: o WebKit tira a semantica de lista de <ul> com list-style: none. -->
+          <ul class="sep-notificacoes-lista" role="list" aria-label="Notificacoes">
+            @for (item of itens(); track item.notificacao.id) {
+              <li
+                class="sep-notificacoes-item"
+                [class.sep-notificacoes-item-nao-lida]="!item.notificacao.lidaEm"
+                data-testid="sep-notificacoes-item"
+              >
+                <h2
+                  #tituloDoItem
+                  class="sep-notificacoes-item-titulo"
+                  tabindex="-1"
+                  [id]="idDoTitulo(item.notificacao.id)"
+                >
+                  {{ item.notificacao.titulo }}
+                </h2>
+                <p class="sep-notificacoes-item-mensagem">{{ item.notificacao.mensagem }}</p>
+                <p class="sep-notificacoes-item-meta">
+                  <span>Recebida em {{ formatarDataHora(item.notificacao.criadaEm) }}</span>
+                  @if (item.notificacao.lidaEm; as lidaEm) {
+                    <span data-testid="sep-notificacoes-item-situacao">
+                      Lida em {{ formatarDataHora(lidaEm) }}
+                    </span>
+                  } @else {
+                    <span
+                      class="sep-notificacoes-item-rotulo-nao-lida"
+                      data-testid="sep-notificacoes-item-situacao"
+                    >
+                      Nao lida
+                    </span>
+                  }
+                </p>
+                @if (!item.notificacao.lidaEm) {
+                  <!-- aria-disabled, e nao disabled: botao desabilitado perde o foco no meio do gesto. -->
+                  <button
+                    type="button"
+                    class="sep-notificacoes-cta sep-notificacoes-item-marcar"
+                    [attr.aria-describedby]="idDoTitulo(item.notificacao.id)"
+                    [attr.aria-disabled]="item.marcando ? 'true' : null"
+                    data-testid="sep-notificacoes-item-marcar"
+                    (click)="marcarComoLida(item.notificacao.id)"
+                  >
+                    {{ item.marcando ? 'Marcando como lida...' : 'Marcar como lida' }}
+                  </button>
+                }
+                @if (item.falha; as falha) {
+                  <div
+                    class="sep-notificacoes-item-falha"
+                    role="alert"
+                    data-testid="sep-notificacoes-item-falha"
+                  >
+                    <p>{{ falha.mensagem }}</p>
+                    @if (falha.naoEncontrada) {
+                      <button
+                        type="button"
+                        class="sep-notificacoes-pagina"
+                        data-testid="sep-notificacoes-item-atualizar"
+                        (click)="tentarNovamente()"
+                      >
+                        Atualizar lista
+                      </button>
+                    }
+                  </div>
+                }
+                @if (item.rota; as rota) {
+                  <button
+                    type="button"
+                    class="sep-notificacoes-link"
+                    [attr.aria-describedby]="idDoTitulo(item.notificacao.id)"
+                    data-testid="sep-notificacoes-item-referencia"
+                    (click)="abrirReferencia(rota)"
+                  >
+                    Ver contrato
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+
+          @if (totalPaginas() > 1) {
+            <nav class="sep-notificacoes-paginacao" aria-label="Paginacao das notificacoes">
+              <button
+                type="button"
+                class="sep-notificacoes-pagina"
+                data-testid="sep-notificacoes-anterior"
+                [disabled]="pagina() === 0"
+                (click)="irParaPagina(pagina() - 1)"
+              >
+                Anterior
+              </button>
+              <span data-testid="sep-notificacoes-pagina-atual">
+                Pagina {{ pagina() + 1 }} de {{ totalPaginas() }}
+              </span>
+              <button
+                type="button"
+                class="sep-notificacoes-pagina"
+                data-testid="sep-notificacoes-proxima"
+                [disabled]="pagina() + 1 >= totalPaginas()"
+                (click)="irParaPagina(pagina() + 1)"
+              >
+                Proxima
+              </button>
+            </nav>
+          }
+        }
+      }
+    }
+  </section>
+</ion-content>

@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { UsuarioResponse } from '../../../core/api/api.models';
 import { AuthService } from '../../../core/auth/auth.service';
+import { NotificacoesNaoLidasStore } from '../../../core/notificacoes/notificacoes-nao-lidas.store';
 import { HomeComponent } from './home.component';
 
 const cliente: UsuarioResponse = {
@@ -26,7 +27,12 @@ function setup(role: 'ADMIN' | 'CLIENTE') {
   };
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
-    providers: [provideRouter([]), { provide: AuthService, useValue: authStub }],
+    providers: [
+      provideRouter([]),
+      { provide: AuthService, useValue: authStub },
+      // O header da pagina le a contagem de nao lidas (M-Sprint 19); nenhuma consulta aqui.
+      { provide: NotificacoesNaoLidasStore, useValue: { contagem: signal(null) } },
+    ],
   });
   const fixture = TestBed.createComponent(HomeComponent);
   fixture.detectChanges();

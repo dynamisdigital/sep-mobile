@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { EmpresaCredoraResponse } from '../../../core/api/api.models';
 import { AuthService } from '../../../core/auth/auth.service';
+import { NotificacoesNaoLidasStore } from '../../../core/notificacoes/notificacoes-nao-lidas.store';
 import { CredoraContextStore, CredoraPresenca } from '../../../core/credores/credora-context.store';
 import { CredoraMobileService } from '../../../core/credores/credora-mobile.service';
 import { CredoraHomeComponent } from './home.component';
@@ -54,6 +55,8 @@ async function setup(c: Cenario = {}) {
     providers: [
       provideRouter([]),
       { provide: AuthService, useValue: authStub },
+      // O header da pagina le a contagem de nao lidas (M-Sprint 19); nenhuma consulta aqui.
+      { provide: NotificacoesNaoLidasStore, useValue: { contagem: signal(null) } },
       { provide: CredoraContextStore, useValue: store },
       { provide: CredoraMobileService, useValue: service },
     ],
