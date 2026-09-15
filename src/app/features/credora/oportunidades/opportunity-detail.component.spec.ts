@@ -10,6 +10,7 @@ import {
   OportunidadeResponse,
 } from '../../../core/api/api.models';
 import { AuthService } from '../../../core/auth/auth.service';
+import { NotificacoesNaoLidasStore } from '../../../core/notificacoes/notificacoes-nao-lidas.store';
 import { CredoraContextStore } from '../../../core/credores/credora-context.store';
 import { CredoraMobileService } from '../../../core/credores/credora-mobile.service';
 import { OpportunityDetailComponent } from './opportunity-detail.component';
@@ -102,6 +103,8 @@ describe('OpportunityDetailComponent (interesse M-10.4)', () => {
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: authStub },
+        // O header da pagina le a contagem de nao lidas (M-Sprint 19); nenhuma consulta aqui.
+        { provide: NotificacoesNaoLidasStore, useValue: { contagem: signal(null) } },
         { provide: CredoraMobileService, useValue: service },
         { provide: CredoraContextStore, useValue: store },
         {

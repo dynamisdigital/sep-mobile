@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { IonRouterOutlet, IonTabs } from '@ionic/angular/standalone';
 
+import { NotificacoesNaoLidasStore } from '../../core/notificacoes/notificacoes-nao-lidas.store';
 import { TabsComponent } from '../tabs/tabs.component';
 
 @Component({
@@ -11,4 +12,13 @@ import { TabsComponent } from '../tabs/tabs.component';
   styleUrl: './shell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ShellComponent {}
+export class ShellComponent {
+  private readonly naoLidas = inject(NotificacoesNaoLidasStore);
+
+  // Uma consulta por montagem do shell (entrada na area autenticada), e nao uma por pagina: cada
+  // pagina tem o proprio header, e todos leem o mesmo store. O authGuard ja garantiu o usuario.
+  // Fire-and-forget: a contagem nao bloqueia a navegacao.
+  constructor() {
+    void this.naoLidas.carregar();
+  }
+}
