@@ -3,10 +3,13 @@ import { Injectable, computed, effect, inject, signal, untracked } from '@angula
 import { AuthService } from '../auth/auth.service';
 import { NotificacoesMobileService } from './notificacoes-mobile.service';
 
+// `desatualizada` e um numero ja recebido do servidor cuja reconsulta seguinte falhou: continua
+// sendo mostrado, porque apagar ou zerar seria afirmar algo que o app nao sabe.
 export type ContagemNaoLidas =
   | { situacao: 'carregando' }
   | { situacao: 'indisponivel' }
-  | { situacao: 'conhecida'; naoLidas: number };
+  | { situacao: 'conhecida'; naoLidas: number }
+  | { situacao: 'desatualizada'; naoLidas: number };
 
 interface Registro {
   dono: string;
@@ -34,6 +37,10 @@ export class NotificacoesNaoLidasStore {
   private readonly registro = signal<Registro | null>(null);
   private emVoo: { dono: string; promessa: Promise<void> } | null = null;
   private geracao = 0;
+  // Avanca a cada contagem recebida do servidor. Uma leitura enviada ANTES de um marco pode ja estar
+  // descontada nele; por isso cada leitura guarda o marco vigente no seu PRIMEIRO envio.
+  private marcoDaContagem = 0;
+  private readonly marcoPorLeituraEnviada = new Map<string, number>();
 
   readonly contagem = computed<ContagemNaoLidas | null>(() => {
     const registro = this.registro();
@@ -68,6 +75,36 @@ export class NotificacoesNaoLidasStore {
     return promessa;
   }
 
+  // Chamado antes de cada POST de leitura. O retry do mesmo aviso mantem o marco do PRIMEIRO envio: a
+  // tentativa que caiu por timeout pode ter gravado, e uma contagem posterior ja a reflete.
+  leituraEnviada(id: string): void {
+    if (!this.marcoPorLeituraEnviada.has(id)) {
+      this.marcoPorLeituraEnviada.set(id, this.marcoDaContagem);
+    }
+  }
+
+  // Leitura confirmada pelo servidor de um aviso que estava nao lido na tela ("read your writes").
+  //
+  // A contagem em voo foi pedida ANTES da confirmacao e pode trazer o numero antigo: e invalidada. A
+  // baixa local acontece uma vez, sem negativo, e SO quando nenhuma contagem chegou depois do primeiro
+  // envio — ai o numero conhecido e anterior a leitura e nao a inclui. Se chegou, ela pode ja ter
+  // descontado esta leitura (outra leitura concorrente, ou retry depois de timeout que gravou), e
+  // descontar de novo esconderia aviso nao lido; entao so a reconsulta decide. Na duvida o contador
+  // fica alto por um instante, nunca baixo. Contagem desconhecida segue desconhecida.
+  registrarLeitura(id: string): Promise<void> {
+    const baseAnteriorAoEnvio = this.marcoPorLeituraEnviada.get(id) === this.marcoDaContagem;
+    this.marcoPorLeituraEnviada.delete(id);
+    this.invalidarConsultaEmVoo();
+    // O registro nao precisa conferir dono aqui: `contagem` so expoe o do usuario atual, e o `carregar`
+    // abaixo substitui registro de outro dono antes de qualquer numero dele aparecer.
+    const atual = this.registro();
+    if (baseAnteriorAoEnvio && atual && temNumero(atual.contagem)) {
+      const naoLidas = Math.max(0, atual.contagem.naoLidas - 1);
+      this.registro.set({ dono: atual.dono, contagem: { ...atual.contagem, naoLidas } });
+    }
+    return this.carregar();
+  }
+
   private async consultar(dono: string, geracao: number): Promise<void> {
     try {
       const resposta: unknown = await this.service.contarNaoLidas();
@@ -78,6 +115,7 @@ export class NotificacoesNaoLidasStore {
       if (naoLidas === undefined) {
         this.registrarFalha(dono);
       } else {
+        this.marcoDaContagem += 1;
         this.registro.set({ dono, contagem: { situacao: 'conhecida', naoLidas } });
       }
     } catch {
@@ -91,18 +129,37 @@ export class NotificacoesNaoLidasStore {
     }
   }
 
-  // Falha nao afirma zero; e reconsulta que falha nao apaga o numero ja conhecido.
+  // Falha nao afirma zero; e reconsulta que falha nao apaga o numero ja recebido, so o marca como
+  // desatualizado.
   private registrarFalha(dono: string): void {
-    if (this.registro()?.contagem.situacao !== 'conhecida') {
-      this.registro.set({ dono, contagem: { situacao: 'indisponivel' } });
-    }
+    const atual = this.registro()?.contagem;
+    this.registro.set({
+      dono,
+      contagem:
+        atual && temNumero(atual)
+          ? { situacao: 'desatualizada', naoLidas: atual.naoLidas }
+          : { situacao: 'indisponivel' },
+    });
+  }
+
+  private invalidarConsultaEmVoo(): void {
+    this.geracao += 1;
+    this.emVoo = null;
   }
 
   private descartar(): void {
-    this.geracao += 1;
-    this.emVoo = null;
+    this.invalidarConsultaEmVoo();
+    // Higiene de memoria, nao guarda: o marco so avanca, entao uma entrada velha so casaria se nenhuma
+    // contagem tivesse chegado na sessao nova — e ai nao ha numero para baixar.
+    this.marcoPorLeituraEnviada.clear();
     this.registro.set(null);
   }
+}
+
+function temNumero(
+  contagem: ContagemNaoLidas,
+): contagem is Extract<ContagemNaoLidas, { naoLidas: number }> {
+  return contagem.situacao === 'conhecida' || contagem.situacao === 'desatualizada';
 }
 
 // Corpo fora do contrato e falha, nao contagem: `-1`, `2.5`, `"3"` ou corpo nulo virariam marcador

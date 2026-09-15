@@ -101,6 +101,10 @@
       font-weight: 600;
       color: hsl(var(--foreground));
       overflow-wrap: anywhere;
+
+      &:focus {
+        outline: none;
+      }
     }
 
     &-mensagem {
@@ -116,6 +120,27 @@
       margin: 0;
       font-size: 0.8125rem;
       color: hsl(var(--muted-foreground));
+    }
+
+    &-marcar {
+      align-self: flex-start;
+
+      &[aria-disabled="true"] {
+        opacity: 0.6;
+      }
+    }
+
+    &-falha {
+      display: flex;
+      flex-direction: column;
+      gap: var(--sep-space-8);
+      align-items: flex-start;
+      font-size: 0.875rem;
+      color: hsl(var(--destructive));
+
+      p {
+        margin: 0;
+      }
     }
 
     &-rotulo-nao-lida {

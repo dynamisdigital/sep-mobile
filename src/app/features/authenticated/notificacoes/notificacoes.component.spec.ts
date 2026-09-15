@@ -92,9 +92,19 @@ async function assentar(fixture: ComponentFixture<NotificacoesComponent>): Promi
   fixture.detectChanges();
 }
 
-function setup(opts: { listar?: ReturnType<typeof vi.fn>; role?: UsuarioRole } = {}) {
+function setup(
+  opts: {
+    listar?: ReturnType<typeof vi.fn>;
+    marcarComoLida?: ReturnType<typeof vi.fn>;
+    role?: UsuarioRole;
+  } = {},
+) {
   const listar = opts.listar ?? vi.fn().mockResolvedValue(pagina([notificacao()]));
+  const marcarComoLida =
+    opts.marcarComoLida ?? vi.fn().mockResolvedValue(notificacao({ lidaEm: LIDA_EM }));
   const carregar = vi.fn().mockResolvedValue(undefined);
+  const leituraEnviada = vi.fn();
+  const registrarLeitura = vi.fn().mockResolvedValue(undefined);
   TestBed.resetTestingModule();
   TestBed.configureTestingModule({
     providers: [
@@ -103,8 +113,11 @@ function setup(opts: { listar?: ReturnType<typeof vi.fn>; role?: UsuarioRole } =
         provide: AuthService,
         useValue: { currentUser: signal(usuario(opts.role)), logout: vi.fn() },
       },
-      { provide: NotificacoesMobileService, useValue: { listar } },
-      { provide: NotificacoesNaoLidasStore, useValue: { contagem: signal(null), carregar } },
+      { provide: NotificacoesMobileService, useValue: { listar, marcarComoLida } },
+      {
+        provide: NotificacoesNaoLidasStore,
+        useValue: { contagem: signal(null), carregar, leituraEnviada, registrarLeitura },
+      },
     ],
   });
   const navSpy = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
@@ -127,7 +140,10 @@ function setup(opts: { listar?: ReturnType<typeof vi.fn>; role?: UsuarioRole } =
     fixture,
     el,
     listar,
+    marcarComoLida,
     carregar,
+    leituraEnviada,
+    registrarLeitura,
     navSpy,
     porTestId,
     todosPorTestId,
@@ -432,6 +448,199 @@ describe('NotificacoesComponent', () => {
       await entrar();
       expect(porTestId('sep-notificacoes-item')).not.toBeNull();
       expect(porTestId('sep-notificacoes-item-referencia')).toBeNull();
+    });
+  });
+
+  describe('marcar como lida', () => {
+    const ID = '1f0a8c2e-7d3b-6e10-9a4f-2b7c5d8e9f00';
+
+    it('nao marca nada ao entrar, paginar ou seguir a referencia', async () => {
+      const listar = vi.fn().mockResolvedValue(pagina([notificacao()], 25, 0));
+      const { fixture, marcarComoLida, clicar, entrar } = setup({ listar });
+      await entrar();
+      await fixture.componentInstance.irParaPagina(1);
+      await fixture.componentInstance.irParaPagina(0);
+      await assentar(fixture);
+      await clicar('sep-notificacoes-item-referencia');
+
+      expect(marcarComoLida).not.toHaveBeenCalled();
+    });
+
+    it('toque marca pelo servidor e aplica o lidaEm devolvido, com anuncio e foco no titulo', async () => {
+      const { porTestId, todosPorTestId, texto, marcarComoLida, clicar, entrar } = setup();
+      await entrar();
+
+      await clicar('sep-notificacoes-item-marcar');
+
+      expect(marcarComoLida).toHaveBeenCalledExactlyOnceWith(ID);
+      expect(todosPorTestId('sep-notificacoes-item-situacao')[0].textContent).toMatch(
+        /Lida em 15\/09\/2026/,
+      );
+      expect(porTestId('sep-notificacoes-item-marcar')).toBeNull();
+      expect(texto('sep-notificacoes-anuncio')).toBe('Aviso marcado como lido.');
+      const tituloDoItem = porTestId('sep-notificacoes-item')?.querySelector('h2');
+      expect(document.activeElement === tituloDoItem).toBe(true);
+    });
+
+    it('avisa o store antes do POST e confirma so depois do 200', async () => {
+      const post = deferred<NotificacaoResponse>();
+      const { leituraEnviada, registrarLeitura, clicar, fixture, entrar } = setup({
+        marcarComoLida: vi.fn().mockReturnValue(post.promise),
+      });
+      await entrar();
+
+      await clicar('sep-notificacoes-item-marcar');
+      expect(leituraEnviada).toHaveBeenCalledExactlyOnceWith(ID);
+      expect(registrarLeitura).not.toHaveBeenCalled();
+
+      post.resolve(notificacao({ lidaEm: LIDA_EM }));
+      await assentar(fixture);
+      expect(registrarLeitura).toHaveBeenCalledExactlyOnceWith(ID);
+    });
+
+    it('duplo toque e chamada direta com o POST em voo geram uma requisicao so', async () => {
+      const post = deferred<NotificacaoResponse>();
+      const marcarComoLida = vi.fn().mockReturnValue(post.promise);
+      const { fixture, porTestId, texto, clicar, entrar } = setup({ marcarComoLida });
+      await entrar();
+
+      await clicar('sep-notificacoes-item-marcar');
+      expect(texto('sep-notificacoes-item-marcar')).toBe('Marcando como lida...');
+      expect(porTestId('sep-notificacoes-item-marcar')?.getAttribute('aria-disabled')).toBe('true');
+      await clicar('sep-notificacoes-item-marcar');
+      void fixture.componentInstance.marcarComoLida(ID);
+
+      post.resolve(notificacao({ lidaEm: LIDA_EM }));
+      await assentar(fixture);
+      expect(marcarComoLida).toHaveBeenCalledTimes(1);
+    });
+
+    it('aviso ja lido nao oferece o gesto nem aceita chamada direta', async () => {
+      const { fixture, porTestId, marcarComoLida, entrar } = setup({
+        listar: vi.fn().mockResolvedValue(pagina([notificacao({ lidaEm: LIDA_EM })])),
+      });
+      await entrar();
+
+      expect(porTestId('sep-notificacoes-item-marcar')).toBeNull();
+      await fixture.componentInstance.marcarComoLida(ID);
+      expect(marcarComoLida).not.toHaveBeenCalled();
+    });
+
+    it('aviso confirmado nao gera segundo POST nem segunda baixa', async () => {
+      const { fixture, marcarComoLida, registrarLeitura, clicar, entrar } = setup();
+      await entrar();
+
+      await clicar('sep-notificacoes-item-marcar');
+      await fixture.componentInstance.marcarComoLida(ID);
+
+      expect(marcarComoLida).toHaveBeenCalledTimes(1);
+      expect(registrarLeitura).toHaveBeenCalledTimes(1);
+    });
+
+    it('POST que falha mantem nao lida, mostra erro inline e libera o retry', async () => {
+      const marcarComoLida = vi
+        .fn()
+        .mockRejectedValueOnce(erroHttp(503, null))
+        .mockResolvedValueOnce(notificacao({ lidaEm: LIDA_EM }));
+      const { porTestId, todosPorTestId, texto, registrarLeitura, clicar, entrar } = setup({
+        marcarComoLida,
+      });
+      await entrar();
+
+      await clicar('sep-notificacoes-item-marcar');
+
+      expect(todosPorTestId('sep-notificacoes-item-situacao')[0].textContent?.trim()).toBe(
+        'Nao lida',
+      );
+      expect(texto('sep-notificacoes-item-falha')).toBe(
+        'Nao foi possivel marcar o aviso como lido. Tente novamente.',
+      );
+      expect(porTestId('sep-notificacoes-item-falha')?.getAttribute('role')).toBe('alert');
+      expect(porTestId('sep-notificacoes-item-marcar')?.getAttribute('aria-disabled')).toBeNull();
+      expect(registrarLeitura).not.toHaveBeenCalled();
+
+      await clicar('sep-notificacoes-item-marcar');
+
+      expect(marcarComoLida).toHaveBeenCalledTimes(2);
+      expect(porTestId('sep-notificacoes-item-falha')).toBeNull();
+      expect(registrarLeitura).toHaveBeenCalledTimes(1);
+    });
+
+    it('404 neutro nao revela dono e oferece atualizar a lista por gesto', async () => {
+      const corpo = { status: 404, message: 'Notificacao nao encontrada', codigo: 'NTF-404-001' };
+      const { listar, porTestId, texto, clicar, entrar } = setup({
+        marcarComoLida: vi.fn().mockRejectedValue(erroHttp(404, corpo)),
+      });
+      await entrar();
+
+      await clicar('sep-notificacoes-item-marcar');
+
+      expect(texto('sep-notificacoes-item-falha')).toBe(
+        'Este aviso nao foi encontrado. Atualize a lista para ver seus avisos. Atualizar lista',
+      );
+      expect(listar).toHaveBeenCalledTimes(1);
+      await clicar('sep-notificacoes-item-atualizar');
+      expect(listar).toHaveBeenCalledTimes(2);
+      // A lista nova substitui o contexto do erro: a falha do aviso anterior nao sobrevive a ela.
+      expect(porTestId('sep-notificacoes-item-falha')).toBeNull();
+    });
+
+    it('falha que nao e 404 nao oferece atualizar a lista', async () => {
+      const { porTestId, clicar, entrar } = setup({
+        marcarComoLida: vi.fn().mockRejectedValue(erroHttp(500, null)),
+      });
+      await entrar();
+      await clicar('sep-notificacoes-item-marcar');
+      expect(porTestId('sep-notificacoes-item-atualizar')).toBeNull();
+    });
+
+    for (const [descricao, corpo] of [
+      ['sem lidaEm', { id: ID, lidaEm: null }],
+      ['com outro id', { id: 'outro', lidaEm: LIDA_EM }],
+      ['corpo nulo', null],
+    ] as const) {
+      it(`200 ${descricao} nao e confirmacao: fica nao lida e sem baixa`, async () => {
+        const { todosPorTestId, porTestId, registrarLeitura, clicar, entrar } = setup({
+          marcarComoLida: vi.fn().mockResolvedValue(corpo),
+        });
+        await entrar();
+
+        await clicar('sep-notificacoes-item-marcar');
+
+        expect(todosPorTestId('sep-notificacoes-item-situacao')[0].textContent?.trim()).toBe(
+          'Nao lida',
+        );
+        expect(porTestId('sep-notificacoes-item-falha')).not.toBeNull();
+        expect(registrarLeitura).not.toHaveBeenCalled();
+      });
+    }
+
+    // A reentrada pede a lista enquanto o POST esta em voo; o servidor responde a lista com o estado
+    // anterior a gravacao, e ela chega depois da confirmacao.
+    it('lista pedida antes da confirmacao nao ressuscita aviso ja confirmado como lido', async () => {
+      const listaAntiga = deferred<PageResponse<NotificacaoResponse>>();
+      const post = deferred<NotificacaoResponse>();
+      const listar = vi
+        .fn()
+        .mockResolvedValueOnce(pagina([notificacao()]))
+        .mockReturnValueOnce(listaAntiga.promise);
+      const { fixture, todosPorTestId, porTestId, clicar, entrar } = setup({
+        listar,
+        marcarComoLida: vi.fn().mockReturnValue(post.promise),
+      });
+      await entrar();
+
+      await clicar('sep-notificacoes-item-marcar');
+      fixture.componentInstance.ionViewWillEnter();
+      post.resolve(notificacao({ lidaEm: LIDA_EM }));
+      await assentar(fixture);
+      listaAntiga.resolve(pagina([notificacao({ lidaEm: null })]));
+      await assentar(fixture);
+
+      expect(todosPorTestId('sep-notificacoes-item-situacao')[0].textContent).toMatch(
+        /^\s*Lida em/,
+      );
+      expect(porTestId('sep-notificacoes-item-marcar')).toBeNull();
     });
   });
 });

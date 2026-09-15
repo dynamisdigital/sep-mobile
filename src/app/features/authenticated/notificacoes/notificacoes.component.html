@@ -12,7 +12,8 @@
         Notificacoes
       </h1>
       <p class="sep-notificacoes-subtitle">
-        Avisos sobre a sua conta. A lista e o contador no topo atualizam ao abrir esta central.
+        Avisos sobre a sua conta. A lista e o contador no topo atualizam ao abrir esta central e ao
+        marcar um aviso como lido.
       </p>
     </header>
 
@@ -71,8 +72,10 @@
                 data-testid="sep-notificacoes-item"
               >
                 <h2
+                  #tituloDoItem
                   class="sep-notificacoes-item-titulo"
-                  [id]="'sep-notificacao-' + item.notificacao.id"
+                  tabindex="-1"
+                  [id]="idDoTitulo(item.notificacao.id)"
                 >
                   {{ item.notificacao.titulo }}
                 </h2>
@@ -92,11 +95,43 @@
                     </span>
                   }
                 </p>
+                @if (!item.notificacao.lidaEm) {
+                  <!-- aria-disabled, e nao disabled: botao desabilitado perde o foco no meio do gesto. -->
+                  <button
+                    type="button"
+                    class="sep-notificacoes-cta sep-notificacoes-item-marcar"
+                    [attr.aria-describedby]="idDoTitulo(item.notificacao.id)"
+                    [attr.aria-disabled]="item.marcando ? 'true' : null"
+                    data-testid="sep-notificacoes-item-marcar"
+                    (click)="marcarComoLida(item.notificacao.id)"
+                  >
+                    {{ item.marcando ? 'Marcando como lida...' : 'Marcar como lida' }}
+                  </button>
+                }
+                @if (item.falha; as falha) {
+                  <div
+                    class="sep-notificacoes-item-falha"
+                    role="alert"
+                    data-testid="sep-notificacoes-item-falha"
+                  >
+                    <p>{{ falha.mensagem }}</p>
+                    @if (falha.naoEncontrada) {
+                      <button
+                        type="button"
+                        class="sep-notificacoes-pagina"
+                        data-testid="sep-notificacoes-item-atualizar"
+                        (click)="tentarNovamente()"
+                      >
+                        Atualizar lista
+                      </button>
+                    }
+                  </div>
+                }
                 @if (item.rota; as rota) {
                   <button
                     type="button"
                     class="sep-notificacoes-link"
-                    [attr.aria-describedby]="'sep-notificacao-' + item.notificacao.id"
+                    [attr.aria-describedby]="idDoTitulo(item.notificacao.id)"
                     data-testid="sep-notificacoes-item-referencia"
                     (click)="abrirReferencia(rota)"
                   >

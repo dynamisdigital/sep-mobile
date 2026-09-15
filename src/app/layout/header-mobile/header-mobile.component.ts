@@ -64,12 +64,16 @@ function rotuloDaContagem(contagem: ContagemNaoLidas | null): string {
   if (contagem.situacao === 'indisponivel') {
     return 'Notificacoes, contagem indisponivel';
   }
-  if (contagem.naoLidas === 0) {
-    return 'Notificacoes, nenhuma nao lida';
-  }
-  return contagem.naoLidas === 1
-    ? 'Notificacoes, 1 nao lida'
-    : `Notificacoes, ${contagem.naoLidas} nao lidas`;
+  const quantidade =
+    contagem.naoLidas === 0
+      ? 'nenhuma nao lida'
+      : contagem.naoLidas === 1
+        ? '1 nao lida'
+        : `${contagem.naoLidas} nao lidas`;
+  // Numero de uma consulta anterior cuja atualizacao falhou: o marcador segue igual, o rotulo avisa.
+  return contagem.situacao === 'desatualizada'
+    ? `Notificacoes, ${quantidade}, pode estar desatualizado`
+    : `Notificacoes, ${quantidade}`;
 }
 
 // Zero e carregando nao tem marcador; indisponivel tem um proprio, para nao se confundir com zero.
@@ -77,7 +81,7 @@ function marcadorDaContagem(contagem: ContagemNaoLidas | null): string | null {
   if (contagem?.situacao === 'indisponivel') {
     return '?';
   }
-  if (contagem?.situacao !== 'conhecida' || contagem.naoLidas === 0) {
+  if (!contagem || contagem.situacao === 'carregando' || contagem.naoLidas === 0) {
     return null;
   }
   return contagem.naoLidas > 99 ? '99+' : String(contagem.naoLidas);

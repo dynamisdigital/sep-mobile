@@ -107,6 +107,23 @@ describe('HeaderMobileComponent - acesso a central de notificacoes', () => {
     expect(marcador()?.getAttribute('data-situacao')).toBe('conhecida');
   });
 
+  it('contagem desatualizada mantem o numero no marcador e avisa no rotulo', () => {
+    const { botao, marcador } = setup({ situacao: 'desatualizada', naoLidas: 2 });
+    expect(marcador()?.textContent?.trim()).toBe('2');
+    expect(marcador()?.getAttribute('data-situacao')).toBe('desatualizada');
+    expect(botao()?.getAttribute('aria-label')).toBe(
+      'Notificacoes, 2 nao lidas, pode estar desatualizado',
+    );
+  });
+
+  it('contagem desatualizada em zero nao tem marcador e continua avisando', () => {
+    const { botao, marcador } = setup({ situacao: 'desatualizada', naoLidas: 0 });
+    expect(marcador()).toBeNull();
+    expect(botao()?.getAttribute('aria-label')).toBe(
+      'Notificacoes, nenhuma nao lida, pode estar desatualizado',
+    );
+  });
+
   it('acompanha a mudanca de contagem do store sem recriar o header', () => {
     const { fixture, contagem, botao, marcador } = setup({ situacao: 'conhecida', naoLidas: 2 });
 

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -6,6 +7,7 @@ import {
   inject,
   signal,
   viewChild,
+  viewChildren,
 } from '@angular/core';
 import { Router } from '@angular/router';
 import { ViewDidEnter, ViewWillEnter } from '@ionic/angular';
@@ -20,6 +22,11 @@ import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobi
 
 const TAMANHO_PAGINA = 10;
 const ERRO_PADRAO = 'Nao foi possivel carregar suas notificacoes. Tente novamente.';
+const ERRO_LEITURA = 'Nao foi possivel marcar o aviso como lido. Tente novamente.';
+// Mesmo texto para aviso inexistente, de outra conta ou de e-mail: o 404 do backend e neutro, e a tela
+// nao pode ser mais especifica que ele.
+const AVISO_NAO_ENCONTRADO =
+  'Este aviso nao foi encontrado. Atualize a lista para ver seus avisos.';
 
 // Destino da referencia CONTRATO e as roles que a rota de destino exige
 // (`formalizacao/contratos/:contratoId` em authenticated.routes.ts). Sem a role o link levaria o
@@ -36,10 +43,17 @@ type Consulta =
   | { situacao: 'erro'; mensagem: string }
   | { situacao: 'pronta'; itens: NotificacaoResponse[]; total: number };
 
-export interface ItemDaCentral {
+interface FalhaDeLeitura {
+  mensagem: string;
+  naoEncontrada: boolean;
+}
+
+interface ItemDaCentral {
   notificacao: NotificacaoResponse;
   // Rota interna montada no app a partir da referencia, ou null quando nao ha destino permitido.
   rota: string | null;
+  marcando: boolean;
+  falha: FalhaDeLeitura | null;
 }
 
 // Central de notificacoes do usuario autenticado (M-Sprint 19, spec 219). Lista paginada na ordem do
@@ -62,11 +76,18 @@ export class NotificacoesComponent implements ViewWillEnter, ViewDidEnter {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly titulo = viewChild.required<ElementRef<HTMLHeadingElement>>('titulo');
+  private readonly titulosDosItens = viewChildren<ElementRef<HTMLHeadingElement>>('tituloDoItem');
 
   readonly pagina = signal(0);
   readonly consulta = signal<Consulta>({ situacao: 'carregando' });
   // Regiao de status: diz onde o usuario chegou depois de um gesto que substitui o conteudo.
   readonly anuncio = signal('');
+  private readonly marcando = signal<ReadonlySet<string>>(new Set());
+  private readonly falhasDeLeitura = signal<ReadonlyMap<string, FalhaDeLeitura>>(new Map());
+  // Leituras confirmadas pelo servidor, sobrepostas a qualquer lista: uma resposta de lista pedida
+  // antes da confirmacao (reentrada, troca de pagina) ainda traz o aviso como nao lido, e nao pode
+  // ressuscita-lo. A pagina e cacheada pelo Ionic, entao o mapa sobrevive a reentrada.
+  private readonly lidasConfirmadas = signal<ReadonlyMap<string, string>>(new Map());
 
   readonly itens = computed<ItemDaCentral[]>(() => {
     const consulta = this.consulta();
@@ -74,10 +95,19 @@ export class NotificacoesComponent implements ViewWillEnter, ViewDidEnter {
       return [];
     }
     const role = this.auth.currentUser()?.role;
-    return consulta.itens.map((notificacao) => ({
-      notificacao,
-      rota: rotaDaReferencia(notificacao, role),
-    }));
+    const confirmadas = this.lidasConfirmadas();
+    const marcando = this.marcando();
+    const falhas = this.falhasDeLeitura();
+    return consulta.itens.map((recebida) => {
+      const lidaEmConfirmada = recebida.lidaEm ? undefined : confirmadas.get(recebida.id);
+      const notificacao = lidaEmConfirmada ? { ...recebida, lidaEm: lidaEmConfirmada } : recebida;
+      return {
+        notificacao,
+        rota: rotaDaReferencia(notificacao, role),
+        marcando: marcando.has(notificacao.id),
+        falha: falhas.get(notificacao.id) ?? null,
+      };
+    });
   });
   readonly total = computed(() => {
     const consulta = this.consulta();
@@ -122,9 +152,55 @@ export class NotificacoesComponent implements ViewWillEnter, ViewDidEnter {
     void this.router.navigateByUrl(rota);
   }
 
+  // Gesto explicito por aviso: abrir a central, paginar ou seguir a referencia nao marca nada. Aviso ja
+  // lido ou com leitura em voo nao gera outro POST, nem por toque repetido nem por chamada direta. So a
+  // confirmacao do servidor baixa o contador; a falha libera o retry com o mesmo id, que o POST
+  // idempotente absorve mesmo que a tentativa anterior tenha gravado antes de cair.
+  async marcarComoLida(id: string): Promise<void> {
+    const item = this.itens().find((i) => i.notificacao.id === id);
+    if (!item || item.notificacao.lidaEm || item.marcando) {
+      return;
+    }
+    this.marcando.update((ids) => new Set(ids).add(id));
+    this.falhasDeLeitura.update((falhas) => semFalha(falhas, id));
+    this.anuncio.set('');
+    this.naoLidas.leituraEnviada(id);
+    try {
+      const lidaEm = lidaEmConfirmada(await this.service.marcarComoLida(id), id);
+      if (lidaEm === undefined) {
+        this.registrarFalhaDeLeitura(id, { mensagem: ERRO_LEITURA, naoEncontrada: false });
+        return;
+      }
+      this.lidasConfirmadas.update((lidas) => new Map(lidas).set(id, lidaEm));
+      void this.naoLidas.registrarLeitura(id);
+      this.anuncio.set('Aviso marcado como lido.');
+      // O botao some com a leitura: o foco vai ao titulo do aviso em vez de cair no body.
+      this.titulosDosItens()
+        .find((titulo) => titulo.nativeElement.id === idDoTitulo(id))
+        ?.nativeElement.focus();
+    } catch (erro) {
+      const naoEncontrada = erro instanceof HttpErrorResponse && erro.status === 404;
+      this.registrarFalhaDeLeitura(id, {
+        mensagem: naoEncontrada ? AVISO_NAO_ENCONTRADO : ERRO_LEITURA,
+        naoEncontrada,
+      });
+    } finally {
+      this.marcando.update((ids) => semId(ids, id));
+    }
+  }
+
+  protected idDoTitulo(id: string): string {
+    return idDoTitulo(id);
+  }
+
+  private registrarFalhaDeLeitura(id: string, falha: FalhaDeLeitura): void {
+    this.falhasDeLeitura.update((falhas) => new Map(falhas).set(id, falha));
+  }
+
   private async buscar(porGesto: boolean): Promise<void> {
     const geracao = ++this.geracao;
     this.anuncio.set('');
+    this.falhasDeLeitura.set(new Map());
     this.consulta.set({ situacao: 'carregando' });
     try {
       const corpo: unknown = await this.service.listar(this.pagina(), TAMANHO_PAGINA);
@@ -175,6 +251,39 @@ function ehPaginaValida(corpo: unknown): corpo is PageResponse<NotificacaoRespon
     Number.isInteger(pagina.totalElements) &&
     pagina.totalElements >= 0
   );
+}
+
+function idDoTitulo(id: string): string {
+  return `sep-notificacao-${id}`;
+}
+
+// Copias sem o id, para manter os signals imutaveis.
+function semId(ids: ReadonlySet<string>, id: string): ReadonlySet<string> {
+  const copia = new Set(ids);
+  copia.delete(id);
+  return copia;
+}
+
+function semFalha(
+  falhas: ReadonlyMap<string, FalhaDeLeitura>,
+  id: string,
+): ReadonlyMap<string, FalhaDeLeitura> {
+  const copia = new Map(falhas);
+  copia.delete(id);
+  return copia;
+}
+
+// So a confirmacao do servidor marca o aviso como lido, e com o `lidaEm` que ele devolveu (o da
+// primeira leitura, se ja estava lido em outro canal). Corpo sem o mesmo id ou sem `lidaEm` nao e
+// confirmacao: fica como falha e o retry, idempotente, resolve.
+function lidaEmConfirmada(resposta: unknown, id: string): string | undefined {
+  if (resposta === null || typeof resposta !== 'object') {
+    return undefined;
+  }
+  const corpo = resposta as Partial<Record<keyof NotificacaoResponse, unknown>>;
+  return corpo.id === id && typeof corpo.lidaEm === 'string' && corpo.lidaEm !== ''
+    ? corpo.lidaEm
+    : undefined;
 }
 
 // So CONTRATO tem destino, e so para quem a rota de destino admite. Referencia nula, ausente, de tipo
