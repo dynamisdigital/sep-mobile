@@ -1698,6 +1698,10 @@ const pixHandlers = [
 // Estado em `localStorage` (`mock.notificacoes`), como os demais: a leitura sobrevive a reload e a
 // reentrada dentro do mesmo teste, e cada teste Playwright comeca do seed por abrir contexto novo.
 const NOTIFICACOES_KEY = 'mock.notificacoes';
+// Efeito de teste, no padrao do `mock.pix`: com `true`, a proxima listagem responde 500 uma unica vez
+// (prova a superficie de erro e o retry). O Playwright nao consegue fazer isso com `page.route`,
+// porque requisicao atendida pelo service worker do MSW nao passa pelo roteamento da pagina.
+const NOTIFICACOES_FALHAR_KEY = 'mock.notificacoes.falhar';
 const NOTIFICACOES_PATH = '/api/v1/notificacoes';
 const UUID_VALIDO = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -1824,6 +1828,19 @@ const notificacoesHandlers = [
     const semAuth = naoAutenticado(request, NOTIFICACOES_PATH);
     if (semAuth) {
       return semAuth;
+    }
+    if (lerEstado<boolean>(NOTIFICACOES_FALHAR_KEY, false)) {
+      salvarEstado(NOTIFICACOES_FALHAR_KEY, false);
+      // Mesma frase do `handleGeneric` do sep-api; sem traceId, o app nao acrescenta codigo de suporte.
+      return HttpResponse.json(
+        errorResponse(
+          500,
+          'Internal Server Error',
+          'Erro interno. Consulte o suporte com o traceId.',
+          NOTIFICACOES_PATH,
+        ),
+        { status: 500 },
+      );
     }
     const url = new URL(request.url);
     const page = inteiroDaQuery(url, 'page', 0);

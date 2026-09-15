@@ -214,3 +214,201 @@ test.describe('M-Sprint 19 - central de notificacoes contra o MSW', () => {
     expect(idInvalido.corpo['codigo']).toBeUndefined();
   });
 });
+
+// Jornada, acessibilidade e layout (Task 219.6). O que o happy-dom nao prova: hidratacao do Ionic,
+// foco real, landmark contado no documento, pilha de paginas do ion-router-outlet e largura medida.
+test.describe('M-Sprint 19 - jornada e acessibilidade da central', () => {
+  // Conta so os landmarks da pagina visivel: o outlet mantem as anteriores escondidas no DOM.
+  async function landmarksNaPaginaVisivel(page: Page): Promise<number> {
+    return central(page).evaluate((el) => el.querySelectorAll('[role="main"], main').length);
+  }
+
+  // Duas medidas, porque transbordam em lugares diferentes: o documento (header, tab bar) e o
+  // elemento de rolagem do `ion-content`, que recorta o conteudo — um item mais largo que a tela nao
+  // alarga o documento, so ganha rolagem horizontal ali dentro.
+  async function transbordos(page: Page): Promise<{ documento: number; conteudo: number }> {
+    const documento = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    const conteudo = await central(page)
+      .locator('ion-content')
+      .evaluate(async (el) => {
+        const rolagem = await (
+          el as HTMLElement & { getScrollElement(): Promise<HTMLElement> }
+        ).getScrollElement();
+        return rolagem.scrollWidth - rolagem.clientWidth;
+      });
+    return { documento, conteudo };
+  }
+
+  test('URL direta abre a central autenticada com foco no h1 e um unico landmark main', async ({
+    page,
+  }) => {
+    await entrar(page, CONTA_SEED);
+    await page.goto('/app/notificacoes');
+
+    const titulo = central(page).getByRole('heading', { level: 1, name: 'Notificacoes' });
+    await expect(titulo).toBeFocused({ timeout: 10_000 });
+    await expect(central(page).getByTestId('sep-notificacoes-item')).toHaveCount(10);
+    expect(await landmarksNaPaginaVisivel(page)).toBe(1);
+  });
+
+  test('reentrada pela aba reconsulta lista e contador; parado na central, nada muda sozinho', async ({
+    page,
+  }) => {
+    await entrar(page, CONTA_SEED);
+    await abrirCentral(page);
+    await expect(sino(page)).toHaveAttribute('aria-label', 'Notificacoes, 3 nao lidas');
+
+    // Outro canal le um aviso: sem polling, a central parada nao percebe.
+    await chamar(page, 'POST', `${API}/${AVISO_DA_CONTA_SEED}/leitura`);
+    await page.waitForTimeout(3_000);
+    await expect(sino(page)).toHaveAttribute('aria-label', 'Notificacoes, 3 nao lidas');
+    await expect(
+      central(page)
+        .getByTestId('sep-notificacoes-item')
+        .first()
+        .getByTestId('sep-notificacoes-item-situacao'),
+    ).toHaveText('Nao lida');
+
+    // Reentrada pela pilha do Ionic: aba Inicio e de volta pelo sino.
+    await page.getByTestId('sep-tab-inicio').click();
+    await expect(page.locator('sep-notificacoes.ion-page-hidden')).toHaveCount(1);
+    await sino(page).click();
+    await expect(page).toHaveURL(/\/app\/notificacoes$/);
+
+    // O sino do header da propria central: durante a transicao os dois headers ficam visiveis.
+    await expect(central(page).getByTestId('sep-header-mobile-notificacoes')).toHaveAttribute(
+      'aria-label',
+      'Notificacoes, 2 nao lidas',
+    );
+    await expect(
+      central(page)
+        .getByTestId('sep-notificacoes-item')
+        .first()
+        .getByTestId('sep-notificacoes-item-situacao'),
+    ).toContainText('Lida em');
+    await expect(
+      central(page).getByRole('heading', { level: 1, name: 'Notificacoes' }),
+    ).toBeFocused();
+  });
+
+  // A falha vem do flag do proprio mock (`mock.notificacoes.falhar`, consumido uma vez): `page.route`
+  // nao alcanca requisicao atendida pelo service worker do MSW. O retry cai no handler real.
+  test('erro tecnico da lista mostra a frase do backend e o retry recupera a lista real', async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      if (!window.sessionStorage.getItem('falha-semeada')) {
+        window.sessionStorage.setItem('falha-semeada', 'sim');
+        window.localStorage.setItem('mock.notificacoes.falhar', 'true');
+      }
+    });
+    await entrar(page, CONTA_SEED);
+    await sino(page).click();
+
+    await expect(central(page).getByTestId('sep-notificacoes-erro')).toContainText(
+      'Erro interno. Consulte o suporte com o traceId.',
+    );
+    await central(page).getByTestId('sep-notificacoes-retry').click();
+
+    await expect(central(page).getByTestId('sep-notificacoes-total')).toHaveText('12 notificacoes');
+    await expect(
+      central(page).getByRole('heading', { level: 1, name: 'Notificacoes' }),
+    ).toBeFocused();
+  });
+
+  test('marcar pelo teclado anuncia o desfecho e leva o foco ao titulo do aviso', async ({
+    page,
+  }) => {
+    await entrar(page, CONTA_SEED);
+    await abrirCentral(page);
+
+    const primeiro = central(page).getByTestId('sep-notificacoes-item').first();
+    const botao = primeiro.getByTestId('sep-notificacoes-item-marcar');
+    await botao.focus();
+    await page.keyboard.press('Enter');
+
+    // Pelo papel, nao pelo testid: o que o leitor de tela anuncia e a regiao `status`.
+    await expect(central(page).getByRole('status')).toHaveText('Aviso marcado como lido.');
+    await expect(primeiro.getByRole('heading', { level: 2 })).toBeFocused();
+    await expect(sino(page)).toHaveAttribute('aria-label', 'Notificacoes, 2 nao lidas');
+  });
+
+  test('Ver contrato abre o detalhe pela rota interna e voltar retorna a central', async ({
+    page,
+  }) => {
+    await entrar(page, CONTA_SEED);
+    await abrirCentral(page);
+
+    await central(page)
+      .getByTestId('sep-notificacoes-item')
+      .first()
+      .getByTestId('sep-notificacoes-item-referencia')
+      .click();
+    await expect(page).toHaveURL(/\/app\/formalizacao\/contratos\/contrato-mock-1$/);
+    await expect(page.locator('[data-testid="sep-contrato-detail-status"]:visible')).toBeVisible();
+
+    await page.goBack();
+    await expect(page).toHaveURL(/\/app\/notificacoes$/);
+    await expect(
+      central(page).getByRole('heading', { level: 1, name: 'Notificacoes' }),
+    ).toBeFocused();
+  });
+
+  // O contador vive no header de toda pagina autenticada, inclusive nas que embutem status Pix.
+  test('o acesso a central existe nas jornadas do tomador, da credora e nas telas com Pix', async ({
+    page,
+  }) => {
+    await page.addInitScript(() => {
+      window.localStorage.setItem('mock.formalizacao', JSON.stringify({ status: 'ASSINADO' }));
+      window.localStorage.setItem(
+        'mock.credora',
+        JSON.stringify({
+          presente: true,
+          elegibilidade: 'ELEGIVEL',
+          interesse: 'AUSENTE',
+          carteiraVazia: false,
+        }),
+      );
+    });
+    await entrar(page, CONTA_SEED);
+
+    for (const rota of [
+      '/app/parcelas',
+      '/app/formalizacao/contratos/contrato-mock-1',
+      '/app/credora/carteira/oper-carteira-1',
+    ]) {
+      await page.goto(rota);
+      await expect(sino(page)).toHaveAttribute('aria-label', 'Notificacoes, 3 nao lidas', {
+        timeout: 10_000,
+      });
+    }
+    await sino(page).click();
+    await expect(page).toHaveURL(/\/app\/notificacoes$/);
+  });
+
+  for (const largura of [320, 360, 390]) {
+    test(`a ${largura}px a central nao transborda e a paginacao nao fica sob a tab bar`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: largura, height: 740 });
+      await entrar(page, CONTA_SEED);
+      await abrirCentral(page);
+      await expect(central(page).getByTestId('sep-notificacoes-item')).toHaveCount(10);
+
+      expect(await transbordos(page)).toEqual({ documento: 0, conteudo: 0 });
+
+      // O clique do Playwright reprova se outro elemento (a tab bar fixa) interceptar o ponteiro.
+      await central(page).getByTestId('sep-notificacoes-proxima').click();
+      await expect(central(page).getByTestId('sep-notificacoes-pagina-atual')).toHaveText(
+        'Pagina 2 de 2',
+      );
+      const ultimo = central(page).getByTestId('sep-notificacoes-item').last();
+      await ultimo.getByTestId('sep-notificacoes-item-marcar').click();
+      await expect(ultimo.getByTestId('sep-notificacoes-item-situacao')).toContainText('Lida em');
+
+      expect(await transbordos(page)).toEqual({ documento: 0, conteudo: 0 });
+    });
+  }
+});
