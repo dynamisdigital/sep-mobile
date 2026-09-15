@@ -85,8 +85,8 @@
     }
   }
 
-  // Mesmo tamanho do botao de tema. O marcador fica dentro da caixa do proprio botao, entao nao cobre
-  // conteudo da pagina nem muda a altura do header.
+  // Mesmo tamanho do botao de tema. O marcador sobra 6px para fora do botao, mas dentro do padding do
+  // header (12px): nao cobre conteudo da pagina nem muda a altura do header.
   &-notificacoes {
     position: relative;
     display: inline-flex;
