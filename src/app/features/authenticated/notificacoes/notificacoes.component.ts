@@ -16,6 +16,7 @@ import { IonContent, IonSpinner } from '@ionic/angular/standalone';
 import { mensagemDaApi } from '../../../core/api/api-error';
 import { NotificacaoResponse, PageResponse, UsuarioRole } from '../../../core/api/api.models';
 import { AuthService } from '../../../core/auth/auth.service';
+import { formatarDataIso } from '../../../core/format/data';
 import { NotificacoesMobileService } from '../../../core/notificacoes/notificacoes-mobile.service';
 import { NotificacoesNaoLidasStore } from '../../../core/notificacoes/notificacoes-nao-lidas.store';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
@@ -304,16 +305,15 @@ function rotaDaReferencia(
 
 // `criadaEm`/`lidaEm` chegam com offset e ate microssegundos. Data invalida mostra o texto recebido:
 // o `Intl` lancaria RangeError dentro do template e derrubaria a lista inteira.
+//
+// A guarda local da M-19 testava so `Number.isNaN(getTime())` e por isso deixava `null` passar como
+// epoch (`31/12/1969` em -03). Delegada ao helper compartilhado na FMF-4.1.
 function formatarDataHora(iso: string): string {
-  const data = new Date(iso);
-  if (Number.isNaN(data.getTime())) {
-    return iso;
-  }
-  return new Intl.DateTimeFormat('pt-BR', {
+  return formatarDataIso(iso, {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  }).format(data);
+  });
 }

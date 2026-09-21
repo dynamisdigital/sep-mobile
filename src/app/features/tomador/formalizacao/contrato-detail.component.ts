@@ -27,6 +27,7 @@ import { PixMobileService } from '../../../core/pix/pix-mobile.service';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
 import { PixStatusPublicoComponent } from '../../pix/pix-status-publico.component';
 import { ContratoContentComponent } from './contrato-content.component';
+import { DIA_MES_ANO, formatarDataIso } from '../../../core/format/data';
 
 const ROTULOS_TIPO: Record<TipoContrato, string> = {
   MUTUO: 'Contrato de mutuo',
@@ -432,11 +433,7 @@ export class ContratoDetailComponent implements OnInit {
   }
 
   protected dataFormatada(iso: string): string {
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(new Date(iso));
+    return formatarDataIso(iso, DIA_MES_ANO);
   }
 
   protected valorFormatado(valor: number): string {

@@ -435,6 +435,29 @@ describe('ParcelaDetailComponent', () => {
     component.ionViewWillEnter();
     await vi.waitFor(() => expect(pix.consultarStatusPixDaParcela).toHaveBeenCalledTimes(2));
   });
+
+  /**
+   * FMF-4.1: fiacao com `core/format/data`. Antes, `null` virava `31/12/1969` na tela (em -03) e
+   * texto invalido lancava `RangeError` dentro do template, derrubando a pagina. O contrato completo
+   * esta em `core/format/data.spec.ts`; aqui se prova que **este** componente passa por ele.
+   *
+   * Nenhum horario e afirmado: o CI roda em UTC e a maquina de dev em -03.
+   */
+  it('data invalida nao vira 1969 nem derruba a tela', () => {
+    const { component } = setup({});
+    const view = component as unknown as {
+      dataVencimentoFormatada(d: string): string;
+      dataRecebimentoFormatada(d: string): string;
+    };
+
+    expect(view.dataVencimentoFormatada(null as unknown as string)).toBe('');
+    expect(() => view.dataVencimentoFormatada('lixo')).not.toThrow();
+    expect(view.dataVencimentoFormatada('2026-09-14')).toBe('14/09/2026');
+
+    expect(view.dataRecebimentoFormatada(null as unknown as string)).toBe('');
+    expect(() => view.dataRecebimentoFormatada('lixo')).not.toThrow();
+    expect(view.dataRecebimentoFormatada('2026-09-14T12:00:00Z')).toContain('14/09/2026');
+  });
 });
 
 function recebimentosFixture(): RecebimentoTomadorResponse[] {

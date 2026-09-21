@@ -21,6 +21,12 @@ import { PixMobileService } from '../../../core/pix/pix-mobile.service';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
 import { PixStatusParcelaComponent } from '../../pix/pix-status-parcela.component';
 import { ParcelaStatusComponent } from './parcela-status.component';
+import {
+  DIA_MES_ANO,
+  DIA_MES_ANO_HORA,
+  formatarDataIso,
+  formatarLocalDate,
+} from '../../../core/format/data';
 
 // Detalhe de uma parcela com o valor atualizado calculado pelo backend (`consultarParcela`). O app
 // apenas exibe os campos recebidos (principal, juros, mora, multa, valor devido, total recebido,
@@ -230,22 +236,12 @@ export class ParcelaDetailComponent implements OnInit, ViewWillEnter {
   // dataVencimento e LocalDate (yyyy-MM-dd). Fixa meio-dia local para exibir sem deslocamento de
   // fuso. Formatacao e apenas apresentacao; nenhuma aritmetica de data ocorre aqui.
   protected dataVencimentoFormatada(data: string): string {
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(new Date(`${data}T12:00:00`));
+    return formatarLocalDate(data, DIA_MES_ANO);
   }
 
   // dataRecebimento e ISO-8601 com offset; exibe data e hora locais, sem aritmetica.
   protected dataRecebimentoFormatada(data: string): string {
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(data));
+    return formatarDataIso(data, DIA_MES_ANO_HORA);
   }
 
   private horaAtual(): string {
