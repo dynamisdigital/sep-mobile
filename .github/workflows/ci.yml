@@ -68,6 +68,11 @@ jobs:
       - name: Lint SCSS
         run: npm run lint:scss
 
+      # Specs sao excluidos do tsconfig.app.json, entao `build` nao os ve: sem este step um erro
+      # de tipo em spec passa por vitest, lint e build (FMF-4.3; o sep-app ganhou o mesmo na F-28).
+      - name: Typecheck specs
+        run: npm run typecheck:spec
+
       - name: Test with coverage
         run: npm run test:coverage
 

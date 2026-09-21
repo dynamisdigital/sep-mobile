@@ -76,7 +76,10 @@ describe('NativeRuntimeService', () => {
   function capturarDeepLinkCallback(): (event: { url: string }) => void {
     const chamada = vi.mocked(App.addListener).mock.calls.at(0);
     expect(chamada?.[0]).toBe('appUrlOpen');
-    return chamada?.[1] as (event: { url: string }) => void;
+    // `.at()` passou a devolver `T | undefined` quando o lib alinhou com o target (FMF-4.3), e o
+    // listener do Capacitor e uma uniao de sobrecargas: o duplo cast e a afirmacao honesta de
+    // que a asserção acima ja fixou qual sobrecarga e esta.
+    return chamada?.[1] as unknown as (event: { url: string }) => void;
   }
 
   function capturarBackButtonHandler(): () => void {

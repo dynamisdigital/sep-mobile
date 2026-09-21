@@ -125,7 +125,9 @@ describe('PortfolioDetailComponent', () => {
     return render();
   }
 
-  function responder(req: TestRequest, corpo: unknown): void {
+  // `number` aqui significa "responda com este status de erro"; qualquer outra coisa e o corpo de
+  // sucesso. O tipo diz isso em vez de `unknown`, que o `flush` nao aceita.
+  function responder(req: TestRequest, corpo: number | object | null): void {
     if (typeof corpo === 'number') {
       req.flush({ message: 'x' }, { status: corpo, statusText: 'Error' });
     } else {
