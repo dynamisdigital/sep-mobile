@@ -26,6 +26,20 @@
  * entao o documento nao tem marca de nulidade nenhuma e campo que o backend pode mandar `null` chega
  * aqui declarado `string`. Por isso a guarda e de runtime, e nao de tipo.
  */
+/** `dd/MM/yyyy` — o formato de data que todas as telas usam. */
+export const DIA_MES_ANO: Intl.DateTimeFormatOptions = {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+};
+
+/** `dd/MM/yyyy HH:mm` — para `OffsetDateTime` em que a hora importa (recebimento, proposta). */
+export const DIA_MES_ANO_HORA: Intl.DateTimeFormatOptions = {
+  ...DIA_MES_ANO,
+  hour: '2-digit',
+  minute: '2-digit',
+};
+
 export function formatarDataIso(iso: string, opcoes: Intl.DateTimeFormatOptions): string {
   if (iso == null) {
     return '';

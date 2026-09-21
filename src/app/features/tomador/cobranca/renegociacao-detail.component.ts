@@ -10,6 +10,12 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { StepUpTokenStore } from '../../../core/auth/step-up-token.store';
 import { CobrancaMobileService } from '../../../core/cobranca/cobranca-mobile.service';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
+import {
+  DIA_MES_ANO,
+  DIA_MES_ANO_HORA,
+  formatarDataIso,
+  formatarLocalDate,
+} from '../../../core/format/data';
 
 // Termos e decisao da renegociacao ativa da parcela (M-9.5, backend B2/Sprint 24 + PATCHes da
 // Sprint 13). O app exibe os termos exatamente como recebidos — `valorTotalRenegociado` vem do
@@ -182,22 +188,12 @@ export class RenegociacaoDetailComponent implements OnInit, ViewWillEnter {
 
   // novoVencimento e LocalDate (yyyy-MM-dd); fixa meio-dia local para nao deslocar fuso.
   protected dataFormatada(data: string): string {
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(new Date(`${data}T12:00:00`));
+    return formatarLocalDate(data, DIA_MES_ANO);
   }
 
   // dataProposta/dataExpiracao sao ISO-8601 com offset; exibe data e hora locais.
   protected dataHoraFormatada(data: string): string {
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(data));
+    return formatarDataIso(data, DIA_MES_ANO_HORA);
   }
 
   private fecharConfirmacoes(): void {

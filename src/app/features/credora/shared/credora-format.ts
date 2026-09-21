@@ -1,10 +1,4 @@
-import { formatarDataIso, formatarLocalDate } from '../../../core/format/data';
-
-const DIA_MES_ANO: Intl.DateTimeFormatOptions = {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-};
+import { DIA_MES_ANO, formatarDataIso, formatarLocalDate } from '../../../core/format/data';
 
 // Formatadores de borda da jornada credora. `number` aqui e so apresentacao: nao ha aritmetica
 // financeira (o Intl faz a formatacao; a taxa vem do backend como fracao e usa `style: 'percent'`,
