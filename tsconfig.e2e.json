@@ -1,0 +1,9 @@
+/* TypeScript config para os specs do Playwright (e2e/) e o playwright.config.ts (FMF-4.3). */
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./out-tsc/e2e",
+    "types": ["node"]
+  },
+  "include": ["e2e/**/*.ts", "playwright.config.ts"]
+}

@@ -88,15 +88,15 @@ describe('formatarLocalDate', () => {
    * caso realista: meia-noite UTC de 14/09 la ainda e 13/09.
    */
   it('o meio-dia fixo e o que segura o dia num fuso a oeste', () => {
-    const fusoOriginal = process.env.TZ;
+    const fusoOriginal = process.env['TZ'];
     try {
-      process.env.TZ = 'Pacific/Honolulu';
+      process.env['TZ'] = 'Pacific/Honolulu';
       expect(formatarLocalDate('2026-09-14', DIA_MES_ANO)).toBe('14/09/2026');
       // Controle: a mesma data sem o meio-dia volta um dia neste fuso. Se esta linha passar a
-      // devolver 14/09, o ambiente deixou de honrar `process.env.TZ` e o teste acima virou vacuo.
+      // devolver 14/09, o ambiente deixou de honrar `process.env['TZ']` e o teste acima virou vacuo.
       expect(formatarDataIso('2026-09-14', DIA_MES_ANO)).toBe('13/09/2026');
     } finally {
-      process.env.TZ = fusoOriginal;
+      process.env['TZ'] = fusoOriginal;
     }
   });
 

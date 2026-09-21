@@ -33,7 +33,10 @@ async function prepararSessao(page: Page, seed: CredoraSeed): Promise<void> {
         }),
       );
     },
-    seed as Record<string, unknown>,
+    // Sem o cast para `Record<string, unknown>`: ele forcava acesso por indice no corpo do
+    // callback (TS4111) e mentia sobre o tipo (TS2352). O `addInitScript` e generico no argumento,
+    // entao `estado` chega como `CredoraSeed` e os campos opcionais sao conferidos de verdade.
+    seed,
   );
 }
 

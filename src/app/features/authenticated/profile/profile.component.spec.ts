@@ -17,6 +17,8 @@ const cliente: UsuarioResponse = {
   dataModificacao: '2026-04-24T18:30:00-03:00',
   criadoPor: 'system',
   modificadoPor: 'system',
+  precisaRedefinirSenha: false,
+  mfaHabilitado: false,
 };
 
 function createAuthStub(user: UsuarioResponse | null) {
