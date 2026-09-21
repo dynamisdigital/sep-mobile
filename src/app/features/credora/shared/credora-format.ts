@@ -1,3 +1,11 @@
+import { formatarDataIso, formatarLocalDate } from '../../../core/format/data';
+
+const DIA_MES_ANO: Intl.DateTimeFormatOptions = {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+};
+
 // Formatadores de borda da jornada credora. `number` aqui e so apresentacao: nao ha aritmetica
 // financeira (o Intl faz a formatacao; a taxa vem do backend como fracao e usa `style: 'percent'`,
 // igual ao consumidor web F-11, para evitar divergencia de exibicao).
@@ -19,19 +27,11 @@ export function formatarTaxaMensal(taxa: number): string {
 
 // Data com offset (OffsetDateTime ISO) apenas para exibicao; sem aritmetica de data.
 export function formatarData(iso: string): string {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(new Date(iso));
+  return formatarDataIso(iso, DIA_MES_ANO);
 }
 
 // LocalDate (yyyy-MM-dd, ex.: proximoVencimento) fixa meio-dia local para exibir sem deslocamento
 // de fuso. Apenas apresentacao; nenhuma aritmetica de data.
 export function formatarDataLocal(data: string): string {
-  return new Intl.DateTimeFormat('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(new Date(`${data}T12:00:00`));
+  return formatarLocalDate(data, DIA_MES_ANO);
 }
