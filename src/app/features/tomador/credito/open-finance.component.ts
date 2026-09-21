@@ -12,6 +12,7 @@ import {
 } from '../../../core/api/api.models';
 import { CreditoMobileService } from '../../../core/credito/credito-mobile.service';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
+import { DIA_MES_ANO, formatarDataIso } from '../../../core/format/data';
 
 // CPF (11) ou CNPJ (14), somente numeros — espelha a validacao do backend.
 const DOCUMENTO_PATTERN = /^\d{11}$|^\d{14}$/;
@@ -139,11 +140,7 @@ export class OpenFinanceComponent implements OnInit {
   }
 
   protected dataFormatada(iso: string): string {
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(new Date(iso));
+    return formatarDataIso(iso, DIA_MES_ANO);
   }
 
   // Handoff na mesma aba (PWA). Isolado para permitir bloqueio quando a URL nao for http(s).

@@ -8,6 +8,7 @@ import { DecisaoParecer, PropostaResponse, TipoOperacao } from '../../../core/ap
 import { CreditoMobileService } from '../../../core/credito/credito-mobile.service';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
 import { PropostaStatusComponent } from './proposta-status.component';
+import { DIA_MES_ANO, formatarDataIso } from '../../../core/format/data';
 
 const ROTULOS_TIPO: Record<TipoOperacao, string> = {
   CAPITAL_GIRO: 'Capital de giro',
@@ -90,11 +91,7 @@ export class PropostaDetailComponent implements OnInit {
   }
 
   protected dataFormatada(iso: string): string {
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(new Date(iso));
+    return formatarDataIso(iso, DIA_MES_ANO);
   }
 
   private mensagemErro(err: unknown): string {

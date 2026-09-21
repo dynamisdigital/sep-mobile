@@ -8,6 +8,7 @@ import { CobrancaMobileService } from '../../../core/cobranca/cobranca-mobile.se
 import { ContratosMobileService } from '../../../core/contratos/contratos-mobile.service';
 import { HeaderMobileComponent } from '../../../layout/header-mobile/header-mobile.component';
 import { ParcelaStatusComponent } from './parcela-status.component';
+import { DIA_MES_ANO, formatarDataIso, formatarLocalDate } from '../../../core/format/data';
 
 // Agenda e lista de parcelas do tomador. Entra por proposta (`consultarPorProposta`) ou direto por
 // contrato (`consultarPorId`); apos a primeira resposta usa `contrato.id` como identidade da
@@ -84,19 +85,11 @@ export class AgendaDetailComponent implements OnInit {
   // dataVencimento e LocalDate (yyyy-MM-dd). Fixa meio-dia local para exibir a data recebida sem
   // deslocamento de fuso. Formatacao e apenas apresentacao; nenhuma aritmetica de data ocorre aqui.
   protected dataVencimentoFormatada(data: string): string {
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(new Date(`${data}T12:00:00`));
+    return formatarLocalDate(data, DIA_MES_ANO);
   }
 
   protected dataGeracaoFormatada(iso: string): string {
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(new Date(iso));
+    return formatarDataIso(iso, DIA_MES_ANO);
   }
 
   private tratarErro(err: unknown): void {

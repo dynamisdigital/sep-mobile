@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 import { IonButton } from '@ionic/angular/standalone';
 
 import { VersaoContratoResponse } from '../../../core/api/api.models';
+import { DIA_MES_ANO, formatarDataIso } from '../../../core/format/data';
 
 // Apresentacional: renderiza uma versao de contrato (cabecalho + hash + texto + clausulas) como
 // texto puro, nunca HTML. Sem estado proprio nem chamadas de rede; o detalhe orquestra carga,
@@ -23,10 +24,6 @@ export class ContratoContentComponent {
   readonly voltarVigente = output<void>();
 
   protected dataFormatada(iso: string): string {
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(new Date(iso));
+    return formatarDataIso(iso, DIA_MES_ANO);
   }
 }

@@ -325,6 +325,30 @@ describe('NotificacoesComponent', () => {
     );
   });
 
+  /**
+   * O teste acima cobre texto nao parseavel, que a guarda da M-19 ja tratava. **`null` era o buraco
+   * dela**: `new Date(null)` e a epoch, nao `NaN`, entao passava pela guarda e a central mostrava
+   * "Recebida em 31/12/1969" (em -03) ou "01/01/1970" (em UTC) — data plausivel, errada, sem aviso.
+   * Fechado na FMF-4.1 delegando ao `formatarDataIso`.
+   *
+   * `criadaEm` e `NOT NULL` na `V61`, entao isto e defesa; mas e o unico campo de data que o
+   * template **nao** protege — `lidaEm` tem `@if`. A asserção e pela ausencia das duas datas, e nao
+   * por uma string formatada, porque o resultado do defeito dependia do fuso da maquina.
+   */
+  it('criadaEm nulo nao vira data de 1969 nem de 1970', async () => {
+    const { el, entrar } = setup({
+      listar: vi
+        .fn()
+        .mockResolvedValue(pagina([notificacao({ criadaEm: null as unknown as string })])),
+    });
+    await entrar();
+
+    const meta = el.querySelector('.sep-notificacoes-item-meta');
+    expect(meta?.textContent).toContain('Recebida em');
+    expect(meta?.textContent).not.toContain('1969');
+    expect(meta?.textContent).not.toContain('1970');
+  });
+
   describe('paginacao', () => {
     const dezItens = (prefixo: string) =>
       Array.from({ length: 10 }, (_, i) => notificacao({ id: `${prefixo}-${i}`, titulo: prefixo }));

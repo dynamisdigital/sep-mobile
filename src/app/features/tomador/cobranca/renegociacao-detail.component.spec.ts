@@ -304,6 +304,29 @@ describe('RenegociacaoDetailComponent', () => {
     expect(cobranca.aceitarRenegociacao).not.toHaveBeenCalled();
     expect(cobranca.recusarRenegociacao).not.toHaveBeenCalled();
   });
+
+  /**
+   * FMF-4.1: fiacao com `core/format/data`. Antes, `null` virava `31/12/1969` na tela (em -03) e
+   * texto invalido lancava `RangeError` dentro do template, derrubando a pagina. O contrato completo
+   * esta em `core/format/data.spec.ts`; aqui se prova que **este** componente passa por ele.
+   *
+   * Nenhum horario e afirmado: o CI roda em UTC e a maquina de dev em -03.
+   */
+  it('data invalida nao vira 1969 nem derruba a tela', () => {
+    const { component } = setup();
+    const view = component as unknown as {
+      dataFormatada(d: string): string;
+      dataHoraFormatada(d: string): string;
+    };
+
+    expect(view.dataFormatada(null as unknown as string)).toBe('');
+    expect(() => view.dataFormatada('lixo')).not.toThrow();
+    expect(view.dataFormatada('2026-09-14')).toBe('14/09/2026');
+
+    expect(view.dataHoraFormatada(null as unknown as string)).toBe('');
+    expect(() => view.dataHoraFormatada('lixo')).not.toThrow();
+    expect(view.dataHoraFormatada('2026-09-14T12:00:00Z')).toContain('14/09/2026');
+  });
 });
 
 function renegociacaoFixture(): RenegociacaoTomadorResponse {
