@@ -98,7 +98,7 @@
     "stylelint-config-standard-scss": "^14.0.0",
     "typescript": "~5.9.0",
     "typescript-eslint": "^8.61.1",
-    "vitest": "^3.2.6"
+    "vitest": "^5.0.4"
   },
   "msw": {
     "workerDirectory": [
